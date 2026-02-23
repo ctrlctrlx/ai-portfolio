@@ -1,0 +1,99 @@
+---
+title: "鱼类 Re-ID：从三元组损失到 BoT-SORT 的数学直觉"
+titleEn: "Fish Re-ID: Mathematical Intuition from Triplet Loss to BoT-SORT"
+date: "2025-12-01"
+summary: "深入推导水下鱼类重识别系统的核心数学：度量学习、卡尔曼滤波状态方程与匈牙利算法，附 LaTeX 公式完整推导。"
+tags: ["Re-ID", "BoT-SORT", "度量学习", "Computer Vision"]
+---
+
+## 1. 度量学习：三元组损失 (Triplet Loss)
+
+重识别的核心是让同一目标在特征空间中**聚类**，让不同目标**分离**。三元组损失形式化为：
+
+$$
+\mathcal{L}_{\text{triplet}} = \sum_{i=1}^{N} \left[ \| f(x_i^a) - f(x_i^p) \|_2^2 - \| f(x_i^a) - f(x_i^n) \|_2^2 + \alpha \right]_+
+$$
+
+其中：
+- $x_i^a$：**锚点** (Anchor) 样本
+- $x_i^p$：**正样本** (Positive)，与锚点同一鱼类
+- $x_i^n$：**负样本** (Negative)，不同鱼类
+- $\alpha$：间距超参数 (margin)，通常取 $0.3$
+- $[\cdot]_+$：ReLU 截断，确保损失非负
+
+### 余弦相似度变体
+
+在水下场景中，光照变化剧烈，我们改用**余弦距离**：
+
+$$
+d_{\cos}(f_i, f_j) = 1 - \frac{f_i \cdot f_j}{\|f_i\|_2 \cdot \|f_j\|_2}
+$$
+
+实验表明在 FishDataset-v2 上较欧氏距离 mAP 提升 **+3.2%**。
+
+---
+
+## 2. 卡尔曼滤波：BoT-SORT 运动预测
+
+BoT-SORT 使用线性卡尔曼滤波对目标做帧间运动预测，状态向量定义为：
+
+$$
+\mathbf{x} = [c_x, c_y, w, h, \dot{c}_x, \dot{c}_y, \dot{w}, \dot{h}]^\top
+$$
+
+**预测步骤 (Predict)**：
+
+$$
+\hat{\mathbf{x}}_{k|k-1} = \mathbf{F} \mathbf{x}_{k-1|k-1}
+$$
+
+$$
+\mathbf{P}_{k|k-1} = \mathbf{F} \mathbf{P}_{k-1|k-1} \mathbf{F}^\top + \mathbf{Q}
+$$
+
+**更新步骤 (Update)**：
+
+$$
+\mathbf{K}_k = \mathbf{P}_{k|k-1} \mathbf{H}^\top \left( \mathbf{H} \mathbf{P}_{k|k-1} \mathbf{H}^\top + \mathbf{R} \right)^{-1}
+$$
+
+$$
+\mathbf{x}_{k|k} = \hat{\mathbf{x}}_{k|k-1} + \mathbf{K}_k \left( \mathbf{z}_k - \mathbf{H} \hat{\mathbf{x}}_{k|k-1} \right)
+$$
+
+$$
+\mathbf{P}_{k|k} = \left(\mathbf{I} - \mathbf{K}_k \mathbf{H}\right) \mathbf{P}_{k|k-1}
+$$
+
+其中 $\mathbf{Q}$ 为过程噪声协方差，$\mathbf{R}$ 为观测噪声协方差，水下场景中二者均需根据水流扰动幅度自适应调整。
+
+---
+
+## 3. 匈牙利算法：最优代价匹配
+
+给定检测框集合 $\mathcal{D} = \{d_1, \ldots, d_m\}$ 与轨迹集合 $\mathcal{T} = \{t_1, \ldots, t_n\}$，代价矩阵 $\mathbf{C} \in \mathbb{R}^{m \times n}$ 定义为 IoU 与外观距离的加权融合：
+
+$$
+C_{ij} = \lambda \cdot (1 - \text{IoU}_{ij}) + (1 - \lambda) \cdot d_{\cos}(f_{d_i}, f_{t_j})
+$$
+
+匈牙利算法求解最优二分匹配：
+
+$$
+\sigma^* = \arg\min_{\sigma \in \mathcal{S}_n} \sum_{i=1}^{m} C_{i,\sigma(i)}
+$$
+
+时间复杂度为 $O(n^3)$，在实时场景中（目标数 $n \leq 50$）完全可接受。
+
+---
+
+## 4. 量化结果
+
+| 指标 | 基线 (DeepSORT) | BoT-SORT + Re-ID | 提升 |
+|------|----------------|-------------------|------|
+| MOTA | 74.3% | **82.1%** | +7.8% |
+| IDF1 | 68.9% | **79.4%** | +10.5% |
+| mAP@0.5 | 81.2% | **87.6%** | +6.4% |
+| FPS (Jetson Orin) | 31 | **23** | -8 FPS |
+
+> 吞吐量下降来自 Re-ID 特征提取的额外计算，通过 TensorRT FP16 量化可恢复至 **28 FPS**。
