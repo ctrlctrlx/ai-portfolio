@@ -29,7 +29,8 @@ if ($msg -eq "") {
 git commit -m $msg
 
 # 4. 锁定分支与关联 (静默处理重复关联的报错)
-
+# git branch -M main
+# git remote add origin https://github.com/ctrlctrlx/ai-portfolio.git 2>$null
 
 # 5. 正式推送
 Write-Host "📡 正在与云端 GitHub 同步数据..." -ForegroundColor Yellow
