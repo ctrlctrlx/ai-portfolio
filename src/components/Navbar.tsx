@@ -42,7 +42,7 @@ export default function Navbar({ lang }: NavbarProps) {
           className="font-bold text-base tracking-tight hover:opacity-80 transition-opacity"
           style={{ color: "var(--foreground)" }}
         >
-          {lang === "zh" ? "杨明远" : "Mingyuan Yang"}
+          {lang === "zh" ? "杨冲" : "Mingyuan Yang"}
         </Link>
 
         {/* Desktop nav links */}

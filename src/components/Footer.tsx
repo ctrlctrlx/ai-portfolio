@@ -24,7 +24,7 @@ export default function Footer({ lang }: { lang: Locale }) {
       >
         <p>
           © {new Date().getFullYear()}{" "}
-          {lang === "zh" ? "杨明远" : "Mingyuan Yang"} ·{" "}
+          {lang === "zh" ? "杨冲" : "Mingyuan Yang"} ·{" "}
           {lang === "zh" ? "基于 Next.js & DeepSeek 构建" : "Built with Next.js & DeepSeek"}
         </p>
 

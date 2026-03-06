@@ -39,7 +39,7 @@ const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
 };
 
 const GREETING: Record<Lang, string> = {
-  zh: "你好！我是杨明远的 AI 分身。请问您想了解哪个项目或技能？",
+  zh: "你好！我是杨冲的 AI 分身。请问您想了解哪个项目或技能？",
   en: "Hi! I'm Mingyuan Yang's AI avatar. What project or skill would you like to know about?",
 };
 

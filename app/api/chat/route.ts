@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
   if (!apiKey) {
     // Dev fallback: echo a helpful static message
     const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() ?? "";
-    let staticReply = "您好！我是杨明远的 AI 分身。请问您想了解哪个项目？\n\n快捷问题：\n• 鱼类Re-ID项目\n• VIO-SLAM项目\n• 核心技能栈";
+    let staticReply = "您好！我是杨冲的 AI 分身。请问您想了解哪个项目？\n\n快捷问题：\n• 鱼类Re-ID项目\n• VIO-SLAM项目\n• 核心技能栈";
 
     if (lastMsg.includes("鱼") || lastMsg.includes("reid") || lastMsg.includes("fish")) {
       staticReply = STATIC_QA.fish_reid;
