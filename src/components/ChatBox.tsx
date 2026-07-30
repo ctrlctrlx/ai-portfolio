@@ -13,29 +13,29 @@ type Lang = "zh" | "en";
 
 const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
   zh: [
-    { label: "鱼类 Re-ID", key: "fish" },
-    { label: "水下 VIO-SLAM", key: "vio" },
+    { label: "项目经历", key: "projects" },
     { label: "核心技能", key: "skills" },
+    { label: "教育经历", key: "education" },
   ],
   en: [
-    { label: "Fish Re-ID", key: "fish" },
-    { label: "Underwater VIO-SLAM", key: "vio" },
+    { label: "Project Experience", key: "projects" },
     { label: "Core Skills", key: "skills" },
+    { label: "Education", key: "education" },
   ],
 };
 
 const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
-  fish: {
-    zh: "介绍一下你的鱼类 Re-ID 项目",
-    en: "Tell me about your Fish Re-ID project",
-  },
-  vio: {
-    zh: "介绍一下水下 VIO-SLAM 项目",
-    en: "Tell me about your underwater VIO-SLAM project",
+  projects: {
+    zh: "介绍一下你的项目经历",
+    en: "Tell me about your project experience",
   },
   skills: {
-    zh: "介绍你的核心技能栈",
-    en: "What are your core technical skills?",
+    zh: "你的核心技能是什么？",
+    en: "What are your core skills?",
+  },
+  education: {
+    zh: "请介绍你的教育经历",
+    en: "Tell me about your education",
   },
 };
 

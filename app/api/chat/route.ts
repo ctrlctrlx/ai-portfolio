@@ -101,39 +101,90 @@ ${pubsText}
 1. **只讨论技术**：仅回答与候选人的技术能力、项目、研究、求职相关的问题。
 2. **拒绝闲聊**：如果用户问无关话题（如"你好吗"、"讲个笑话"等），礼貌地说："我只能介绍候选人的技术背景，请问您想了解哪个项目或技能？"
 3. **中英双语**：用户用中文则回中文，用英文则回英文。
-4. **言简意赅**：每次回复 200 字以内，重点突出量化指标。
-5. **引导深挖**：每次回复末尾附上一个追问建议（如"您是否想深入了解 INT8 量化的精度优化方案？"）。
-6. **保护隐私**：不透露私人联系方式（邮箱已在页面展示），不讨论薪资谈判。`;
+4. **言简意赅**：每次回复 200 字以内，只引用公开资料明确提供的事实。
+5. **引导深挖**：每次回复末尾可以建议继续了解资料中已经列出的项目、技能或教育经历。
+6. **保护隐私**：不透露私人联系方式（邮箱已在页面展示），不讨论薪资谈判。
+7. **事实边界**：资料未提供的成果必须明确说明无法确认，禁止推断论文发表状态。
+8. **禁止编造**：不得编造项目、指标、设备或奖项，不得把未来规划描述为已经完成的成果。`;
 }
 
 // ---------------------------------------------------------------------------
-// Static fallback Q&A — used when rate limited or API unavailable
+// Static fallback Q&A — generated from the verified public data
 // ---------------------------------------------------------------------------
 
-const STATIC_QA: Record<string, string> = {
-  fish_reid: `🐟 鱼类 Re-ID 项目亮点：
-• 检测骨干: YOLOv11n + 结构化通道剪枝（L1范数），参数量压缩 60%
-• 加速方案: TensorRT 8 + INT8 量化 → 23 FPS（较基线 3.7×↑）
-• 跟踪器: BoT-SORT，针对鱼类外观相似场景调优 ReID 权重
-• 最终指标: mAP@50=87.6%（+5.2%），ID Switch 率仅 3.1%
-• 部署平台: NVIDIA Jetson Nano 4GB
-📌 论文已录用至 IEEE Internet of Things Journal。`,
+type StaticLocale = "zh" | "en";
 
-  vio_slam: `🤖 水下 VIO-SLAM 项目亮点：
-• 框架: ORB-SLAM3 + IMU 预积分（紧耦合）
-• 前端增强: 暗通道先验去雾，提升水下散射光照下特征提取鲁棒性
-• 噪声标定: Allan 方差分析，重新标定水下振动 IMU 噪声参数
-• 后端优化: g2o 关键帧位姿图优化
-• 最终精度: ATE RMSE = 0.043m（目标 ≤0.05m）
-• 技术生态: ROS2 Humble，封装为可复用节点`,
-
-  skills: `💡 核心技能栈：
-• 算法方向: 目标检测/Re-ID(YOLOv11/BoT-SORT)、VIO/SLAM(ORB-SLAM3)
-• 深度学习: PyTorch、模型压缩(剪枝/量化)、TensorRT 部署
-• 边缘端: NVIDIA Jetson Nano、CUDA Streams、INT8/FP16推理
-• 机器人: ROS2、IMU预积分、g2o位姿优化
-• 全栈Web: Next.js 14 App Router、TypeScript、Tailwind CSS、Redis`,
+const SAFE_FALLBACK: Record<StaticLocale, string> = {
+  zh: "目前公开资料中没有足够证据支持这项说法，我不会把它作为个人成果展示。你可以继续了解网站中已经列出的教育经历、项目经历和技能。",
+  en: "The current public profile does not contain enough evidence to support that claim, so I will not present it as a personal achievement. You can ask about the education, projects, and skills already listed on the website.",
 };
+
+function getStaticLocale(message: string): StaticLocale {
+  return /[\u3400-\u9fff]/.test(message) ? "zh" : "en";
+}
+
+function buildProjectsReply(locale: StaticLocale): string {
+  const projects = resumeData.projects
+    .map((project) => {
+      return `• ${project.title[locale]} (${project.startDate}–${project.endDate})\n  ${project.result[locale]}`;
+    })
+    .join("\n\n");
+
+  return locale === "zh"
+    ? `${resumeData.personalInfo.name.zh}当前公开的项目经历：\n${projects}`
+    : `${resumeData.personalInfo.name.en}'s currently listed project experience:\n${projects}`;
+}
+
+function buildSkillsReply(locale: StaticLocale): string {
+  const skills = Array.from(
+    new Set(resumeData.projects.flatMap((project) => project.coreSkill))
+  );
+  const skillList = skills.map((skill) => `• ${skill}`).join("\n");
+
+  return locale === "zh"
+    ? `当前公开项目中列出的核心技能：\n${skillList}`
+    : `Core skills listed in the current public projects:\n${skillList}`;
+}
+
+function buildEducationReply(locale: StaticLocale): string {
+  const education = resumeData.education
+    .map((entry) => {
+      return `• ${entry.institution[locale]} — ${entry.degree[locale]} · ${entry.major[locale]} (${entry.startDate}–${entry.endDate})`;
+    })
+    .join("\n");
+
+  return locale === "zh"
+    ? `${resumeData.personalInfo.name.zh}当前公开的教育经历：\n${education}`
+    : `${resumeData.personalInfo.name.en}'s currently listed education:\n${education}`;
+}
+
+function buildStaticReply(message: string): string {
+  const locale = getStaticLocale(message);
+  const normalized = message.trim().toLowerCase();
+
+  if (
+    normalized.includes("项目经历") ||
+    normalized.includes("project experience")
+  ) {
+    return buildProjectsReply(locale);
+  }
+
+  if (
+    normalized.includes("核心技能") ||
+    normalized.includes("core skills")
+  ) {
+    return buildSkillsReply(locale);
+  }
+
+  if (
+    normalized.includes("教育经历") ||
+    normalized.includes("education")
+  ) {
+    return buildEducationReply(locale);
+  }
+
+  return SAFE_FALLBACK[locale];
+}
 
 // ---------------------------------------------------------------------------
 // POST /api/chat
@@ -173,17 +224,9 @@ export async function POST(req: NextRequest) {
   // Check for DeepSeek API key
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) {
-    // Dev fallback: echo a helpful static message
+    // Dev fallback: answer only from the verified public data
     const lastMsg = messages[messages.length - 1]?.content?.toLowerCase() ?? "";
-    let staticReply = "您好！我是杨冲的 AI 分身。请问您想了解哪个项目？\n\n快捷问题：\n• 鱼类Re-ID项目\n• VIO-SLAM项目\n• 核心技能栈";
-
-    if (lastMsg.includes("鱼") || lastMsg.includes("reid") || lastMsg.includes("fish")) {
-      staticReply = STATIC_QA.fish_reid;
-    } else if (lastMsg.includes("slam") || lastMsg.includes("vio") || lastMsg.includes("水下")) {
-      staticReply = STATIC_QA.vio_slam;
-    } else if (lastMsg.includes("技能") || lastMsg.includes("skill") || lastMsg.includes("技术")) {
-      staticReply = STATIC_QA.skills;
-    }
+    const staticReply = buildStaticReply(lastMsg);
 
     return NextResponse.json(
       { role: "assistant", content: staticReply },
