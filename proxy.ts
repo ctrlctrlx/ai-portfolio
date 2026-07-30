@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-
-export const locales = ["zh", "en"] as const;
-export type Locale = (typeof locales)[number];
-export const defaultLocale: Locale = "zh";
+import { isValidLocale } from "@/src/lib/i18n";
+import type { Locale } from "@/src/lib/i18n";
 
 function getLocale(request: NextRequest): Locale {
   const acceptLang = request.headers.get("accept-language") ?? "";
@@ -10,7 +8,7 @@ function getLocale(request: NextRequest): Locale {
   return "en";
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip static files, API routes, Next.js internals
@@ -24,16 +22,22 @@ export function middleware(request: NextRequest) {
   }
 
   // Check if a valid locale is already in the path
-  const pathnameHasLocale = locales.some(
-    (loc) => pathname.startsWith(`/${loc}/`) || pathname === `/${loc}`
-  );
+  const localeSegment = pathname.split("/")[1];
 
-  if (pathnameHasLocale) return NextResponse.next();
+  if (!isValidLocale(localeSegment)) {
+    const locale = getLocale(request);
+    const newPath = `/${locale}${pathname === "/" ? "" : pathname}`;
+    return NextResponse.redirect(new URL(newPath, request.url));
+  }
 
-  // Redirect to locale-prefixed path
-  const locale = getLocale(request);
-  const newPath = `/${locale}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.redirect(new URL(newPath, request.url));
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-portfolio-locale", localeSegment);
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { getOppositeLocale, localeLabels } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
@@ -26,11 +26,8 @@ const navLinks = {
 };
 
 export default function Navbar({ lang }: NavbarProps) {
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   const opposite = getOppositeLocale(lang);
 
@@ -72,16 +69,15 @@ export default function Navbar({ lang }: NavbarProps) {
           </Link>
 
           {/* Theme toggle */}
-          {mounted && (
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-1.5 rounded-md transition-colors hover:bg-[var(--card)]"
-              style={{ color: "var(--muted)" }}
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            </button>
-          )}
+          <button
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="p-1.5 rounded-md transition-colors hover:bg-[var(--card)]"
+            style={{ color: "var(--muted)" }}
+            aria-label={lang === "zh" ? "切换深色或浅色主题" : "Toggle dark or light theme"}
+          >
+            <Sun size={16} className="hidden dark:block" />
+            <Moon size={16} className="block dark:hidden" />
+          </button>
 
           {/* Mobile menu button */}
           <button
