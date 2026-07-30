@@ -45,6 +45,7 @@ export interface Publication {
 
 export interface Project {
   id: string;
+  slug: string;
   title: BilingualText;
   subtitle: BilingualText;
   featured: boolean;
@@ -144,6 +145,7 @@ export const resumeData = {
   projects: [
     {
       id: "audio-edge",
+      slug: "audio-edge",
       title: {
         zh: "轻量级环境音分类模型训练与边缘端部署",
         en: "Lightweight Environmental Sound Classification & Edge Deployment",
@@ -186,6 +188,7 @@ export const resumeData = {
     },
     {
       id: "smart-attendance",
+      slug: "smart-attendance",
       title: {
         zh: "智能教室考勤系统",
         en: "Intelligent Classroom Attendance System",
@@ -283,4 +286,8 @@ export function getSortedProjects(): Project[] {
     if (!a.featured && b.featured) return 1;
     return 0;
   });
+}
+
+export function getProjectBySlug(slug: string): Project | null {
+  return resumeData.projects.find((project) => project.slug === slug) ?? null;
 }

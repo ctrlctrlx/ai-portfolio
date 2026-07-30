@@ -31,7 +31,11 @@ export default async function HomePage({
           <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2" style={{ borderColor: "var(--card-border)" }}>
             <Image
               src={personalInfo.avatar}
-              alt={personalInfo.name[locale]}
+              alt={
+                locale === "zh"
+                  ? `${personalInfo.name.zh}的个人头像`
+                  : `Portrait of ${personalInfo.name.en}`
+              }
               width={128}
               height={128}
               className="w-full h-full object-cover"
@@ -213,7 +217,7 @@ export default async function HomePage({
       )}
 
       {/* ── Featured Projects ─────────────────────────────────── */}
-      <section>
+      {featuredProjects.length > 0 && <section>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold" style={{ color: "var(--foreground)" }}>
             {locale === "zh" ? "精选项目" : "Featured Projects"}
@@ -290,6 +294,8 @@ export default async function HomePage({
                 {proj.isInteractive && proj.liveDemoUrl && (
                   <a
                     href={proj.liveDemoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-xs flex items-center gap-1 hover:underline"
                     style={{ color: "var(--accent)" }}
                   >
@@ -298,7 +304,7 @@ export default async function HomePage({
                   </a>
                 )}
                 <Link
-                  href={`/${locale}/projects`}
+                  href={`/${locale}/projects/${proj.slug}`}
                   className="ml-auto text-xs flex items-center gap-1 hover:underline"
                   style={{ color: "var(--muted)" }}
                 >
@@ -309,7 +315,7 @@ export default async function HomePage({
             </div>
           ))}
         </div>
-      </section>
+      </section>}
 
       {/* ── Awards ────────────────────────────────────────────── */}
       <Awards locale={locale} />
