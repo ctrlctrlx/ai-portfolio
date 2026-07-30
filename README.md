@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Yang Chong — Evidence-based Portfolio
 
-## Getting Started
+杨冲的中英双语求职作品集，面向计算机视觉算法与边缘部署岗位。页面、元数据与 AI 助理统一使用 `src/data/` 中经核验的公开资料，重点呈现已有教育经历、项目、技能和工程实践。
 
-First, run the development server:
+## 技术栈
+
+- Next.js 16 App Router、React 19、TypeScript
+- Tailwind CSS 4
+- MDX、KaTeX
+- `next-themes`
+- 可选的 Vercel KV 访客计数和 DeepSeek API
+
+## 本地开发
+
+需要 Node.js 22.15.0 或更高版本，以及 npm 10.9.2。
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+开发服务器默认位于 `http://localhost:3000`。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 验证
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run verify:content
+npm run lint
+npm run typecheck
+npm run build
+npm run verify
+```
 
-## Learn More
+`verify:content` 使用 Node.js 内置模块检查公开姓名、禁用内容、草稿、简历入口和本地静态资产。`verify` 按顺序运行公开内容、lint、TypeScript 和 production build 检查。
 
-To learn more about Next.js, take a look at the following resources:
+## 当前路由
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/`：根据请求语言进入本地化首页
+- `/zh`、`/en`：中英文首页
+- `/[lang]/projects`：项目列表
+- `/[lang]/projects/[slug]`：项目详情
+- `/[lang]/blog`：公开博客列表
+- `/[lang]/blog/[slug]`：公开博客文章
+- `/api/chat`：AI 助理接口；无密钥时仅返回经核验资料生成的静态答案
+- `/api/visitor`：可选访客计数接口；未配置时明确返回不可用
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 环境变量
 
-## Deploy on Vercel
+仅在需要对应能力时配置：
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `DEEPSEEK_API_KEY`
+- `KV_REST_API_URL`
+- `KV_REST_API_TOKEN`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+不要提交 `.env` 文件或输出变量值。
+
+## 公开事实与隐私原则
+
+- 个人事实只允许来自 `src/data/` 中已经核验的公开资料。
+- 不得猜测或补写论文、专利、奖项、项目角色、设备、指标、链接或状态。
+- 不得公开电话号码、私人邮箱、生日、学号、住址、证件、密钥或原始私有研究数据。
+- 草稿文章不会进入公开列表或公开 slug 集合。
+- 证据不足时应明确说明信息不足，不得生成看似合理的个人成果。
+
+提交前必须运行完整验证。推送和部署必须由维护者人工审查后执行；仓库不提供自动暂存、改分支、推送或部署脚本。
