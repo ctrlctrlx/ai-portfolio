@@ -8,6 +8,63 @@ import { resumeData } from "@/src/data/resumeData";
 
 const RATE_LIMIT = 5;       // requests
 const WINDOW_MS = 60_000;   // 1 minute
+const MAX_MESSAGES = 12;
+const MAX_MESSAGE_CHARACTERS = 2_000;
+const MAX_TOTAL_CHARACTERS = 8_000;
+
+type ChatRole = "user" | "assistant";
+
+interface ChatMessage {
+  role: ChatRole;
+  content: string;
+}
+
+function parseMessages(body: unknown): ChatMessage[] | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return null;
+  }
+
+  const messages = (body as Record<string, unknown>).messages;
+  if (
+    !Array.isArray(messages) ||
+    messages.length === 0 ||
+    messages.length > MAX_MESSAGES
+  ) {
+    return null;
+  }
+
+  let totalCharacters = 0;
+  const parsed: ChatMessage[] = [];
+
+  for (const message of messages) {
+    if (
+      typeof message !== "object" ||
+      message === null ||
+      Array.isArray(message)
+    ) {
+      return null;
+    }
+
+    const { role, content } = message as Record<string, unknown>;
+    if (role !== "user" && role !== "assistant") return null;
+    if (typeof content !== "string") return null;
+
+    const trimmedContent = content.trim();
+    if (
+      trimmedContent.length === 0 ||
+      content.length > MAX_MESSAGE_CHARACTERS
+    ) {
+      return null;
+    }
+
+    totalCharacters += content.length;
+    if (totalCharacters > MAX_TOTAL_CHARACTERS) return null;
+
+    parsed.push({ role, content: trimmedContent });
+  }
+
+  return parsed;
+}
 
 async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining: number }> {
   // Skip rate limiting when KV is not configured (local dev)
@@ -103,7 +160,7 @@ ${pubsText}
 3. **中英双语**：用户用中文则回中文，用英文则回英文。
 4. **言简意赅**：每次回复 200 字以内，只引用公开资料明确提供的事实。
 5. **引导深挖**：每次回复末尾可以建议继续了解资料中已经列出的项目、技能或教育经历。
-6. **保护隐私**：不透露私人联系方式（邮箱已在页面展示），不讨论薪资谈判。
+6. **保护隐私**：不透露私人联系方式，不讨论薪资谈判。
 7. **事实边界**：资料未提供的成果必须明确说明无法确认，禁止推断论文发表状态。
 8. **禁止编造**：不得编造项目、指标、设备或奖项，不得把未来规划描述为已经完成的成果。`;
 }
@@ -115,8 +172,8 @@ ${pubsText}
 type StaticLocale = "zh" | "en";
 
 const SAFE_FALLBACK: Record<StaticLocale, string> = {
-  zh: "目前公开资料中没有足够证据支持这项说法，我不会把它作为个人成果展示。你可以继续了解网站中已经列出的教育经历、项目经历和技能。",
-  en: "The current public profile does not contain enough evidence to support that claim, so I will not present it as a personal achievement. You can ask about the education, projects, and skills already listed on the website.",
+  zh: "当前公开资料中没有足够信息支持这一结论。",
+  en: "The currently available public information is insufficient to support that conclusion.",
 };
 
 function getStaticLocale(message: string): StaticLocale {
@@ -210,13 +267,12 @@ export async function POST(req: NextRequest) {
   }
 
   // Parse request body
-  let messages: { role: string; content: string }[];
+  let messages: ChatMessage[];
   try {
-    const body = await req.json();
-    messages = body.messages;
-    if (!Array.isArray(messages) || messages.length === 0) {
-      throw new Error("invalid messages");
-    }
+    const body: unknown = await req.json();
+    const parsedMessages = parseMessages(body);
+    if (!parsedMessages) throw new Error("invalid messages");
+    messages = parsedMessages;
   } catch {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }

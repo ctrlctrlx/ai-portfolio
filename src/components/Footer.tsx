@@ -4,13 +4,24 @@ import { useEffect, useState } from "react";
 import type { Locale } from "@/src/lib/i18n";
 import { publicProfile } from "@/src/data/publicProfile";
 
+type VisitorResponse =
+  | { available: true; count: number }
+  | { available: false };
+
 export default function Footer({ lang }: { lang: Locale }) {
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/visitor", { method: "POST" })
-      .then((r) => r.json())
-      .then((d: { count: number }) => setCount(d.count))
+      .then((response) => {
+        if (!response.ok) throw new Error("visitor service unavailable");
+        return response.json() as Promise<VisitorResponse>;
+      })
+      .then((data) => {
+        if (data.available && Number.isSafeInteger(data.count) && data.count >= 0) {
+          setCount(data.count);
+        }
+      })
       .catch(() => {});
   }, []);
 
