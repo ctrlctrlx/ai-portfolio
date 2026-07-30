@@ -1,7 +1,28 @@
 * text=auto
 
-*.{js,jsx,mjs,cjs,ts,tsx,css,scss,json,md,mdx,yml,yaml,html,svg,sh} text eol=lf
-*.{ps1,cmd,bat} text eol=crlf
+.gitattributes text eol=lf
+.gitignore text eol=lf
+
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.mdx text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+*.sh text eol=lf
+
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
 
 *.ico binary
 *.jpg binary
