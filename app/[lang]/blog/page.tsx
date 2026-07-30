@@ -2,9 +2,38 @@ import { getAllPostMetas } from "@/src/lib/posts";
 import type { Locale } from "@/src/lib/i18n";
 import Link from "next/link";
 import { CalendarDays, Tag } from "lucide-react";
+import type { Metadata } from "next";
+import { publicProfile } from "@/src/data/publicProfile";
 
 export function generateStaticParams() {
   return [{ lang: "zh" }, { lang: "en" }];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = lang as Locale;
+  const title =
+    locale === "zh"
+      ? `技术洞察 | ${publicProfile.name.zh}`
+      : `Tech Insights | ${publicProfile.name.en}`;
+  const description =
+    locale === "zh"
+      ? "公开的算法推导、工程实践与系统设计学习笔记。"
+      : "Public notes on algorithm derivations, engineering practice, and system design.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      locale: locale === "zh" ? "zh_CN" : "en_US",
+    },
+  };
 }
 
 export default async function BlogPage({

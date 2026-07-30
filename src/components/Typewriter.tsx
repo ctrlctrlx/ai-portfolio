@@ -33,8 +33,8 @@ export default function Typewriter({ text, startDelay = 200, speed = 40 }: Typew
   }, [text, startDelay, speed]);
 
   return (
-    <span>
-      {displayed}
+    <span aria-label={text}>
+      <span aria-hidden="true">{displayed}</span>
       {!done && <span className="typewriter-cursor" aria-hidden="true" />}
     </span>
   );

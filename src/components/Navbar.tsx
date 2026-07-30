@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { Moon, Sun, Menu, X } from "lucide-react";
@@ -28,11 +29,20 @@ const navLinks = {
 export default function Navbar({ lang }: NavbarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   const opposite = getOppositeLocale(lang);
+  const oppositePath = pathname.match(/^\/(zh|en)(?=\/|$)/)
+    ? pathname.replace(/^\/(zh|en)(?=\/|$)/, `/${opposite}`)
+    : `/${opposite}`;
+  const menuId = "primary-mobile-navigation";
 
   return (
-    <nav className="sticky top-0 z-50 border-b" style={{ background: "var(--background)", borderColor: "var(--card-border)" }}>
+    <nav
+      aria-label={lang === "zh" ? "主导航" : "Primary navigation"}
+      className="sticky top-0 z-50 border-b"
+      style={{ background: "var(--background)", borderColor: "var(--card-border)" }}
+    >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link
@@ -61,9 +71,14 @@ export default function Navbar({ lang }: NavbarProps) {
         <div className="flex items-center gap-2">
           {/* Language switcher */}
           <Link
-            href={`/${opposite}`}
+            href={oppositePath}
             className="text-xs px-2 py-1 rounded border transition-colors hover:bg-[var(--card)]"
             style={{ color: "var(--muted)", borderColor: "var(--card-border)" }}
+            aria-label={
+              lang === "zh"
+                ? "切换到英文并保留当前页面"
+                : "Switch to Chinese and keep the current page"
+            }
           >
             {localeLabels[opposite]}
           </Link>
@@ -74,6 +89,7 @@ export default function Navbar({ lang }: NavbarProps) {
             className="p-1.5 rounded-md transition-colors hover:bg-[var(--card)]"
             style={{ color: "var(--muted)" }}
             aria-label={lang === "zh" ? "切换深色或浅色主题" : "Toggle dark or light theme"}
+            title={lang === "zh" ? "切换主题" : "Toggle theme"}
           >
             <Sun size={16} className="hidden dark:block" />
             <Moon size={16} className="block dark:hidden" />
@@ -84,7 +100,10 @@ export default function Navbar({ lang }: NavbarProps) {
             className="sm:hidden p-1.5 rounded-md transition-colors hover:bg-[var(--card)]"
             style={{ color: "var(--muted)" }}
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
+            aria-label={lang === "zh" ? "切换导航菜单" : "Toggle navigation menu"}
+            aria-expanded={menuOpen}
+            aria-controls={menuId}
+            title={lang === "zh" ? "导航菜单" : "Navigation menu"}
           >
             {menuOpen ? <X size={16} /> : <Menu size={16} />}
           </button>
@@ -93,7 +112,11 @@ export default function Navbar({ lang }: NavbarProps) {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="sm:hidden border-t px-4 py-2 flex flex-col gap-1" style={{ borderColor: "var(--card-border)" }}>
+        <div
+          id={menuId}
+          className="sm:hidden border-t px-4 py-2 flex flex-col gap-1"
+          style={{ borderColor: "var(--card-border)" }}
+        >
           {navLinks[lang].map((link) => (
             <Link
               key={link.href}

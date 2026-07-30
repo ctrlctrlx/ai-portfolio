@@ -8,12 +8,47 @@ import { notFound } from "next/navigation";
 import type { Locale } from "@/src/lib/i18n";
 import Link from "next/link";
 import { CalendarDays, ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
+import { publicProfile } from "@/src/data/publicProfile";
 
 export function generateStaticParams() {
   const posts = getAllPostMetas();
   return ["zh", "en"].flatMap((lang) =>
     posts.map((post) => ({ lang, slug: post.slug }))
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string; slug: string }>;
+}): Promise<Metadata> {
+  const { lang, slug } = await params;
+  const locale = lang as Locale;
+  const post = getPostBySlug(slug);
+
+  if (!post) {
+    return {
+      title: locale === "zh" ? "文章未找到" : "Post not found",
+    };
+  }
+
+  const postTitle = locale === "zh" ? post.title : post.titleEn;
+  const title = `${postTitle} | ${publicProfile.name[locale]}`;
+  const description =
+    locale === "zh"
+      ? post.summary
+      : "A public technical note from this bilingual portfolio.";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      locale: locale === "zh" ? "zh_CN" : "en_US",
+    },
+  };
 }
 
 export default async function BlogPostPage({

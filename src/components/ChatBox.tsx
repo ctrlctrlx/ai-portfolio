@@ -124,9 +124,12 @@ export default function ChatBox({ lang }: { lang: Lang }) {
       {/* Floating toggle button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
         style={{ background: "var(--accent)" }}
         aria-label={lang === "zh" ? "打开 AI 助理" : "Open AI assistant"}
+        aria-expanded={open}
+        aria-controls="portfolio-ai-assistant"
+        title={lang === "zh" ? "AI 助理" : "AI assistant"}
       >
         {open ? (
           <ChevronDown size={20} color="white" />
@@ -138,10 +141,13 @@ export default function ChatBox({ lang }: { lang: Lang }) {
       {/* Chat window */}
       {open && (
         <div
-          className="fixed right-6 z-50 w-80 sm:w-96 rounded-2xl shadow-2xl border flex flex-col overflow-hidden"
+          id="portfolio-ai-assistant"
+          role="dialog"
+          aria-labelledby="portfolio-ai-assistant-title"
+          className="fixed left-4 right-4 sm:left-auto sm:right-6 z-50 w-auto sm:w-96 rounded-2xl shadow-2xl border flex flex-col overflow-hidden"
           style={{
             bottom: "5.5rem",
-            height: "440px",
+            height: "min(440px, calc(100dvh - 7rem))",
             background: "#0d1117",
             borderColor: "#30363d",
           }}
@@ -153,7 +159,10 @@ export default function ChatBox({ lang }: { lang: Lang }) {
           >
             <div className="flex items-center gap-2">
               <Bot size={16} color="#60a5fa" />
-              <span className="text-sm font-semibold text-white">
+              <span
+                id="portfolio-ai-assistant-title"
+                className="text-sm font-semibold text-white"
+              >
                 {lang === "zh" ? "AI 分身" : "AI Avatar"}
               </span>
               <span
@@ -167,20 +176,25 @@ export default function ChatBox({ lang }: { lang: Lang }) {
               onClick={() => setOpen(false)}
               className="transition-colors hover:text-white"
               style={{ color: "#6b7280" }}
-              aria-label="Close"
+              aria-label={lang === "zh" ? "关闭 AI 助理" : "Close AI assistant"}
+              title={lang === "zh" ? "关闭" : "Close"}
             >
               <X size={15} />
             </button>
           </div>
 
           {/* Message list */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+          <div
+            className="flex-1 overflow-y-auto px-3 py-3 space-y-3"
+            aria-live="polite"
+          >
             {messages.map((msg, i) => (
               <div
                 key={i}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
+                  role="status"
                   className="max-w-[88%] text-xs leading-relaxed px-3 py-2 rounded-2xl whitespace-pre-wrap break-words"
                   style={
                     msg.role === "user"
@@ -225,11 +239,15 @@ export default function ChatBox({ lang }: { lang: Lang }) {
 
           {/* Input row */}
           <div className="px-3 pb-3 shrink-0">
+            <label htmlFor="portfolio-ai-question" className="sr-only">
+              {lang === "zh" ? "向 AI 助理提问" : "Ask the AI assistant"}
+            </label>
             <div
               className="flex items-center gap-2 rounded-xl px-3 py-2 border"
               style={{ background: "#161b22", borderColor: "#30363d" }}
             >
               <input
+                id="portfolio-ai-question"
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -251,7 +269,8 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                 disabled={loading || !input.trim()}
                 className="shrink-0 transition-opacity disabled:opacity-30"
                 style={{ color: "#60a5fa" }}
-                aria-label="Send"
+                aria-label={lang === "zh" ? "发送问题" : "Send question"}
+                title={lang === "zh" ? "发送问题" : "Send question"}
               >
                 <Send size={14} />
               </button>

@@ -4,6 +4,7 @@ import { resumeData } from "@/src/data/resumeData";
 
 export default function Awards({ locale }: { locale: Locale }) {
   const { awards } = resumeData;
+  if (awards.length === 0) return null;
 
   return (
     <section>

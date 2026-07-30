@@ -40,9 +40,20 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 /* Typewriter cursor blink */
@@ -59,6 +70,17 @@ html {
   margin-left: 2px;
   vertical-align: text-bottom;
   animation: blink 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 /* KaTeX display block scrollable on mobile */
