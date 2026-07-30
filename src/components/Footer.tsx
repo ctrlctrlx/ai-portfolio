@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Locale } from "@/src/lib/i18n";
+import { publicProfile } from "@/src/data/publicProfile";
 
 export default function Footer({ lang }: { lang: Locale }) {
   const [count, setCount] = useState<number | null>(null);
@@ -24,7 +25,7 @@ export default function Footer({ lang }: { lang: Locale }) {
       >
         <p>
           © {new Date().getFullYear()}{" "}
-          {lang === "zh" ? "杨冲" : "Mingyuan Yang"} ·{" "}
+          {publicProfile.name[lang]} ·{" "}
           {lang === "zh" ? "基于 Next.js & DeepSeek 构建" : "Built with Next.js & DeepSeek"}
         </p>
 

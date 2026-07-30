@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { getOppositeLocale, localeLabels } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
+import { publicProfile } from "@/src/data/publicProfile";
 
 interface NavbarProps {
   lang: Locale;
@@ -42,7 +43,7 @@ export default function Navbar({ lang }: NavbarProps) {
           className="font-bold text-base tracking-tight hover:opacity-80 transition-opacity"
           style={{ color: "var(--foreground)" }}
         >
-          {lang === "zh" ? "杨冲" : "Mingyuan Yang"}
+          {publicProfile.name[lang]}
         </Link>
 
         {/* Desktop nav links */}

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageCircle, X, Send, Bot, ChevronDown } from "lucide-react";
+import { publicProfile } from "@/src/data/publicProfile";
 
 interface Message {
   role: "user" | "assistant";
@@ -39,8 +40,8 @@ const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
 };
 
 const GREETING: Record<Lang, string> = {
-  zh: "你好！我是杨冲的 AI 分身。请问您想了解哪个项目或技能？",
-  en: "Hi! I'm Mingyuan Yang's AI avatar. What project or skill would you like to know about?",
+  zh: `你好！我是${publicProfile.name.zh}的 AI 分身。请问您想了解哪个项目或技能？`,
+  en: `Hi! I'm ${publicProfile.name.en}'s AI avatar. What project or skill would you like to know about?`,
 };
 
 const BUSY_MSG: Record<Lang, string> = {

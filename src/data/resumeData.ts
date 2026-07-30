@@ -1,3 +1,5 @@
+import { publicProfile } from "@/src/data/publicProfile";
+
 // ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface BilingualText {
@@ -70,7 +72,7 @@ export interface Award {
 
 export const resumeData = {
   personalInfo: {
-    name: { zh: "杨冲", en: "Yang Chong" },
+    name: publicProfile.name,
     tagline: {
       zh: "AI 算法工程师 · 边缘计算方向",
       en: "AI Algorithm Engineer · Edge Computing",
