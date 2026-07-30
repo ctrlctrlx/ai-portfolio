@@ -83,12 +83,9 @@ export const resumeData = {
     },
     location: { zh: "海南，中国", en: "Hainan, China" },
     avatar: "/head_photo.jpg",
-    email: "18716985140@163.com",
-    phone: "18716985140",
-    resumePdfUrl: "/resume.pdf",
+    resumePdfUrl: null as string | null,
     socialLinks: [
       { platform: "GitHub", url: "https://github.com/ctrlctrlx", icon: "Github" },
-      { platform: "Email", url: "mailto:18716985140@163.com", icon: "Mail" },
     ] as SocialLink[],
   },
 

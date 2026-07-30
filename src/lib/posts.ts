@@ -23,18 +23,21 @@ export function getAllPostMetas(): PostMeta[] {
   const files = fs.readdirSync(POSTS_DIR).filter((f) => f.endsWith(".mdx"));
 
   return files
-    .map((file) => {
+    .flatMap((file): PostMeta[] => {
       const slug = file.replace(/\.mdx$/, "");
       const raw = fs.readFileSync(path.join(POSTS_DIR, file), "utf-8");
       const { data } = matter(raw);
-      return {
+
+      if (data.draft === true) return [];
+
+      return [{
         slug,
         title: (data.title as string) ?? slug,
         titleEn: (data.titleEn as string) ?? slug,
         date: (data.date as string) ?? "",
         summary: (data.summary as string) ?? "",
         tags: (data.tags as string[]) ?? [],
-      };
+      }];
     })
     .sort((a, b) => b.date.localeCompare(a.date));
 }
@@ -45,6 +48,7 @@ export function getPostBySlug(slug: string): PostData | null {
 
   const raw = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(raw);
+  if (data.draft === true) return null;
 
   return {
     slug,

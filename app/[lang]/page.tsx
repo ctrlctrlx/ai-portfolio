@@ -63,15 +63,17 @@ export default async function HomePage({
 
           {/* CTA buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
-            <a
-              href={personalInfo.resumePdfUrl}
-              download
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-              style={{ background: "var(--accent)" }}
-            >
-              <Download size={14} />
-              {locale === "zh" ? "下载简历" : "Download CV"}
-            </a>
+            {personalInfo.resumePdfUrl && (
+              <a
+                href={personalInfo.resumePdfUrl}
+                download
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                style={{ background: "var(--accent)" }}
+              >
+                <Download size={14} />
+                {locale === "zh" ? "下载简历" : "Download CV"}
+              </a>
+            )}
 
             {personalInfo.socialLinks.map((link) => {
               const Icon = iconMap[link.icon ?? ""] ?? Mail;
@@ -136,86 +138,79 @@ export default async function HomePage({
       </section>
 
       {/* ── Publications ─────────────────────────────────────── */}
-      <section>
-        <h2 className="text-xl font-bold mb-6" style={{ color: "var(--foreground)" }}>
-          {locale === "zh" ? "论文与专利" : "Publications & Patents"}
-        </h2>
-        <div className="space-y-4">
-          {publications.map((pub) => {
-            const authors = formatAuthors(pub);
-            return (
-              <div
-                key={pub.id}
-                className="p-5 rounded-xl border"
-                style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
-              >
-                {/* Title */}
-                <h3 className="font-semibold text-sm leading-snug" style={{ color: "var(--foreground)" }}>
-                  {pub.title}
-                </h3>
-
-                {/* Authors */}
-                <p className="mt-1.5 text-xs" style={{ color: "var(--muted)" }}>
-                  {authors.map((a, i) => (
-                    <span key={i}>
-                      {i > 0 && ", "}
-                      <span style={a.isHighlighted ? { color: "var(--accent)", fontWeight: 600 } : {}}>
-                        {a.name}
+      {publications.length > 0 && (
+        <section>
+          <h2 className="text-xl font-bold mb-6" style={{ color: "var(--foreground)" }}>
+            {locale === "zh" ? "论文与专利" : "Publications & Patents"}
+          </h2>
+          <div className="space-y-4">
+            {publications.map((pub) => {
+              const authors = formatAuthors(pub);
+              return (
+                <div
+                  key={pub.id}
+                  className="p-5 rounded-xl border"
+                  style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
+                >
+                  <h3 className="font-semibold text-sm leading-snug" style={{ color: "var(--foreground)" }}>
+                    {pub.title}
+                  </h3>
+                  <p className="mt-1.5 text-xs" style={{ color: "var(--muted)" }}>
+                    {authors.map((a, i) => (
+                      <span key={i}>
+                        {i > 0 && ", "}
+                        <span style={a.isHighlighted ? { color: "var(--accent)", fontWeight: 600 } : {}}>
+                          {a.name}
+                        </span>
                       </span>
-                    </span>
-                  ))}
-                </p>
-
-                {/* Venue & year */}
-                <p className="mt-1 text-xs italic" style={{ color: "var(--muted)" }}>
-                  {pub.venue[locale]}, {pub.year}
-                  {pub.patentNo && <span className="ml-2 not-italic">({pub.patentNo})</span>}
-                </p>
-
-                {/* Abstract */}
-                <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
-                  {pub.abstract[locale]}
-                </p>
-
-                {/* Tags + links */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {pub.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs px-2 py-0.5 rounded-full border"
-                      style={{ background: "var(--tag-bg)", color: "var(--tag-text)", borderColor: "var(--tag-border)" }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {pub.doi && (
-                    <a
-                      href={`https://doi.org/${pub.doi}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-auto text-xs flex items-center gap-1 hover:underline"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      DOI <ExternalLink size={10} />
-                    </a>
-                  )}
-                  {pub.arxivUrl && (
-                    <a
-                      href={pub.arxivUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs flex items-center gap-1 hover:underline"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      arXiv <ExternalLink size={10} />
-                    </a>
-                  )}
+                    ))}
+                  </p>
+                  <p className="mt-1 text-xs italic" style={{ color: "var(--muted)" }}>
+                    {pub.venue[locale]}, {pub.year}
+                    {pub.patentNo && <span className="ml-2 not-italic">({pub.patentNo})</span>}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
+                    {pub.abstract[locale]}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    {pub.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-xs px-2 py-0.5 rounded-full border"
+                        style={{ background: "var(--tag-bg)", color: "var(--tag-text)", borderColor: "var(--tag-border)" }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {pub.doi && (
+                      <a
+                        href={`https://doi.org/${pub.doi}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-auto text-xs flex items-center gap-1 hover:underline"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        DOI <ExternalLink size={10} />
+                      </a>
+                    )}
+                    {pub.arxivUrl && (
+                      <a
+                        href={pub.arxivUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs flex items-center gap-1 hover:underline"
+                        style={{ color: "var(--accent)" }}
+                      >
+                        arXiv <ExternalLink size={10} />
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ── Featured Projects ─────────────────────────────────── */}
       <section>
