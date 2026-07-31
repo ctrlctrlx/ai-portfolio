@@ -63,6 +63,7 @@ const forbiddenRules = [
     rule: "forbidden-phone-number-email",
     pattern: /\b1[3-9]\d{9}@[a-z0-9.-]+\.[a-z]{2,}\b/i,
   },
+  { rule: "forbidden-phone-number", pattern: /\b1[3-9]\d{9}\b/ },
   { rule: "forbidden-fixed-visitor-count", pattern: /\b1024\b/ },
   {
     rule: "unsupported-ai-claim",
@@ -99,50 +100,42 @@ for (const { filePath, content } of implementationFiles) {
   }
 }
 
-const identityPath = join(
-  repositoryRoot,
-  "src",
-  "data",
-  "profile",
-  "identity.ts"
-);
+const identityPath = join(repositoryRoot, "src", "data", "profile", "identity.ts");
 const homePagePath = join(repositoryRoot, "app", "[lang]", "page.tsx");
 const identitySource = readFileSync(identityPath, "utf8");
 const homePageSource = readFileSync(homePagePath, "utf8");
-const resumeUrlMatch = identitySource.match(
-  /resumePdfUrl:\s*(null|["']([^"']+)["'])/
+const approvedEmail = "yangc202706@163.com";
+const publicEmailMatches = implementationFiles.flatMap(({ filePath, content }) =>
+  [...content.matchAll(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi)].map(
+    (match) => ({ filePath, value: match[0] })
+  )
 );
-
-if (!resumeUrlMatch) {
-  report(identityPath, "unverifiable-resume-target");
-} else if (resumeUrlMatch[1] !== "null") {
-  const resumeUrl = resumeUrlMatch[2];
-  const targetPath =
-    resumeUrl && resumeUrl.startsWith("/")
-      ? join(repositoryRoot, "public", resumeUrl.slice(1).replaceAll("/", sep))
-      : null;
-
-  if (!targetPath || !existsSync(targetPath) || !statSync(targetPath).isFile()) {
-    report(identityPath, "missing-resume-target");
+for (const match of publicEmailMatches) {
+  if (match.value !== approvedEmail || match.filePath !== identityPath) {
+    report(match.filePath, "unapproved-or-hardcoded-public-email");
   }
 }
-
-const guardedResumePatterns = [
-  [
-    "personalInfo.resumePdfUrl &&",
-    "href={personalInfo.resumePdfUrl}",
-  ],
-  [
-    "publicIdentity.resumePdfUrl &&",
-    "href={publicIdentity.resumePdfUrl}",
-  ],
-];
 if (
-  !guardedResumePatterns.some(([guard, href]) =>
-    homePageSource.includes(guard) && homePageSource.includes(href)
-  )
+  publicEmailMatches.filter(
+    (match) => match.filePath === identityPath && match.value === approvedEmail
+  ).length !== 1
 ) {
-  report(homePagePath, "unguarded-resume-button");
+  report(identityPath, "approved-public-email-not-unique");
+}
+
+if (
+  /download\s*=|Download Resume|下载简历|\.pdf\b/i.test(homePageSource)
+) {
+  report(homePagePath, "stale-pdf-download-entry");
+}
+
+const publicAssetNames = walk(join(repositoryRoot, "public")).map((filePath) =>
+  toRepositoryPath(filePath)
+);
+for (const assetName of publicAssetNames) {
+  if (/patent|certificate|证书|专利/i.test(assetName)) {
+    report(join(repositoryRoot, assetName), "sensitive-certificate-asset-present");
+  }
 }
 
 const postsLibraryPath = join(repositoryRoot, "src", "lib", "posts.ts");

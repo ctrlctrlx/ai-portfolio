@@ -5,6 +5,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const profileDirectory = join(repositoryRoot, "src", "data", "profile");
 const errors = [];
+const approvedEmail = "yangc202706@163.com";
+const approvedWebsite = "https://ctrlctrlx.top";
 
 function fail(rule, detail = "") {
   errors.push(detail ? `${rule}: ${detail}` : rule);
@@ -45,8 +47,9 @@ const [
   { awards },
   { education },
   { identity },
+  { patents },
   { projects },
-  { patents, publications },
+  { publications },
   { research },
   { skills },
   { isPublicVerified },
@@ -54,6 +57,7 @@ const [
   loadProfileModule("awards.ts"),
   loadProfileModule("education.ts"),
   loadProfileModule("identity.ts"),
+  loadProfileModule("patents.ts"),
   loadProfileModule("projects.ts"),
   loadProfileModule("publications.ts"),
   loadProfileModule("research.ts"),
@@ -64,6 +68,27 @@ const [
 if (identity.name.zh !== "杨冲") fail("incorrect-identity-name-zh");
 if (identity.name.en !== "Yang Chong") fail("incorrect-identity-name-en");
 validateEvidence(identity, "identity");
+
+const publicContacts = identity.contacts.filter(isPublicVerified);
+const emailContacts = publicContacts.filter((contact) => contact.kind === "email");
+const websiteContacts = publicContacts.filter((contact) => contact.kind === "website");
+const githubContacts = publicContacts.filter((contact) => contact.kind === "github");
+if (emailContacts.length !== 1 || emailContacts[0]?.value !== approvedEmail) {
+  fail("incorrect-public-email");
+}
+if (websiteContacts.length !== 1 || websiteContacts[0]?.value !== approvedWebsite) {
+  fail("incorrect-public-website");
+}
+if (
+  githubContacts.length !== 1 ||
+  githubContacts[0]?.value !== "https://github.com/ctrlctrlx"
+) {
+  fail("incorrect-public-github");
+}
+for (const contact of identity.contacts) {
+  validateEvidence(contact, `contact:${contact.id}`);
+  if (!isBilingual(contact.label)) fail("missing-bilingual-field", `contact:${contact.id}:label`);
+}
 
 const profileFiles = readdirSync(profileDirectory)
   .filter((fileName) => fileName.endsWith(".ts"))
@@ -131,16 +156,53 @@ for (const publication of publications) {
 }
 
 for (const patent of patents) {
-  if (!isBilingual(patent.title) || !isBilingual(patent.summary)) {
+  if (
+    !isBilingual(patent.title) ||
+    !isBilingual(patent.role) ||
+    !isBilingual(patent.stageLabel)
+  ) {
     fail("missing-bilingual-field", `patent:${patent.id}`);
   }
+}
+
+const publicPatents = patents.filter(isPublicVerified);
+if (publicPatents.length !== 1) fail("incorrect-public-patent-count");
+const [publicPatent] = publicPatents;
+if (publicPatent) {
+  if (publicPatent.type !== "utility-model") fail("incorrect-patent-type");
+  if (publicPatent.inventorOrder !== 2) fail("incorrect-inventor-order");
+  if (publicPatent.patentNumber !== "ZL 2022 2 0475134.9") {
+    fail("incorrect-patent-number");
+  }
+  if (publicPatent.publicationNumber !== "CN 216957023 U") {
+    fail("incorrect-patent-publication-number");
+  }
+  if (publicPatent.applicationDate !== "2022-03-04") {
+    fail("incorrect-patent-application-date");
+  }
+  if (publicPatent.grantDate !== "2022-07-12") {
+    fail("incorrect-patent-grant-date");
+  }
+}
+
+if (awards.filter(isPublicVerified).length !== 4) {
+  fail("incorrect-public-award-count");
+}
+if (publications.filter(isPublicVerified).length !== 0) {
+  fail("incorrect-public-publication-count");
+}
+const pendingPublicationCase = {
+  visibility: "public",
+  verificationStatus: "pending",
+};
+if (isPublicVerified(pendingPublicationCase)) {
+  fail("pending-publication-entered-public-collection");
 }
 
 const slugEntries = [
   ...projects.map((entry) => ["project", entry.id, entry.slug]),
   ...research.areas.map((entry) => ["research", entry.id, entry.slug]),
   ...publications.map((entry) => ["publication", entry.id, entry.slug]),
-  ...patents.map((entry) => ["patent", entry.id, entry.slug]),
 ];
 const seenSlugs = new Set();
 for (const [kind, id, slug] of slugEntries) {
@@ -180,7 +242,6 @@ const serializedProfile = JSON.stringify({
 const forbiddenPatterns = [
   ["legacy-name", /\bMingyuan(?:\s+Yang)?\b/i],
   ["phone-number", /\b1[3-9]\d{9}\b/],
-  ["email-address", /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i],
   ["fixed-visitor-count", /\b1024\b/],
   [
     "unsupported-professional-identity",
@@ -189,6 +250,11 @@ const forbiddenPatterns = [
 ];
 for (const [rule, pattern] of forbiddenPatterns) {
   if (pattern.test(serializedProfile)) fail(rule);
+}
+
+const serializedWithoutApprovedEmail = serializedProfile.replaceAll(approvedEmail, "");
+if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(serializedWithoutApprovedEmail)) {
+  fail("unapproved-email-address");
 }
 
 if (!existsSync(join(repositoryRoot, "public", identity.avatar.slice(1)))) {

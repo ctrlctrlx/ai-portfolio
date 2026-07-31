@@ -15,9 +15,10 @@
     "verify:content": "node scripts/verify-public-content.mjs",
     "verify:profile": "node --no-warnings --experimental-strip-types scripts/verify-profile-data.mjs",
     "verify:chat": "node --no-warnings --experimental-strip-types scripts/verify-chat-contract.mjs",
+    "verify:resume": "node --no-warnings --experimental-strip-types scripts/verify-public-resume.mjs",
     "verify:deploy": "node scripts/verify-deploy-readiness.mjs",
-    "verify": "npm run verify:content && npm run verify:profile && npm run verify:chat && npm run lint && npm run typecheck && npm run build",
-    "verify:all": "npm run verify:content && npm run verify:profile && npm run verify:chat && npm run lint && npm run typecheck && npm run build && npm run verify:deploy"
+    "verify": "npm run verify:content && npm run verify:profile && npm run verify:chat && npm run verify:resume && npm run lint && npm run typecheck && npm run build",
+    "verify:all": "npm run verify:content && npm run verify:profile && npm run verify:chat && npm run verify:resume && npm run lint && npm run typecheck && npm run build && npm run verify:deploy"
   },
   "dependencies": {
     "@vercel/kv": "^3.0.0",

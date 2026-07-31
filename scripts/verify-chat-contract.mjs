@@ -28,8 +28,9 @@ const [
   { awards },
   { education },
   { identity },
+  { patents },
   { projects },
-  { patents, publications },
+  { publications },
   { research },
   { skills },
   { isPublicVerified },
@@ -37,6 +38,7 @@ const [
   loadProfileModule("awards.ts"),
   loadProfileModule("education.ts"),
   loadProfileModule("identity.ts"),
+  loadProfileModule("patents.ts"),
   loadProfileModule("projects.ts"),
   loadProfileModule("publications.ts"),
   loadProfileModule("research.ts"),
@@ -48,7 +50,7 @@ const publicCorpus = {
   identity: isPublicVerified(identity)
     ? {
         ...identity,
-        socialLinks: identity.socialLinks.filter(isPublicVerified),
+        contacts: identity.contacts.filter(isPublicVerified),
       }
     : null,
   education: education.filter(isPublicVerified),
@@ -145,6 +147,12 @@ const quickPrompts = [
   "Tell me about your education",
   "What is your research focus?",
   "What publication information is currently available?",
+  "你有专利吗？",
+  "公开求职邮箱是什么？",
+  "在线简历在哪里？",
+  "What patent experience do you have?",
+  "What is the public contact email?",
+  "Where is the online resume?",
 ];
 for (const prompt of quickPrompts) {
   const reply = createCareerReply(publicCorpus, prompt);
@@ -176,23 +184,52 @@ expect(
   "empty-publications-answer-unsafe"
 );
 const patentsReply = createCareerReply(publicCorpus, "目前有哪些专利信息？");
-expect(
-  patents.length > 0 ||
-    patentsReply === "当前公开资料中暂无可确认的专利信息。",
-  "empty-patents-answer-unsafe"
+for (const expectedValue of [
+  "一种智能教室考勤系统",
+  "实用新型专利",
+  "第二发明人",
+  "ZL 2022 2 0475134.9",
+  "2022",
+  "本科阶段工程创新成果",
+]) {
+  expect(patentsReply.includes(expectedValue), "patent-answer-missing-fact", expectedValue);
+}
+const englishPatentsReply = createCareerReply(
+  publicCorpus,
+  "Tell me about the patent."
 );
+for (const expectedValue of [
+  "An Intelligent Classroom Attendance System",
+  "Utility Model Patent",
+  "Second Inventor",
+  "ZL 2022 2 0475134.9",
+  "2022",
+  "Undergraduate Engineering Innovation",
+]) {
+  expect(
+    englishPatentsReply.includes(expectedValue),
+    "english-patent-answer-missing-fact",
+    expectedValue
+  );
+}
 
 const contactReply = createCareerReply(publicCorpus, "联系方式是什么？");
 expect(!/\b1[3-9]\d{9}\b/.test(contactReply), "contact-reply-leaks-phone");
 expect(
-  !/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(contactReply),
-  "contact-reply-leaks-email"
+  contactReply === "公开求职邮箱为 yangc202706@163.com。",
+  "incorrect-public-contact-reply"
+);
+const englishContactReply = createCareerReply(publicCorpus, "What is the contact email?");
+expect(
+  englishContactReply === "The public contact email is yangc202706@163.com.",
+  "incorrect-english-public-contact-reply"
 );
 const resumeReply = createCareerReply(publicCorpus, "可以下载简历吗？");
 expect(
-  publicCorpus.identity?.resumePdfUrl ||
-    resumeReply === "当前未提供公开下载版本的简历。",
-  "missing-resume-answer-unsafe"
+  resumeReply.includes("/zh/resume") &&
+    resumeReply.includes("PDF 下载版仍待人工审核") &&
+    !resumeReply.includes("下载地址"),
+  "incorrect-resume-answer"
 );
 
 const injectionPrompts = [
@@ -246,9 +283,11 @@ const filteredCorpus = {
 const serializedReplies = [
   createCareerReply(filteredCorpus, "介绍一下项目经历"),
   createCareerReply(filteredCorpus, "有哪些奖项？"),
+  createCareerReply(filteredCorpus, "有哪些论文？"),
 ].join("\n");
 expect(!serializedReplies.includes("隐藏项目秘密"), "hidden-project-leaked");
 expect(!serializedReplies.includes("待确认秘密奖项"), "pending-award-leaked");
+expect(!/\b1[3-9]\d{9}\b/.test(serializedReplies), "filtered-replies-leak-phone");
 
 const routeSource = readFileSync(
   join(repositoryRoot, "app", "api", "chat", "route.ts"),
