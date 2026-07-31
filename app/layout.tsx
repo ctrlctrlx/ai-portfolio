@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/src/providers/ThemeProvider";
 import { defaultLocale, isValidLocale } from "@/src/lib/i18n";
+import { getSiteUrl } from "@/src/lib/siteUrl";
 
 async function getRequestLocale() {
   const localeHeader = (await headers()).get("x-portfolio-locale");
@@ -15,6 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
 
   return {
+    metadataBase: getSiteUrl(),
     title: locale === "zh" ? "页面未找到" : "Page not found",
   };
 }

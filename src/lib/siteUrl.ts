@@ -1,8 +1,9 @@
 const SITE_URL_VARIABLE = "NEXT_PUBLIC_SITE_URL";
+export const DEFAULT_SITE_URL = "https://ctrlctrlx.top";
 
-export function getSiteUrl(): URL | null {
+export function getSiteUrl(): URL {
   const configuredUrl = process.env[SITE_URL_VARIABLE]?.trim();
-  if (!configuredUrl) return null;
+  if (!configuredUrl) return new URL(DEFAULT_SITE_URL);
 
   let siteUrl: URL;
   try {
@@ -29,7 +30,7 @@ export function getSiteUrl(): URL | null {
   return siteUrl;
 }
 
-export function getAbsolutePageUrl(pathname: string): string | null {
+export function getAbsolutePageUrl(pathname: string): string {
   const siteUrl = getSiteUrl();
-  return siteUrl ? new URL(pathname, siteUrl).toString() : null;
+  return new URL(pathname, siteUrl).toString();
 }

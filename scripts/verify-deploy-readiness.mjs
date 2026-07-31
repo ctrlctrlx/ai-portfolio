@@ -89,6 +89,7 @@ const requiredScripts = [
   "verify:content",
   "verify:profile",
   "verify:chat",
+  "verify:resume",
   "verify",
   "verify:deploy",
   "verify:all",
@@ -138,8 +139,15 @@ for (const filePath of publicTextFiles) {
   if (/\b1[3-9]\d{9}\b/.test(content)) {
     fail("public-phone-number-present", repositoryPath(filePath));
   }
-  if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(content)) {
-    fail("public-email-address-present", repositoryPath(filePath));
+  const emailMatches =
+    content.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi) ?? [];
+  for (const email of emailMatches) {
+    if (
+      email !== "yangc202706@163.com" ||
+      repositoryPath(filePath) !== "src/data/profile/identity.ts"
+    ) {
+      fail("unapproved-public-email-address-present", repositoryPath(filePath));
+    }
   }
 }
 
@@ -184,11 +192,7 @@ if (!existsSync(buildIdPath)) {
 }
 
 const configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-if (!configuredSiteUrl) {
-  notices.push(
-    "NEXT_PUBLIC_SITE_URL is not configured; production canonical URLs and sitemap entries remain blocked pending a public HTTPS origin."
-  );
-} else {
+if (configuredSiteUrl) {
   try {
     const siteUrl = new URL(configuredSiteUrl);
     if (
@@ -205,6 +209,42 @@ if (!configuredSiteUrl) {
   } catch {
     fail("invalid-site-url");
   }
+}
+
+const siteUrlSource = readFileSync(
+  join(repositoryRoot, "src", "lib", "siteUrl.ts"),
+  "utf8"
+);
+if (
+  !/DEFAULT_SITE_URL\s*=\s*["']https:\/\/ctrlctrlx\.top["']/.test(siteUrlSource)
+) {
+  fail("confirmed-default-site-url-missing");
+}
+if (/if\s*\(!configuredUrl\)\s*return\s+null/.test(siteUrlSource)) {
+  fail("default-site-url-remains-disabled");
+}
+
+const envExampleSource = readFileSync(
+  join(repositoryRoot, ".env.example"),
+  "utf8"
+);
+if (
+  !/^NEXT_PUBLIC_SITE_URL=https:\/\/ctrlctrlx\.top$/m.test(envExampleSource)
+) {
+  fail("env-example-site-url-mismatch");
+}
+
+const sitemapSource = readFileSync(
+  join(repositoryRoot, "app", "sitemap.ts"),
+  "utf8"
+);
+if (
+  !sitemapSource.includes("publicProjects") ||
+  !sitemapSource.includes("publicResearchAreas") ||
+  !sitemapSource.includes("publicPatents") ||
+  !sitemapSource.includes('basePaths.push(`/${locale}/resume`)')
+) {
+  fail("sitemap-public-route-contract-missing");
 }
 
 for (const notice of notices) {

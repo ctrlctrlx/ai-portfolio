@@ -1,12 +1,16 @@
 import type { MetadataRoute } from "next";
-import { publicProjects, publicResearchAreas } from "@/src/data/profile";
+import {
+  publicIdentity,
+  publicPatents,
+  publicProjects,
+  publicResearchAreas,
+} from "@/src/data/profile";
 import { locales } from "@/src/lib/i18n";
 import { getAllPostMetas } from "@/src/lib/posts";
 import { getSiteUrl } from "@/src/lib/siteUrl";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const siteUrl = getSiteUrl();
-  if (!siteUrl) return [];
 
   const localizedPaths = locales.flatMap((locale) => {
     const basePaths = [
@@ -14,7 +18,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       `/${locale}/projects`,
       `/${locale}/blog`,
     ];
-    if (publicResearchAreas.length > 0) {
+    if (publicIdentity) {
+      basePaths.push(`/${locale}/resume`);
+    }
+    if (publicResearchAreas.length > 0 || publicPatents.length > 0) {
       basePaths.push(`/${locale}/research`);
     }
 
