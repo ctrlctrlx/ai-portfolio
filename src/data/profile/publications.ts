@@ -1,7 +1,8 @@
-import type { Publication } from "@/src/data/profile/types";
+import type { Patent, Publication } from "@/src/data/profile/types";
 
 // Keep this section empty until a complete record is explicitly verified.
 export const publications: Publication[] = [];
+export const patents: Patent[] = [];
 
 export function formatAuthors(
   publication: Publication

@@ -1,9 +1,9 @@
-import { getSortedProjects } from "@/src/data/profile/projects";
+import { getSortedPublicProjects, publicIdentity } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
 import { Github, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { publicProfile } from "@/src/data/publicProfile";
+import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 export function generateStaticParams() {
   return [{ lang: "zh" }, { lang: "en" }];
@@ -18,20 +18,24 @@ export async function generateMetadata({
   const locale = lang as Locale;
   const title =
     locale === "zh"
-      ? `项目经历 | ${publicProfile.name.zh}`
-      : `Projects | ${publicProfile.name.en}`;
+      ? `项目经历 | ${publicIdentity?.name.zh ?? "作品集"}`
+      : `Projects | ${publicIdentity?.name.en ?? "Portfolio"}`;
   const description =
     locale === "zh"
-      ? `查看${publicProfile.name.zh}公开项目的 STAR 叙述、技术栈与面试重点。`
-      : `Explore ${publicProfile.name.en}'s public projects, STAR narratives, technology stacks, and interview focus points.`;
+      ? `查看${publicIdentity?.name.zh ?? "候选人"}公开项目的 STAR 叙述、技术栈与面试重点。`
+      : `Explore ${publicIdentity?.name.en ?? "the candidate"}'s public projects, STAR narratives, technology stacks, and interview focus points.`;
+  const pageUrl = getAbsolutePageUrl(`/${locale}/projects`);
 
   return {
     title,
     description,
+    ...(pageUrl ? { alternates: { canonical: pageUrl } } : {}),
     openGraph: {
       title,
       description,
+      type: "website",
       locale: locale === "zh" ? "zh_CN" : "en_US",
+      ...(pageUrl ? { url: pageUrl } : {}),
     },
   };
 }
@@ -43,7 +47,7 @@ export default async function ProjectsPage({
 }) {
   const { lang } = await params;
   const locale = lang as Locale;
-  const projects = getSortedProjects();
+  const projects = getSortedPublicProjects();
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">

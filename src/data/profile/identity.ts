@@ -1,6 +1,10 @@
-import type { BilingualText, SocialLink } from "@/src/data/profile/types";
+import type {
+  BilingualText,
+  EvidenceStatus,
+  SocialLink,
+} from "@/src/data/profile/types";
 
-export interface ProfileIdentity {
+export interface ProfileIdentity extends EvidenceStatus {
   name: BilingualText;
   tagline: BilingualText;
   bio: BilingualText;
@@ -11,13 +15,16 @@ export interface ProfileIdentity {
 }
 
 export const identity: ProfileIdentity = {
+  visibility: "public",
+  verificationStatus: "verified",
+  sourceId: "profile-identity",
   name: {
     zh: "杨冲",
     en: "Yang Chong",
   },
   tagline: {
-    zh: "AI 算法工程师 · 边缘计算方向",
-    en: "AI Algorithm Engineer · Edge Computing",
+    zh: "计算机视觉与边缘部署 · 硕士在读",
+    en: "M.S. Candidate · Computer Vision & Edge Deployment",
   },
   bio: {
     zh: "新一代电子信息技术专业硕士在读。具备扎实的软硬件协同开发能力，专注于计算机视觉与深度学习模型的轻量化设计，拥有将 PyTorch 模型转化为 ONNX/NCNN 并部署到边缘计算设备的实战经验。对探索前沿 AI 技术落地抱有极大热情。",
@@ -27,6 +34,14 @@ export const identity: ProfileIdentity = {
   avatar: "/head_photo.jpg",
   resumePdfUrl: null,
   socialLinks: [
-    { platform: "GitHub", url: "https://github.com/ctrlctrlx", icon: "Github" },
+    {
+      id: "github",
+      platform: "GitHub",
+      url: "https://github.com/ctrlctrlx",
+      icon: "Github",
+      visibility: "public",
+      verificationStatus: "verified",
+      sourceId: "profile-social-github",
+    },
   ],
 };

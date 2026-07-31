@@ -4,6 +4,9 @@ export const projects: Project[] = [
   {
     id: "audio-edge",
     slug: "audio-edge",
+    visibility: "public",
+    verificationStatus: "verified",
+    sourceId: "profile-project-audio-edge",
     title: {
       zh: "轻量级环境音分类模型训练与边缘端部署",
       en: "Lightweight Environmental Sound Classification & Edge Deployment",
@@ -47,12 +50,14 @@ export const projects: Project[] = [
         en: "Adam vs. SGD optimizer ablation study with TensorBoard visualization",
       },
     ],
-    githubUrl: "https://github.com/ctrlctrlx",
     isInteractive: false,
   },
   {
     id: "smart-attendance",
     slug: "smart-attendance",
+    visibility: "public",
+    verificationStatus: "verified",
+    sourceId: "profile-project-smart-attendance",
     title: {
       zh: "智能教室考勤系统",
       en: "Intelligent Classroom Attendance System",
@@ -100,14 +105,17 @@ export const projects: Project[] = [
   },
 ];
 
-export function getSortedProjects(): Project[] {
-  return [...projects].sort((first, second) => {
+export function sortProjects(projectEntries: readonly Project[]): Project[] {
+  return [...projectEntries].sort((first, second) => {
     if (first.featured && !second.featured) return -1;
     if (!first.featured && second.featured) return 1;
     return 0;
   });
 }
 
-export function getProjectBySlug(slug: string): Project | null {
-  return projects.find((project) => project.slug === slug) ?? null;
+export function findProjectBySlug(
+  projectEntries: readonly Project[],
+  slug: string
+): Project | null {
+  return projectEntries.find((project) => project.slug === slug) ?? null;
 }

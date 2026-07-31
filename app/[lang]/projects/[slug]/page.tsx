@@ -3,18 +3,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Github } from "lucide-react";
 import {
-  getProjectBySlug,
-  projects,
+  getPublicProjectBySlug,
+  publicIdentity,
+  publicProjects,
   type Project,
 } from "@/src/data/profile";
-import { identity } from "@/src/data/profile/identity";
 import type { Locale } from "@/src/lib/i18n";
+import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
   return ["zh", "en"].flatMap((lang) =>
-    projects.map((project) => ({ lang, slug: project.slug }))
+    publicProjects.map((project) => ({ lang, slug: project.slug }))
   );
 }
 
@@ -25,7 +26,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang, slug } = await params;
   const locale = lang as Locale;
-  const project = getProjectBySlug(slug);
+  const project = getPublicProjectBySlug(slug);
 
   if (!project) {
     return {
@@ -37,16 +38,20 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${project.title[locale]} | ${identity.name[locale]}`;
+  const title = `${project.title[locale]} | ${publicIdentity?.name[locale] ?? "Portfolio"}`;
   const description = project.subtitle[locale];
+  const pageUrl = getAbsolutePageUrl(`/${locale}/projects/${project.slug}`);
 
   return {
     title,
     description,
+    ...(pageUrl ? { alternates: { canonical: pageUrl } } : {}),
     openGraph: {
       title,
       description,
+      type: "article",
       locale: locale === "zh" ? "zh_CN" : "en_US",
+      ...(pageUrl ? { url: pageUrl } : {}),
     },
   };
 }
@@ -115,7 +120,7 @@ export default async function ProjectDetailPage({
 }) {
   const { lang, slug } = await params;
   const locale = lang as Locale;
-  const project = getProjectBySlug(slug);
+  const project = getPublicProjectBySlug(slug);
 
   if (!project) notFound();
 

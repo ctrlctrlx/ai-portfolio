@@ -1,6 +1,6 @@
-import { identity } from "@/src/data/profile/identity";
+import { publicIdentity } from "@/src/data/profile/public";
 
-// Compatibility adapter for metadata and navigation consumers.
+// Legacy compatibility adapter. New code should use publicIdentity directly.
 export const publicProfile = {
-  name: identity.name,
+  name: publicIdentity?.name ?? { zh: "", en: "" },
 };

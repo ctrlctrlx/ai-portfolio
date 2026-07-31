@@ -1,32 +1,32 @@
 import {
-  awards,
-  education,
   formatAuthors,
-  getProjectBySlug,
-  getSortedProjects,
-  identity,
-  projects,
-  publications,
-  research,
-  skills,
+  getPublicProjectBySlug,
+  getSortedPublicProjects,
+  publicAwards,
+  publicEducation,
+  publicIdentity,
+  publicProjects,
+  publicPublications,
+  publicResearchAreas,
+  publicSkills,
 } from "@/src/data/profile";
 
-// Compatibility adapter for existing UI consumers.
-// New code should import the relevant domain directly from src/data/profile.
+// Legacy compatibility adapter. It derives every value from the Profile data
+// layer; new code must import the relevant public domain collection directly.
 export const resumeData = {
-  personalInfo: identity,
-  education,
-  publications,
-  skills,
-  projects,
-  awards,
-  interviewFocus: research.interviewContext,
+  personalInfo: publicIdentity,
+  education: publicEducation,
+  publications: publicPublications,
+  skills: publicSkills,
+  projects: publicProjects,
+  awards: publicAwards,
+  interviewFocus: publicResearchAreas,
 };
 
 export {
   formatAuthors,
-  getProjectBySlug,
-  getSortedProjects,
+  getPublicProjectBySlug as getProjectBySlug,
+  getSortedPublicProjects as getSortedProjects,
 };
 
 export type {
