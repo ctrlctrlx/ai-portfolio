@@ -228,12 +228,14 @@ function buildPublications(corpus, locale) {
  */
 function buildPatents(corpus, locale) {
   if (corpus.patents.length === 0) return EMPTY_PATENTS[locale];
-  return corpus.patents
-    .map(
-      (patent) =>
-        `• ${patent.title[locale]}${patent.year ? ` (${patent.year})` : ""} — ${patent.status}`
-    )
-    .join("\n");
+  const lines = corpus.patents.map((patent) =>
+    locale === "zh"
+      ? `• ${patent.title.zh} — 实用新型专利，${patent.role.zh}，专利号 ${patent.patentNumber}，${patent.grantDate.slice(0, 4)} 年授权，${patent.stageLabel.zh}。`
+      : `• ${patent.title.en} — Utility Model Patent, ${patent.role.en}, patent number ${patent.patentNumber}, granted in ${patent.grantDate.slice(0, 4)}; ${patent.stageLabel.en}.`
+  );
+  return locale === "zh"
+    ? `公开且已核验的专利经历：\n${lines.join("\n")}`
+    : `Public and verified patent experience:\n${lines.join("\n")}`;
 }
 
 /**
@@ -257,17 +259,13 @@ function buildAwards(corpus, locale) {
  * @returns {string}
  */
 function buildContact(corpus, locale) {
-  const publicLinks = corpus.identity?.socialLinks ?? [];
-  const linkSummary = publicLinks.map((link) => `${link.platform}: ${link.url}`).join("\n");
-
-  if (locale === "zh") {
-    return linkSummary
-      ? `当前未提供可公开的邮箱或电话。已公开的个人主页：\n${linkSummary}`
-      : "当前未提供可公开的联系方式。";
-  }
-  return linkSummary
-    ? `No public email address or phone number is provided. Public profile:\n${linkSummary}`
-    : "No public contact information is currently provided.";
+  const email = corpus.identity?.contacts.find(
+    (contact) => contact.kind === "email"
+  );
+  if (!email) return FALLBACK[locale];
+  return locale === "zh"
+    ? `公开求职邮箱为 ${email.value}。`
+    : `The public contact email is ${email.value}.`;
 }
 
 /**
@@ -276,14 +274,10 @@ function buildContact(corpus, locale) {
  * @returns {string}
  */
 function buildResume(corpus, locale) {
-  if (corpus.identity?.resumePdfUrl) {
-    return locale === "zh"
-      ? `公开简历下载地址：${corpus.identity.resumePdfUrl}`
-      : `Public resume download: ${corpus.identity.resumePdfUrl}`;
-  }
+  if (!corpus.identity) return FALLBACK[locale];
   return locale === "zh"
-    ? "当前未提供公开下载版本的简历。"
-    : "A public downloadable resume is not currently provided.";
+    ? "在线公开简历：/zh/resume。PDF 下载版仍待人工审核，当前不提供下载。"
+    : "Online public resume: /en/resume. A downloadable PDF is still pending manual review and is not currently available.";
 }
 
 /**

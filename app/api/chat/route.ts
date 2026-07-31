@@ -18,16 +18,7 @@ const RATE_LIMIT = 5;
 const WINDOW_MS = 60_000;
 
 const publicCareerCorpus = {
-  identity: publicIdentity
-    ? {
-        ...publicIdentity,
-        socialLinks: publicIdentity.socialLinks.filter(
-          (link) =>
-            link.visibility === "public" &&
-            link.verificationStatus === "verified"
-        ),
-      }
-    : null,
+  identity: publicIdentity,
   education: publicEducation,
   research: publicResearchAreas,
   projects: publicProjects,

@@ -63,8 +63,8 @@ export const projects: Project[] = [
       en: "Intelligent Classroom Attendance System",
     },
     subtitle: {
-      zh: "获国家实用新型专利授权",
-      en: "Granted National Utility Model Patent · Multi-sensor Fusion System",
+      zh: "本科阶段工程创新项目与实用新型专利成果",
+      en: "Undergraduate engineering project and utility model patent outcome",
     },
     featured: true,
     startDate: "2020.09",
@@ -82,12 +82,12 @@ export const projects: Project[] = [
       en: "Architected a multi-sensor pipeline integrating an AS608 optical fingerprint module, a pyroelectric infrared (PIR) presence sensor, and a DS18B20 digital temperature sensor; authored modular C/C++ firmware to maximize reusability and portability, significantly reducing BOM cost and system complexity.",
     },
     result: {
-      zh: "作为主要发明人之一，获得国家实用新型专利授权",
-      en: "Co-invented the system architecture and was granted a National Utility Model Patent by CNIPA, confirming the solution's technical novelty and industrial applicability.",
+      zh: "项目成果获得实用新型专利授权，本人为第二发明人",
+      en: "The project resulted in a granted utility model patent, with the candidate listed as the second inventor.",
     },
     coreSkill: ["C/C++", "MCU", "HW Driver Dev.", "Sensor Fusion"],
     metrics: [
-      { zh: "国家实用新型专利", en: "National Utility Model Patent" },
+      { zh: "实用新型专利", en: "Utility Model Patent" },
       { zh: "多传感器融合", en: "Multi-sensor Fusion" },
       { zh: "模块化架构", en: "Modular Architecture" },
     ],
@@ -97,8 +97,8 @@ export const projects: Project[] = [
         en: "Hardware component selection, BOM cost optimization, and modular system architecture design",
       },
       {
-        zh: "获得国家实用新型专利",
-        en: "Co-inventor of a granted National Utility Model Patent (CNIPA)",
+        zh: "实用新型专利第二发明人",
+        en: "Second inventor on the granted utility model patent",
       },
     ],
     isInteractive: false,

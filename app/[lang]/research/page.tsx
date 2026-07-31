@@ -25,15 +25,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const locale = lang as Locale;
-  if (publicResearchAreas.length === 0) return {};
+  if (publicResearchAreas.length === 0 && publicPatents.length === 0) return {};
 
   const name = publicIdentity?.name[locale] ?? (locale === "zh" ? "作品集" : "Portfolio");
   const title =
     locale === "zh" ? `研究方向 | ${name}` : `Research Focus | ${name}`;
   const description =
     locale === "zh"
-      ? `了解${name}当前公开的研究方向及其相关项目。`
-      : `Explore ${name}'s currently public research focus and related projects.`;
+      ? `了解${name}当前公开的研究方向、相关项目与已核验的专利工程创新成果。`
+      : `Explore ${name}'s public research focus, related projects, and verified patent-based engineering innovation.`;
   const pageUrl = getAbsolutePageUrl(`/${locale}/research`);
 
   return {
@@ -57,7 +57,7 @@ export default async function ResearchPage({
 }) {
   const { lang } = await params;
   const locale = lang as Locale;
-  if (publicResearchAreas.length === 0) notFound();
+  if (publicResearchAreas.length === 0 && publicPatents.length === 0) notFound();
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
@@ -82,6 +82,7 @@ export default async function ResearchPage({
         </p>
       </header>
 
+      {publicResearchAreas.length > 0 && (
       <section className="mt-10" aria-labelledby="research-areas-heading">
         <h2
           id="research-areas-heading"
@@ -136,6 +137,7 @@ export default async function ResearchPage({
           })}
         </div>
       </section>
+      )}
 
       {publicPublications.length > 0 && (
         <section className="mt-14" aria-labelledby="publications-heading">
@@ -165,7 +167,9 @@ export default async function ResearchPage({
             className="text-xl font-semibold"
             style={{ color: "var(--foreground)" }}
           >
-            {locale === "zh" ? "专利" : "Patents"}
+            {locale === "zh"
+              ? "专利与工程创新"
+              : "Patents & Engineering Innovation"}
           </h2>
           <div className="mt-5 space-y-4">
             {publicPatents.map((patent) => (

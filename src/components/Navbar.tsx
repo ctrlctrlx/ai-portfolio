@@ -7,7 +7,11 @@ import { useState } from "react";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { getOppositeLocale, localeLabels } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
-import { publicIdentity, publicResearchAreas } from "@/src/data/profile";
+import {
+  publicIdentity,
+  publicPatents,
+  publicResearchAreas,
+} from "@/src/data/profile";
 
 interface NavbarProps {
   lang: Locale;
@@ -19,12 +23,14 @@ function getNavLinks(hasResearch: boolean) {
     { href: "", label: "首页" },
     { href: "/projects", label: "项目" },
     ...(hasResearch ? [{ href: "/research", label: "研究" }] : []),
+    { href: "/resume", label: "在线简历" },
     { href: "/blog", label: "博客" },
   ],
   en: [
     { href: "", label: "Home" },
     { href: "/projects", label: "Projects" },
     ...(hasResearch ? [{ href: "/research", label: "Research" }] : []),
+    { href: "/resume", label: "Resume" },
     { href: "/blog", label: "Blog" },
   ],
   };
@@ -34,7 +40,9 @@ export default function Navbar({ lang }: NavbarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const navLinks = getNavLinks(publicResearchAreas.length > 0);
+  const navLinks = getNavLinks(
+    publicResearchAreas.length > 0 || publicPatents.length > 0
+  );
 
   const opposite = getOppositeLocale(lang);
   const oppositePath = pathname.match(/^\/(zh|en)(?=\/|$)/)

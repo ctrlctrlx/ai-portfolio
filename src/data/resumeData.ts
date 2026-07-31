@@ -3,8 +3,10 @@ import {
   getPublicProjectBySlug,
   getSortedPublicProjects,
   publicAwards,
+  publicContacts,
   publicEducation,
   publicIdentity,
+  publicPatents,
   publicProjects,
   publicPublications,
   publicResearchAreas,
@@ -15,11 +17,13 @@ import {
 // layer; new code must import the relevant public domain collection directly.
 export const resumeData = {
   personalInfo: publicIdentity,
+  contacts: publicContacts,
   education: publicEducation,
   publications: publicPublications,
   skills: publicSkills,
   projects: publicProjects,
   awards: publicAwards,
+  patents: publicPatents,
   interviewFocus: publicResearchAreas,
 };
 
@@ -36,5 +40,5 @@ export type {
   EducationEntry,
   Project,
   Publication,
-  SocialLink,
+  ContactPoint,
 } from "@/src/data/profile";

@@ -2,7 +2,9 @@ import {
   ArrowRight,
   BookOpen,
   ExternalLink,
+  FileText,
   Github,
+  Mail,
   MapPin,
 } from "lucide-react";
 import Image from "next/image";
@@ -11,9 +13,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Awards from "@/src/components/Awards";
 import OpenChatButton from "@/src/components/OpenChatButton";
-import PatentCard from "@/src/components/PatentCard";
 import PublicationCard from "@/src/components/PublicationCard";
 import {
+  getContactHref,
+  getPublicContact,
   getPublicProjectBySlug,
   getSortedPublicProjects,
   publicEducation,
@@ -72,11 +75,11 @@ export default async function HomePage({
     (project) => project.featured
   );
   const currentEducation = publicEducation[0];
-  const publicSocialLinks = publicIdentity.socialLinks.filter(
-    (link) =>
-      link.visibility === "public" &&
-      link.verificationStatus === "verified"
+  const publicEmail = getPublicContact("email");
+  const publicProfileLinks = publicIdentity.contacts.filter(
+    (contact) => contact.kind === "website" || contact.kind === "github"
   );
+  const featuredPatent = publicPatents[0];
 
   return (
     <div className="mx-auto max-w-6xl space-y-24 px-4 py-12 sm:px-6 sm:py-16">
@@ -149,40 +152,56 @@ export default async function HomePage({
                 </Link>
               )}
               <OpenChatButton locale={locale} />
-              {publicIdentity.resumePdfUrl && (
+              {publicEmail && (
                 <a
-                  href={publicIdentity.resumePdfUrl}
-                  className="inline-flex min-h-10 items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
+                  href={getContactHref(publicEmail)}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
                   style={{
                     borderColor: "var(--card-border)",
                     color: "var(--foreground)",
                   }}
-                  download
+                  aria-label={
+                    locale === "zh"
+                      ? `发送邮件至公开求职邮箱 ${publicEmail.value}`
+                      : `Email the public contact address ${publicEmail.value}`
+                  }
                 >
-                  {locale === "zh" ? "下载简历" : "Download Resume"}
+                  <Mail size={15} aria-hidden="true" />
+                  {locale === "zh" ? "联系我" : "Contact"}
                 </a>
               )}
+              <Link
+                href={`/${locale}/resume`}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
+                style={{
+                  borderColor: "var(--card-border)",
+                  color: "var(--foreground)",
+                }}
+              >
+                <FileText size={15} aria-hidden="true" />
+                {locale === "zh" ? "在线简历" : "Resume"}
+              </Link>
             </div>
-            {publicSocialLinks.length > 0 && (
+            {publicProfileLinks.length > 0 && (
               <div className="mt-5 flex flex-wrap gap-3">
-                {publicSocialLinks.map((link) => {
-                  const Icon = iconMap[link.icon ?? ""] ?? ExternalLink;
+                {publicProfileLinks.map((contact) => {
+                  const Icon = iconMap[contact.icon ?? ""] ?? ExternalLink;
                   return (
                     <a
-                      key={link.id}
-                      href={link.url}
+                      key={contact.id}
+                      href={getContactHref(contact)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-xs hover:underline"
                       style={{ color: "var(--muted)" }}
                       aria-label={
                         locale === "zh"
-                          ? `${identity.name.zh}的 ${link.platform} 主页（新窗口打开）`
-                          : `${identity.name.en}'s ${link.platform} profile (opens in a new tab)`
+                          ? `${identity.name.zh}的${contact.label.zh}（新窗口打开）`
+                          : `${identity.name.en}'s ${contact.label.en} (opens in a new tab)`
                       }
                     >
                       <Icon size={13} aria-hidden="true" />
-                      {link.platform}
+                      {contact.label[locale]}
                     </a>
                   );
                 })}
@@ -462,24 +481,40 @@ export default async function HomePage({
         </section>
       )}
 
-      {publicPatents.length > 0 && (
+      {featuredPatent && (
         <section aria-labelledby="home-patents-heading">
           <h2
             id="home-patents-heading"
             className="text-2xl font-bold"
             style={{ color: "var(--foreground)" }}
           >
-            {locale === "zh" ? "专利" : "Patents"}
+            {locale === "zh" ? "成果摘要" : "Outcome Summary"}
           </h2>
-          <div className="mt-6 space-y-4">
-            {publicPatents.map((patent) => (
-              <PatentCard key={patent.id} patent={patent} locale={locale} />
-            ))}
+          <div
+            className="mt-6 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between"
+            style={{
+              background: "var(--card)",
+              borderColor: "var(--card-border)",
+            }}
+          >
+            <p className="text-sm leading-7" style={{ color: "var(--foreground)" }}>
+              {locale === "zh"
+                ? `${publicPatents.length} 项实用新型专利 · ${featuredPatent.role.zh} · ${featuredPatent.stageLabel.zh}`
+                : `${publicPatents.length} Utility Model Patent · ${featuredPatent.role.en} · ${featuredPatent.stageLabel.en}`}
+            </p>
+            <Link
+              href={`/${locale}/research#patents-heading`}
+              className="inline-flex shrink-0 items-center gap-1 text-sm hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              {locale === "zh" ? "查看专利信息" : "View patent details"}
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
           </div>
         </section>
       )}
 
-      <Awards locale={locale} />
+      <Awards locale={locale} limit={3} />
     </div>
   );
 }

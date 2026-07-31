@@ -2,8 +2,15 @@ import { Trophy } from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
 import { publicAwards } from "@/src/data/profile";
 
-export default function Awards({ locale }: { locale: Locale }) {
-  const awards = publicAwards;
+export default function Awards({
+  locale,
+  limit,
+}: {
+  locale: Locale;
+  limit?: number;
+}) {
+  const awards =
+    typeof limit === "number" ? publicAwards.slice(0, limit) : publicAwards;
   if (awards.length === 0) return null;
 
   return (

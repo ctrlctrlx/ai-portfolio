@@ -13,10 +13,13 @@ export interface EvidenceStatus {
   sourceNote?: string;
 }
 
-export interface SocialLink extends EvidenceStatus {
+export type ContactKind = "email" | "website" | "github";
+
+export interface ContactPoint extends EvidenceStatus {
   id: string;
-  platform: string;
-  url: string;
+  kind: ContactKind;
+  label: BilingualText;
+  value: string;
   icon?: string;
 }
 
@@ -59,19 +62,19 @@ export interface Publication extends EvidenceStatus {
   status: PublicationStatus;
 }
 
-export type PatentStatus = "filed" | "under-review" | "granted";
+export type PatentType = "utility-model";
 
 export interface Patent extends EvidenceStatus {
   id: string;
-  slug: string;
   title: BilingualText;
-  inventors: string[];
-  applicationNumber?: string;
-  publicationNumber?: string;
-  year?: number;
-  status: PatentStatus;
-  summary: BilingualText;
-  publicUrl?: string;
+  type: PatentType;
+  patentNumber: string;
+  publicationNumber: string;
+  applicationDate: string;
+  grantDate: string;
+  inventorOrder: number;
+  role: BilingualText;
+  stageLabel: BilingualText;
 }
 
 export interface Project extends EvidenceStatus {

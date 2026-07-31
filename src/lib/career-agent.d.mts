@@ -1,17 +1,17 @@
 import type {
   Award,
+  ContactPoint,
   EducationEntry,
   Patent,
   Project,
   Publication,
   ResearchArea,
   SkillCategory,
-  SocialLink,
 } from "@/src/data/profile";
 import type { ProfileIdentity } from "@/src/data/profile/identity";
 
 export interface PublicCareerIdentity extends ProfileIdentity {
-  socialLinks: SocialLink[];
+  contacts: ContactPoint[];
 }
 
 export interface CareerCorpus {

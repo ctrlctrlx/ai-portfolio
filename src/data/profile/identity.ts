@@ -1,7 +1,7 @@
 import type {
   BilingualText,
+  ContactPoint,
   EvidenceStatus,
-  SocialLink,
 } from "@/src/data/profile/types";
 
 export interface ProfileIdentity extends EvidenceStatus {
@@ -10,8 +10,7 @@ export interface ProfileIdentity extends EvidenceStatus {
   bio: BilingualText;
   location: BilingualText;
   avatar: string;
-  resumePdfUrl: string | null;
-  socialLinks: SocialLink[];
+  contacts: ContactPoint[];
 }
 
 export const identity: ProfileIdentity = {
@@ -32,12 +31,32 @@ export const identity: ProfileIdentity = {
   },
   location: { zh: "海南，中国", en: "Hainan, China" },
   avatar: "/head_photo.jpg",
-  resumePdfUrl: null,
-  socialLinks: [
+  contacts: [
+    {
+      id: "public-email",
+      kind: "email",
+      label: { zh: "公开求职邮箱", en: "Public contact email" },
+      value: "yangc202706@163.com",
+      icon: "Mail",
+      visibility: "public",
+      verificationStatus: "verified",
+      sourceId: "profile-contact-email",
+    },
+    {
+      id: "website",
+      kind: "website",
+      label: { zh: "个人网站", en: "Website" },
+      value: "https://ctrlctrlx.top",
+      icon: "Globe",
+      visibility: "public",
+      verificationStatus: "verified",
+      sourceId: "profile-contact-website",
+    },
     {
       id: "github",
-      platform: "GitHub",
-      url: "https://github.com/ctrlctrlx",
+      kind: "github",
+      label: { zh: "GitHub", en: "GitHub" },
+      value: "https://github.com/ctrlctrlx",
       icon: "Github",
       visibility: "public",
       verificationStatus: "verified",
