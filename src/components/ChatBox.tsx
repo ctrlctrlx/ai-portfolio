@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageCircle, X, Send, Bot, ChevronDown } from "lucide-react";
-import { publicProfile } from "@/src/data/publicProfile";
+import { publicIdentity } from "@/src/data/profile";
 
 interface Message {
   role: "user" | "assistant";
@@ -13,18 +13,28 @@ type Lang = "zh" | "en";
 
 const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
   zh: [
+    { label: "自我介绍", key: "introduction" },
     { label: "项目经历", key: "projects" },
     { label: "核心技能", key: "skills" },
     { label: "教育经历", key: "education" },
+    { label: "研究方向", key: "research" },
+    { label: "论文信息", key: "publications" },
   ],
   en: [
+    { label: "Introduction", key: "introduction" },
     { label: "Project Experience", key: "projects" },
     { label: "Core Skills", key: "skills" },
     { label: "Education", key: "education" },
+    { label: "Research Focus", key: "research" },
+    { label: "Publications", key: "publications" },
   ],
 };
 
 const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
+  introduction: {
+    zh: "请做一个自我介绍",
+    en: "Please introduce yourself",
+  },
   projects: {
     zh: "介绍一下你的项目经历",
     en: "Tell me about your project experience",
@@ -37,11 +47,19 @@ const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
     zh: "请介绍你的教育经历",
     en: "Tell me about your education",
   },
+  research: {
+    zh: "你的研究方向是什么？",
+    en: "What is your research focus?",
+  },
+  publications: {
+    zh: "目前有哪些论文信息？",
+    en: "What publication information is currently available?",
+  },
 };
 
 const GREETING: Record<Lang, string> = {
-  zh: `你好！我是${publicProfile.name.zh}的 AI 分身。请问您想了解哪个项目或技能？`,
-  en: `Hi! I'm ${publicProfile.name.en}'s AI avatar. What project or skill would you like to know about?`,
+  zh: `你好！我是${publicIdentity?.name.zh ?? "候选人"}的求职信息助理。请问您想了解哪个项目或技能？`,
+  en: `Hi! I'm ${publicIdentity?.name.en ?? "the candidate"}'s career information assistant. What project or skill would you like to know about?`,
 };
 
 const BUSY_MSG: Record<Lang, string> = {
@@ -81,6 +99,12 @@ export default function ChatBox({ lang }: { lang: Lang }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener("open-career-assistant", handleOpen);
+    return () => window.removeEventListener("open-career-assistant", handleOpen);
+  }, []);
+
   const sendMessage = useCallback(
     async (content: string) => {
       const trimmed = content.trim();
@@ -96,7 +120,9 @@ export default function ChatBox({ lang }: { lang: Lang }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            messages: next.map((m) => ({ role: m.role, content: m.content })),
+            messages: next
+              .slice(-12)
+              .map((m) => ({ role: m.role, content: m.content })),
           }),
           signal: AbortSignal.timeout(20_000),
         });
@@ -163,13 +189,13 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                 id="portfolio-ai-assistant-title"
                 className="text-sm font-semibold text-white"
               >
-                {lang === "zh" ? "AI 分身" : "AI Avatar"}
+                {lang === "zh" ? "求职信息助理" : "Career Assistant"}
               </span>
               <span
                 className="text-xs px-1.5 py-0.5 rounded font-mono"
                 style={{ background: "#161b22", color: "#60a5fa" }}
               >
-                DeepSeek
+                Profile
               </span>
             </div>
             <button
@@ -258,9 +284,10 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                   }
                 }}
                 placeholder={
-                  lang === "zh" ? "向 AI 分身提问…" : "Ask AI avatar…"
+                  lang === "zh" ? "询问公开资料…" : "Ask about public profile…"
                 }
                 disabled={loading}
+                maxLength={2000}
                 className="flex-1 bg-transparent text-xs outline-none text-gray-200 disabled:opacity-60"
                 style={{ color: "#d1d5db" }}
               />
