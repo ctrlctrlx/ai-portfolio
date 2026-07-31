@@ -1,9 +1,17 @@
 import { Trophy } from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
-import { resumeData } from "@/src/data/resumeData";
+import { publicAwards } from "@/src/data/profile";
 
-export default function Awards({ locale }: { locale: Locale }) {
-  const { awards } = resumeData;
+export default function Awards({
+  locale,
+  limit,
+}: {
+  locale: Locale;
+  limit?: number;
+}) {
+  const awards =
+    typeof limit === "number" ? publicAwards.slice(0, limit) : publicAwards;
+  if (awards.length === 0) return null;
 
   return (
     <section>
@@ -12,9 +20,9 @@ export default function Awards({ locale }: { locale: Locale }) {
       </h2>
 
       <div className="grid sm:grid-cols-2 gap-3">
-        {awards.map((award, i) => (
+        {awards.map((award) => (
           <div
-            key={i}
+            key={award.id}
             className="p-4 rounded-xl border flex items-start gap-3"
             style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
           >

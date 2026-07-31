@@ -2,9 +2,43 @@ import { getAllPostMetas } from "@/src/lib/posts";
 import type { Locale } from "@/src/lib/i18n";
 import Link from "next/link";
 import { CalendarDays, Tag } from "lucide-react";
+import type { Metadata } from "next";
+import { publicIdentity } from "@/src/data/profile";
+import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 export function generateStaticParams() {
   return [{ lang: "zh" }, { lang: "en" }];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = lang as Locale;
+  const title =
+    locale === "zh"
+      ? `技术洞察 | ${publicIdentity?.name.zh ?? "作品集"}`
+      : `Tech Insights | ${publicIdentity?.name.en ?? "Portfolio"}`;
+  const description =
+    locale === "zh"
+      ? "公开的算法推导、工程实践与系统设计学习笔记。"
+      : "Public notes on algorithm derivations, engineering practice, and system design.";
+  const pageUrl = getAbsolutePageUrl(`/${locale}/blog`);
+
+  return {
+    title,
+    description,
+    ...(pageUrl ? { alternates: { canonical: pageUrl } } : {}),
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: locale === "zh" ? "zh_CN" : "en_US",
+      ...(pageUrl ? { url: pageUrl } : {}),
+    },
+  };
 }
 
 export default async function BlogPage({

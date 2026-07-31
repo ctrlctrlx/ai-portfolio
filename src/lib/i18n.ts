@@ -1,6 +1,6 @@
-import { locales, defaultLocale } from "../../middleware";
-export type { Locale } from "../../middleware";
-export { locales, defaultLocale };
+export const locales = ["zh", "en"] as const;
+export type Locale = (typeof locales)[number];
+export const defaultLocale: Locale = "zh";
 
 /** Type-safe locale validator */
 export function isValidLocale(locale: string): locale is "zh" | "en" {

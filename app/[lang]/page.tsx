@@ -1,16 +1,64 @@
-import { resumeData, formatAuthors, getSortedProjects } from "@/src/data/resumeData";
-import Awards from "@/src/components/Awards";
-import type { Locale } from "@/src/lib/i18n";
-import { Github, Linkedin, Mail, MapPin, Download, ExternalLink, BookOpen } from "lucide-react";
-import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpen,
+  ExternalLink,
+  FileText,
+  Github,
+  Mail,
+  MapPin,
+} from "lucide-react";
 import Image from "next/image";
-import Typewriter from "@/src/components/Typewriter";
+import Link from "next/link";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Awards from "@/src/components/Awards";
+import OpenChatButton from "@/src/components/OpenChatButton";
+import PublicationCard from "@/src/components/PublicationCard";
+import {
+  getContactHref,
+  getPublicContact,
+  getPublicProjectBySlug,
+  getSortedPublicProjects,
+  publicEducation,
+  publicIdentity,
+  publicPatents,
+  publicPublications,
+  publicResearchAreas,
+  publicSkills,
+} from "@/src/data/profile";
+import type { Locale } from "@/src/lib/i18n";
+import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 const iconMap: Record<string, React.ElementType> = {
   Github,
-  Linkedin,
-  Mail,
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = lang as Locale;
+  if (!publicIdentity) return {};
+
+  const title = `${publicIdentity.name[locale]} | ${publicIdentity.tagline[locale]}`;
+  const description = publicIdentity.bio[locale];
+  const pageUrl = getAbsolutePageUrl(`/${locale}`);
+
+  return {
+    title,
+    description,
+    ...(pageUrl ? { alternates: { canonical: pageUrl } } : {}),
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: locale === "zh" ? "zh_CN" : "en_US",
+      ...(pageUrl ? { url: pageUrl } : {}),
+    },
+  };
+}
 
 export default async function HomePage({
   params,
@@ -19,305 +67,454 @@ export default async function HomePage({
 }) {
   const { lang } = await params;
   const locale = lang as Locale;
-  const { personalInfo, education, publications } = resumeData;
-  const featuredProjects = getSortedProjects().filter((p) => p.featured);
+  if (!publicIdentity) notFound();
+  const identity = publicIdentity;
+
+  const oppositeLocale: Locale = locale === "zh" ? "en" : "zh";
+  const featuredProjects = getSortedPublicProjects().filter(
+    (project) => project.featured
+  );
+  const currentEducation = publicEducation[0];
+  const publicEmail = getPublicContact("email");
+  const publicProfileLinks = publicIdentity.contacts.filter(
+    (contact) => contact.kind === "website" || contact.kind === "github"
+  );
+  const featuredPatent = publicPatents[0];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12 space-y-20">
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="flex flex-col sm:flex-row items-start gap-8">
-        {/* Avatar */}
-        <div className="shrink-0">
-          <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2" style={{ borderColor: "var(--card-border)" }}>
-            <Image
-              src={personalInfo.avatar}
-              alt={personalInfo.name[locale]}
-              width={128}
-              height={128}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          </div>
-        </div>
-
-        {/* Text */}
-        <div className="flex-1 space-y-3">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" style={{ color: "var(--foreground)" }}>
-              {personalInfo.name[locale]}
-            </h1>
-            <p className="mt-1 text-base" style={{ color: "var(--accent)" }}>
-              <Typewriter text={personalInfo.tagline[locale]} />
-            </p>
-          </div>
-
-          <p className="text-sm leading-relaxed max-w-xl" style={{ color: "var(--muted)" }}>
-            {personalInfo.bio[locale]}
-          </p>
-
-          {/* Location */}
-          <div className="flex items-center gap-1 text-xs" style={{ color: "var(--muted)" }}>
-            <MapPin size={12} />
-            <span>{personalInfo.location[locale]}</span>
-          </div>
-
-          {/* CTA buttons */}
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <a
-              href={personalInfo.resumePdfUrl}
-              download
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-              style={{ background: "var(--accent)" }}
+    <div className="mx-auto max-w-6xl space-y-24 px-4 py-12 sm:px-6 sm:py-16">
+      <section className="relative overflow-hidden rounded-3xl border px-5 py-8 sm:px-10 sm:py-12"
+        style={{
+          background:
+            "linear-gradient(135deg, var(--card) 0%, var(--background) 72%)",
+          borderColor: "var(--card-border)",
+        }}
+      >
+        <div className="grid items-center gap-8 md:grid-cols-[1fr_auto]">
+          <div className="max-w-3xl">
+            <p
+              className="text-sm font-medium tracking-wide"
+              style={{ color: "var(--accent)" }}
             >
-              <Download size={14} />
-              {locale === "zh" ? "下载简历" : "Download CV"}
-            </a>
-
-            {personalInfo.socialLinks.map((link) => {
-              const Icon = iconMap[link.icon ?? ""] ?? Mail;
-              return (
-                <a
-                  key={link.platform}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors hover:bg-[var(--card)]"
-                  style={{ color: "var(--muted)", borderColor: "var(--card-border)" }}
-                  aria-label={link.platform}
+              {publicIdentity.tagline[locale]}
+            </p>
+            <h1
+              className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl"
+              style={{ color: "var(--foreground)" }}
+            >
+              {publicIdentity.name[locale]}
+              <span
+                className="ml-3 align-middle text-base font-normal sm:text-lg"
+                style={{ color: "var(--muted)" }}
+              >
+                {publicIdentity.name[oppositeLocale]}
+              </span>
+            </h1>
+            {currentEducation && (
+              <p className="mt-4 text-sm" style={{ color: "var(--muted)" }}>
+                {currentEducation.degree[locale]} · {currentEducation.major[locale]} ·{" "}
+                {currentEducation.institution[locale]}
+              </p>
+            )}
+            <p
+              className="mt-5 max-w-2xl text-sm leading-7 sm:text-base"
+              style={{ color: "var(--muted)" }}
+            >
+              {publicIdentity.bio[locale]}
+            </p>
+            <div
+              className="mt-4 flex items-center gap-1.5 text-xs"
+              style={{ color: "var(--muted)" }}
+            >
+              <MapPin size={13} aria-hidden="true" />
+              {publicIdentity.location[locale]}
+            </div>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href={`/${locale}/projects`}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+                style={{ background: "var(--accent)" }}
+              >
+                {locale === "zh" ? "查看项目" : "View Projects"}
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+              {publicResearchAreas.length > 0 && (
+                <Link
+                  href={`/${locale}/research`}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--card)]"
+                  style={{
+                    borderColor: "var(--card-border)",
+                    color: "var(--foreground)",
+                  }}
                 >
-                  <Icon size={14} />
-                  <span className="hidden sm:inline">{link.platform}</span>
+                  <BookOpen size={15} aria-hidden="true" />
+                  {locale === "zh" ? "了解研究" : "Explore Research"}
+                </Link>
+              )}
+              <OpenChatButton locale={locale} />
+              {publicEmail && (
+                <a
+                  href={getContactHref(publicEmail)}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
+                  style={{
+                    borderColor: "var(--card-border)",
+                    color: "var(--foreground)",
+                  }}
+                  aria-label={
+                    locale === "zh"
+                      ? `发送邮件至公开求职邮箱 ${publicEmail.value}`
+                      : `Email the public contact address ${publicEmail.value}`
+                  }
+                >
+                  <Mail size={15} aria-hidden="true" />
+                  {locale === "zh" ? "联系我" : "Contact"}
                 </a>
-              );
-            })}
+              )}
+              <Link
+                href={`/${locale}/resume`}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
+                style={{
+                  borderColor: "var(--card-border)",
+                  color: "var(--foreground)",
+                }}
+              >
+                <FileText size={15} aria-hidden="true" />
+                {locale === "zh" ? "在线简历" : "Resume"}
+              </Link>
+            </div>
+            {publicProfileLinks.length > 0 && (
+              <div className="mt-5 flex flex-wrap gap-3">
+                {publicProfileLinks.map((contact) => {
+                  const Icon = iconMap[contact.icon ?? ""] ?? ExternalLink;
+                  return (
+                    <a
+                      key={contact.id}
+                      href={getContactHref(contact)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs hover:underline"
+                      style={{ color: "var(--muted)" }}
+                      aria-label={
+                        locale === "zh"
+                          ? `${identity.name.zh}的${contact.label.zh}（新窗口打开）`
+                          : `${identity.name.en}'s ${contact.label.en} (opens in a new tab)`
+                      }
+                    >
+                      <Icon size={13} aria-hidden="true" />
+                      {contact.label[locale]}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="mx-auto md:mx-0">
+            <div
+              className="h-28 w-28 overflow-hidden rounded-2xl border-2 sm:h-36 sm:w-36"
+              style={{ borderColor: "var(--card-border)" }}
+            >
+              <Image
+                src={publicIdentity.avatar}
+                alt={
+                  locale === "zh"
+                    ? "作品集配图：晚霞与树影"
+                    : "Portfolio image showing a sunset sky and tree silhouettes"
+                }
+                width={144}
+                height={144}
+                className="h-full w-full object-cover"
+                priority
+                unoptimized
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Education ────────────────────────────────────────── */}
-      <section>
-        <h2 className="text-xl font-bold mb-6" style={{ color: "var(--foreground)" }}>
-          {locale === "zh" ? "教育经历" : "Education"}
-        </h2>
-        <div className="space-y-4">
-          {education.map((edu) => (
-            <div
-              key={edu.id}
-              className="p-5 rounded-xl border"
-              style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
+      {publicSkills.length > 0 && (
+        <section aria-labelledby="skills-heading">
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
+              {locale === "zh" ? "能力证据" : "Capability Evidence"}
+            </p>
+            <h2
+              id="skills-heading"
+              className="mt-2 text-2xl font-bold"
+              style={{ color: "var(--foreground)" }}
             >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
-                <div>
-                  <h3 className="font-semibold text-base" style={{ color: "var(--foreground)" }}>
-                    {edu.institution[locale]}
-                  </h3>
-                  <p className="text-sm" style={{ color: "var(--muted)" }}>
-                    {edu.degree[locale]} · {edu.major[locale]}
-                    {edu.gpa && <span className="ml-2">GPA {edu.gpa}</span>}
-                  </p>
-                </div>
-                <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>
-                  {edu.startDate} – {edu.endDate}
-                </span>
-              </div>
-              {edu.highlights.length > 0 && (
-                <ul className="mt-3 space-y-1">
-                  {edu.highlights.map((h, i) => (
-                    <li key={i} className="text-xs flex items-start gap-2" style={{ color: "var(--muted)" }}>
-                      <span className="mt-1 shrink-0 w-1 h-1 rounded-full" style={{ background: "var(--accent)" }} />
-                      {h[locale]}
+              {locale === "zh" ? "核心能力" : "Core Capabilities"}
+            </h2>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {publicSkills.map((category) => (
+              <article
+                key={category.id}
+                className="rounded-2xl border p-5"
+                style={{
+                  background: "var(--card)",
+                  borderColor: "var(--card-border)",
+                }}
+              >
+                <h3 className="font-semibold" style={{ color: "var(--foreground)" }}>
+                  {category.label[locale]}
+                </h3>
+                <ul className="mt-4 space-y-2">
+                  {category.items.map((item) => (
+                    <li
+                      key={item.id}
+                      className="text-sm"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      {item.name[locale]}
                     </li>
                   ))}
                 </ul>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* ── Publications ─────────────────────────────────────── */}
-      <section>
-        <h2 className="text-xl font-bold mb-6" style={{ color: "var(--foreground)" }}>
-          {locale === "zh" ? "论文与专利" : "Publications & Patents"}
-        </h2>
-        <div className="space-y-4">
-          {publications.map((pub) => {
-            const authors = formatAuthors(pub);
-            return (
-              <div
-                key={pub.id}
-                className="p-5 rounded-xl border"
-                style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
+      {featuredProjects.length > 0 && (
+        <section aria-labelledby="projects-heading">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
+                {locale === "zh" ? "公开项目" : "Public Work"}
+              </p>
+              <h2
+                id="projects-heading"
+                className="mt-2 text-2xl font-bold"
+                style={{ color: "var(--foreground)" }}
               >
-                {/* Title */}
-                <h3 className="font-semibold text-sm leading-snug" style={{ color: "var(--foreground)" }}>
-                  {pub.title}
+                {locale === "zh" ? "代表项目" : "Featured Projects"}
+              </h2>
+            </div>
+            <Link
+              href={`/${locale}/projects`}
+              className="inline-flex items-center gap-1 text-sm hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              {locale === "zh" ? "查看全部项目" : "View all projects"}
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            {featuredProjects.map((project) => (
+              <article
+                key={project.id}
+                className="flex min-h-64 flex-col rounded-2xl border p-6"
+                style={{
+                  background: "var(--card)",
+                  borderColor: "var(--card-border)",
+                }}
+              >
+                <p className="text-xs" style={{ color: "var(--muted)" }}>
+                  {project.startDate} – {project.endDate}
+                </p>
+                <h3
+                  className="mt-3 text-lg font-semibold"
+                  style={{ color: "var(--foreground)" }}
+                >
+                  {project.title[locale]}
                 </h3>
-
-                {/* Authors */}
-                <p className="mt-1.5 text-xs" style={{ color: "var(--muted)" }}>
-                  {authors.map((a, i) => (
-                    <span key={i}>
-                      {i > 0 && ", "}
-                      <span style={a.isHighlighted ? { color: "var(--accent)", fontWeight: 600 } : {}}>
-                        {a.name}
-                      </span>
-                    </span>
-                  ))}
+                <p className="mt-2 text-sm leading-6" style={{ color: "var(--muted)" }}>
+                  {project.subtitle[locale]}
                 </p>
-
-                {/* Venue & year */}
-                <p className="mt-1 text-xs italic" style={{ color: "var(--muted)" }}>
-                  {pub.venue[locale]}, {pub.year}
-                  {pub.patentNo && <span className="ml-2 not-italic">({pub.patentNo})</span>}
-                </p>
-
-                {/* Abstract */}
-                <p className="mt-2 text-xs leading-relaxed" style={{ color: "var(--muted)" }}>
-                  {pub.abstract[locale]}
-                </p>
-
-                {/* Tags + links */}
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  {pub.tags.map((tag) => (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {project.coreSkill.slice(0, 5).map((skill) => (
                     <span
-                      key={tag}
-                      className="text-xs px-2 py-0.5 rounded-full border"
-                      style={{ background: "var(--tag-bg)", color: "var(--tag-text)", borderColor: "var(--tag-border)" }}
+                      key={skill}
+                      className="rounded-full border px-2.5 py-1 text-xs"
+                      style={{
+                        borderColor: "var(--tag-border)",
+                        color: "var(--tag-text)",
+                        background: "var(--tag-bg)",
+                      }}
                     >
-                      {tag}
+                      {skill}
                     </span>
                   ))}
-                  {pub.doi && (
-                    <a
-                      href={`https://doi.org/${pub.doi}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-auto text-xs flex items-center gap-1 hover:underline"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      DOI <ExternalLink size={10} />
-                    </a>
-                  )}
-                  {pub.arxivUrl && (
-                    <a
-                      href={pub.arxivUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs flex items-center gap-1 hover:underline"
-                      style={{ color: "var(--accent)" }}
-                    >
-                      arXiv <ExternalLink size={10} />
-                    </a>
-                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                <Link
+                  href={`/${locale}/projects/${project.slug}`}
+                  className="mt-auto inline-flex items-center gap-1 pt-6 text-sm font-medium hover:underline"
+                  style={{ color: "var(--accent)" }}
+                >
+                  {locale === "zh" ? "查看证据与结果" : "View evidence and outcomes"}
+                  <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* ── Featured Projects ─────────────────────────────────── */}
-      <section>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold" style={{ color: "var(--foreground)" }}>
-            {locale === "zh" ? "精选项目" : "Featured Projects"}
-          </h2>
+      {publicResearchAreas.length > 0 && (
+        <section aria-labelledby="home-research-heading">
+          <div>
+            <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
+              {locale === "zh" ? "当前关注" : "Current Focus"}
+            </p>
+            <h2
+              id="home-research-heading"
+              className="mt-2 text-2xl font-bold"
+              style={{ color: "var(--foreground)" }}
+            >
+              {locale === "zh" ? "研究方向" : "Research Focus"}
+            </h2>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {publicResearchAreas.map((area) => {
+              const relatedProjects = area.relatedProjectSlugs
+                .map(getPublicProjectBySlug)
+                .filter((project) => project !== null);
+
+              return (
+                <article
+                  key={area.id}
+                  className="rounded-2xl border p-6"
+                  style={{ borderColor: "var(--card-border)" }}
+                >
+                  <h3
+                    className="font-semibold leading-7"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    {area.title[locale]}
+                  </h3>
+                  {relatedProjects.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      {relatedProjects.map((project) => (
+                        <Link
+                          key={project.id}
+                          href={`/${locale}/projects/${project.slug}`}
+                          className="text-sm hover:underline"
+                          style={{ color: "var(--accent)" }}
+                        >
+                          {project.title[locale]} →
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
           <Link
-            href={`/${locale}/projects`}
-            className="text-sm flex items-center gap-1 hover:underline"
+            href={`/${locale}/research`}
+            className="mt-5 inline-flex items-center gap-1 text-sm hover:underline"
             style={{ color: "var(--accent)" }}
           >
-            {locale === "zh" ? "查看全部" : "View all"} →
+            {locale === "zh" ? "进入研究页" : "Open research page"}
+            <ArrowRight size={14} aria-hidden="true" />
           </Link>
-        </div>
+        </section>
+      )}
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          {featuredProjects.map((proj) => (
-            <div
-              key={proj.id}
-              className="p-5 rounded-xl border flex flex-col gap-3"
-              style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
-            >
-              <div>
-                <h3 className="font-semibold text-sm" style={{ color: "var(--foreground)" }}>
-                  {proj.title[locale]}
-                </h3>
-                <p className="mt-1 text-xs" style={{ color: "var(--muted)" }}>
-                  {proj.subtitle[locale]}
-                </p>
-              </div>
-
-              {/* Metrics */}
-              <div className="flex flex-wrap gap-2">
-                {proj.metrics.slice(0, 3).map((m, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2 py-0.5 rounded-full border font-medium"
-                    style={{ background: "var(--tag-bg)", color: "var(--tag-text)", borderColor: "var(--tag-border)" }}
-                  >
-                    {m[locale]}
-                  </span>
-                ))}
-              </div>
-
-              {/* Skills */}
-              <div className="flex flex-wrap gap-1.5">
-                {proj.coreSkill.slice(0, 5).map((skill) => (
-                  <span
-                    key={skill}
-                    className="text-xs px-1.5 py-0.5 rounded border"
-                    style={{ color: "var(--muted)", borderColor: "var(--card-border)" }}
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {proj.coreSkill.length > 5 && (
+      {publicEducation.length > 0 && (
+        <section aria-labelledby="education-heading">
+          <h2
+            id="education-heading"
+            className="text-2xl font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "教育经历" : "Education"}
+          </h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {publicEducation.map((entry) => (
+              <article
+                key={entry.id}
+                className="rounded-2xl border p-6"
+                style={{
+                  background: "var(--card)",
+                  borderColor: "var(--card-border)",
+                }}
+              >
+                <div className="flex flex-wrap justify-between gap-2">
+                  <h3 className="font-semibold" style={{ color: "var(--foreground)" }}>
+                    {entry.institution[locale]}
+                  </h3>
                   <span className="text-xs" style={{ color: "var(--muted)" }}>
-                    +{proj.coreSkill.length - 5}
+                    {entry.startDate} – {entry.endDate}
                   </span>
+                </div>
+                <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+                  {entry.degree[locale]} · {entry.major[locale]}
+                </p>
+                {entry.highlights.length > 0 && (
+                  <ul className="mt-3 space-y-1">
+                    {entry.highlights.map((highlight) => (
+                      <li
+                        key={highlight.zh}
+                        className="text-xs"
+                        style={{ color: "var(--muted)" }}
+                      >
+                        {highlight[locale]}
+                      </li>
+                    ))}
+                  </ul>
                 )}
-              </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
-              {/* Links */}
-              <div className="flex items-center gap-3 mt-auto pt-1">
-                {proj.githubUrl && (
-                  <a
-                    href={proj.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs flex items-center gap-1 hover:underline"
-                    style={{ color: "var(--muted)" }}
-                  >
-                    <Github size={12} /> GitHub
-                  </a>
-                )}
-                {proj.isInteractive && proj.liveDemoUrl && (
-                  <a
-                    href={proj.liveDemoUrl}
-                    className="text-xs flex items-center gap-1 hover:underline"
-                    style={{ color: "var(--accent)" }}
-                  >
-                    <ExternalLink size={12} />
-                    {locale === "zh" ? "在线演示" : "Live Demo"}
-                  </a>
-                )}
-                <Link
-                  href={`/${locale}/projects`}
-                  className="ml-auto text-xs flex items-center gap-1 hover:underline"
-                  style={{ color: "var(--muted)" }}
-                >
-                  <BookOpen size={12} />
-                  {locale === "zh" ? "详情" : "Details"}
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {publicPublications.length > 0 && (
+        <section aria-labelledby="home-publications-heading">
+          <h2
+            id="home-publications-heading"
+            className="text-2xl font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "论文" : "Publications"}
+          </h2>
+          <div className="mt-6 space-y-4">
+            {publicPublications.map((publication) => (
+              <PublicationCard
+                key={publication.id}
+                publication={publication}
+                locale={locale}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* ── Awards ────────────────────────────────────────────── */}
-      <Awards locale={locale} />
+      {featuredPatent && (
+        <section aria-labelledby="home-patents-heading">
+          <h2
+            id="home-patents-heading"
+            className="text-2xl font-bold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "成果摘要" : "Outcome Summary"}
+          </h2>
+          <div
+            className="mt-6 flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:justify-between"
+            style={{
+              background: "var(--card)",
+              borderColor: "var(--card-border)",
+            }}
+          >
+            <p className="text-sm leading-7" style={{ color: "var(--foreground)" }}>
+              {locale === "zh"
+                ? `${publicPatents.length} 项实用新型专利 · ${featuredPatent.role.zh} · ${featuredPatent.stageLabel.zh}`
+                : `${publicPatents.length} Utility Model Patent · ${featuredPatent.role.en} · ${featuredPatent.stageLabel.en}`}
+            </p>
+            <Link
+              href={`/${locale}/research#patents-heading`}
+              className="inline-flex shrink-0 items-center gap-1 text-sm hover:underline"
+              style={{ color: "var(--accent)" }}
+            >
+              {locale === "zh" ? "查看专利信息" : "View patent details"}
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        </section>
+      )}
+
+      <Awards locale={locale} limit={3} />
     </div>
   );
 }

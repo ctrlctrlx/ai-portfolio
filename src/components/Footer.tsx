@@ -2,14 +2,31 @@
 
 import { useEffect, useState } from "react";
 import type { Locale } from "@/src/lib/i18n";
+import {
+  getContactHref,
+  getPublicContact,
+  publicIdentity,
+} from "@/src/data/profile";
+
+type VisitorResponse =
+  | { available: true; count: number }
+  | { available: false };
 
 export default function Footer({ lang }: { lang: Locale }) {
   const [count, setCount] = useState<number | null>(null);
+  const publicEmail = getPublicContact("email");
 
   useEffect(() => {
     fetch("/api/visitor", { method: "POST" })
-      .then((r) => r.json())
-      .then((d: { count: number }) => setCount(d.count))
+      .then((response) => {
+        if (!response.ok) throw new Error("visitor service unavailable");
+        return response.json() as Promise<VisitorResponse>;
+      })
+      .then((data) => {
+        if (data.available && Number.isSafeInteger(data.count) && data.count >= 0) {
+          setCount(data.count);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -24,12 +41,26 @@ export default function Footer({ lang }: { lang: Locale }) {
       >
         <p>
           © {new Date().getFullYear()}{" "}
-          {lang === "zh" ? "杨冲" : "Mingyuan Yang"} ·{" "}
-          {lang === "zh" ? "基于 Next.js & DeepSeek 构建" : "Built with Next.js & DeepSeek"}
+          {publicIdentity?.name[lang] ?? (lang === "zh" ? "作品集" : "Portfolio")} ·{" "}
+          {lang === "zh" ? "证据导向的双语作品集" : "Evidence-based bilingual portfolio"}
         </p>
 
-        {count !== null && (
-          <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-end">
+          {publicEmail && (
+            <a
+              href={getContactHref(publicEmail)}
+              className="hover:underline"
+              aria-label={
+                lang === "zh"
+                  ? `发送邮件至公开求职邮箱 ${publicEmail.value}`
+                  : `Email the public contact address ${publicEmail.value}`
+              }
+            >
+              {publicEmail.value}
+            </a>
+          )}
+          {count !== null && (
+            <div className="flex items-center gap-1.5">
             <span
               className="inline-block w-1.5 h-1.5 rounded-full"
               style={{
@@ -43,8 +74,9 @@ export default function Footer({ lang }: { lang: Locale }) {
                 ? `全球访客 ${count.toLocaleString()} 人次`
                 : `${count.toLocaleString()} global visitors`}
             </span>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </footer>
   );

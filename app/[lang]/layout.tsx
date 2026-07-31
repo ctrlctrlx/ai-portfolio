@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import Footer from "@/src/components/Footer";
 import ChatBox from "@/src/components/ChatBox";
+import DocumentLocale from "@/src/components/DocumentLocale";
 
 export default async function LangLayout({
   children,
@@ -19,6 +20,7 @@ export default async function LangLayout({
 
   return (
     <>
+      <DocumentLocale lang={locale} />
       <Navbar lang={locale} />
       <main>{children}</main>
       <Footer lang={locale} />

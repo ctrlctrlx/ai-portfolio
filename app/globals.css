@@ -29,20 +29,31 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Segoe UI", "Microsoft YaHei", Arial, system-ui, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-family: "Segoe UI", "Microsoft YaHei", Arial, system-ui, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+img,
+svg {
+  max-width: 100%;
 }
 
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 /* Typewriter cursor blink */
@@ -59,6 +70,17 @@ html {
   margin-left: 2px;
   vertical-align: text-bottom;
   animation: blink 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 /* KaTeX display block scrollable on mobile */
@@ -124,4 +146,76 @@ mjx-container[display="true"] {
   max-width: 100% !important;
   touch-action: pan-x pinch-zoom !important;
   padding-bottom: 10px;
+}
+
+.resume-heading {
+  color: var(--foreground);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body {
+    font-size: 10pt;
+  }
+
+  nav,
+  footer,
+  #portfolio-ai-assistant,
+  button[aria-controls="portfolio-ai-assistant"],
+  .print-hidden {
+    display: none !important;
+  }
+
+  .resume-page {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .resume-page *,
+  .resume-page *::before,
+  .resume-page *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .resume-page header,
+  .resume-page article {
+    background: #ffffff !important;
+    border-color: #b8b8b8 !important;
+  }
+
+  .resume-page a {
+    color: #000000 !important;
+    text-decoration: none !important;
+  }
+
+  .resume-page svg {
+    color: #000000 !important;
+  }
+
+  .resume-section,
+  .resume-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .resume-section {
+    margin-top: 7mm !important;
+  }
+
+  .resume-section:first-child {
+    margin-top: 0 !important;
+  }
 }

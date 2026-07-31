@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageCircle, X, Send, Bot, ChevronDown } from "lucide-react";
+import { publicIdentity } from "@/src/data/profile";
 
 interface Message {
   role: "user" | "assistant";
@@ -12,35 +13,53 @@ type Lang = "zh" | "en";
 
 const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
   zh: [
-    { label: "鱼类 Re-ID", key: "fish" },
-    { label: "水下 VIO-SLAM", key: "vio" },
+    { label: "自我介绍", key: "introduction" },
+    { label: "项目经历", key: "projects" },
     { label: "核心技能", key: "skills" },
+    { label: "教育经历", key: "education" },
+    { label: "研究方向", key: "research" },
+    { label: "论文信息", key: "publications" },
   ],
   en: [
-    { label: "Fish Re-ID", key: "fish" },
-    { label: "Underwater VIO-SLAM", key: "vio" },
+    { label: "Introduction", key: "introduction" },
+    { label: "Project Experience", key: "projects" },
     { label: "Core Skills", key: "skills" },
+    { label: "Education", key: "education" },
+    { label: "Research Focus", key: "research" },
+    { label: "Publications", key: "publications" },
   ],
 };
 
 const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
-  fish: {
-    zh: "介绍一下你的鱼类 Re-ID 项目",
-    en: "Tell me about your Fish Re-ID project",
+  introduction: {
+    zh: "请做一个自我介绍",
+    en: "Please introduce yourself",
   },
-  vio: {
-    zh: "介绍一下水下 VIO-SLAM 项目",
-    en: "Tell me about your underwater VIO-SLAM project",
+  projects: {
+    zh: "介绍一下你的项目经历",
+    en: "Tell me about your project experience",
   },
   skills: {
-    zh: "介绍你的核心技能栈",
-    en: "What are your core technical skills?",
+    zh: "你的核心技能是什么？",
+    en: "What are your core skills?",
+  },
+  education: {
+    zh: "请介绍你的教育经历",
+    en: "Tell me about your education",
+  },
+  research: {
+    zh: "你的研究方向是什么？",
+    en: "What is your research focus?",
+  },
+  publications: {
+    zh: "目前有哪些论文信息？",
+    en: "What publication information is currently available?",
   },
 };
 
 const GREETING: Record<Lang, string> = {
-  zh: "你好！我是杨冲的 AI 分身。请问您想了解哪个项目或技能？",
-  en: "Hi! I'm Mingyuan Yang's AI avatar. What project or skill would you like to know about?",
+  zh: `你好！我是${publicIdentity?.name.zh ?? "候选人"}的求职信息助理。请问您想了解哪个项目或技能？`,
+  en: `Hi! I'm ${publicIdentity?.name.en ?? "the candidate"}'s career information assistant. What project or skill would you like to know about?`,
 };
 
 const BUSY_MSG: Record<Lang, string> = {
@@ -80,6 +99,12 @@ export default function ChatBox({ lang }: { lang: Lang }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    window.addEventListener("open-career-assistant", handleOpen);
+    return () => window.removeEventListener("open-career-assistant", handleOpen);
+  }, []);
+
   const sendMessage = useCallback(
     async (content: string) => {
       const trimmed = content.trim();
@@ -95,7 +120,9 @@ export default function ChatBox({ lang }: { lang: Lang }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            messages: next.map((m) => ({ role: m.role, content: m.content })),
+            messages: next
+              .slice(-12)
+              .map((m) => ({ role: m.role, content: m.content })),
           }),
           signal: AbortSignal.timeout(20_000),
         });
@@ -123,9 +150,12 @@ export default function ChatBox({ lang }: { lang: Lang }) {
       {/* Floating toggle button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
         style={{ background: "var(--accent)" }}
         aria-label={lang === "zh" ? "打开 AI 助理" : "Open AI assistant"}
+        aria-expanded={open}
+        aria-controls="portfolio-ai-assistant"
+        title={lang === "zh" ? "AI 助理" : "AI assistant"}
       >
         {open ? (
           <ChevronDown size={20} color="white" />
@@ -137,10 +167,13 @@ export default function ChatBox({ lang }: { lang: Lang }) {
       {/* Chat window */}
       {open && (
         <div
-          className="fixed right-6 z-50 w-80 sm:w-96 rounded-2xl shadow-2xl border flex flex-col overflow-hidden"
+          id="portfolio-ai-assistant"
+          role="dialog"
+          aria-labelledby="portfolio-ai-assistant-title"
+          className="fixed left-4 right-4 sm:left-auto sm:right-6 z-50 w-auto sm:w-96 rounded-2xl shadow-2xl border flex flex-col overflow-hidden"
           style={{
             bottom: "5.5rem",
-            height: "440px",
+            height: "min(440px, calc(100dvh - 7rem))",
             background: "#0d1117",
             borderColor: "#30363d",
           }}
@@ -152,34 +185,42 @@ export default function ChatBox({ lang }: { lang: Lang }) {
           >
             <div className="flex items-center gap-2">
               <Bot size={16} color="#60a5fa" />
-              <span className="text-sm font-semibold text-white">
-                {lang === "zh" ? "AI 分身" : "AI Avatar"}
+              <span
+                id="portfolio-ai-assistant-title"
+                className="text-sm font-semibold text-white"
+              >
+                {lang === "zh" ? "求职信息助理" : "Career Assistant"}
               </span>
               <span
                 className="text-xs px-1.5 py-0.5 rounded font-mono"
                 style={{ background: "#161b22", color: "#60a5fa" }}
               >
-                DeepSeek
+                Profile
               </span>
             </div>
             <button
               onClick={() => setOpen(false)}
               className="transition-colors hover:text-white"
               style={{ color: "#6b7280" }}
-              aria-label="Close"
+              aria-label={lang === "zh" ? "关闭 AI 助理" : "Close AI assistant"}
+              title={lang === "zh" ? "关闭" : "Close"}
             >
               <X size={15} />
             </button>
           </div>
 
           {/* Message list */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+          <div
+            className="flex-1 overflow-y-auto px-3 py-3 space-y-3"
+            aria-live="polite"
+          >
             {messages.map((msg, i) => (
               <div
                 key={i}
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
+                  role="status"
                   className="max-w-[88%] text-xs leading-relaxed px-3 py-2 rounded-2xl whitespace-pre-wrap break-words"
                   style={
                     msg.role === "user"
@@ -224,11 +265,15 @@ export default function ChatBox({ lang }: { lang: Lang }) {
 
           {/* Input row */}
           <div className="px-3 pb-3 shrink-0">
+            <label htmlFor="portfolio-ai-question" className="sr-only">
+              {lang === "zh" ? "向 AI 助理提问" : "Ask the AI assistant"}
+            </label>
             <div
               className="flex items-center gap-2 rounded-xl px-3 py-2 border"
               style={{ background: "#161b22", borderColor: "#30363d" }}
             >
               <input
+                id="portfolio-ai-question"
                 ref={inputRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -239,9 +284,10 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                   }
                 }}
                 placeholder={
-                  lang === "zh" ? "向 AI 分身提问…" : "Ask AI avatar…"
+                  lang === "zh" ? "询问公开资料…" : "Ask about public profile…"
                 }
                 disabled={loading}
+                maxLength={2000}
                 className="flex-1 bg-transparent text-xs outline-none text-gray-200 disabled:opacity-60"
                 style={{ color: "#d1d5db" }}
               />
@@ -250,7 +296,8 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                 disabled={loading || !input.trim()}
                 className="shrink-0 transition-opacity disabled:opacity-30"
                 style={{ color: "#60a5fa" }}
-                aria-label="Send"
+                aria-label={lang === "zh" ? "发送问题" : "Send question"}
+                title={lang === "zh" ? "发送问题" : "Send question"}
               >
                 <Send size={14} />
               </button>

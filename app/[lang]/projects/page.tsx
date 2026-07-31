@@ -1,6 +1,44 @@
-import { getSortedProjects } from "@/src/data/resumeData";
+import { getSortedPublicProjects, publicIdentity } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
-import { Github, ExternalLink, ChevronDown } from "lucide-react";
+import { Github, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
+
+export function generateStaticParams() {
+  return [{ lang: "zh" }, { lang: "en" }];
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const locale = lang as Locale;
+  const title =
+    locale === "zh"
+      ? `项目经历 | ${publicIdentity?.name.zh ?? "作品集"}`
+      : `Projects | ${publicIdentity?.name.en ?? "Portfolio"}`;
+  const description =
+    locale === "zh"
+      ? `查看${publicIdentity?.name.zh ?? "候选人"}公开项目的 STAR 叙述、技术栈与面试重点。`
+      : `Explore ${publicIdentity?.name.en ?? "the candidate"}'s public projects, STAR narratives, technology stacks, and interview focus points.`;
+  const pageUrl = getAbsolutePageUrl(`/${locale}/projects`);
+
+  return {
+    title,
+    description,
+    ...(pageUrl ? { alternates: { canonical: pageUrl } } : {}),
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      locale: locale === "zh" ? "zh_CN" : "en_US",
+      ...(pageUrl ? { url: pageUrl } : {}),
+    },
+  };
+}
 
 export default async function ProjectsPage({
   params,
@@ -9,7 +47,7 @@ export default async function ProjectsPage({
 }) {
   const { lang } = await params;
   const locale = lang as Locale;
-  const projects = getSortedProjects();
+  const projects = getSortedPublicProjects();
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
@@ -24,8 +62,15 @@ export default async function ProjectsPage({
         </p>
       </div>
 
-      <div className="space-y-8">
-        {projects.map((proj) => (
+      {projects.length === 0 ? (
+        <p className="text-sm" style={{ color: "var(--muted)" }}>
+          {locale === "zh"
+            ? "当前没有可公开展示的项目。"
+            : "There are currently no public projects to display."}
+        </p>
+      ) : (
+        <div className="space-y-8">
+          {projects.map((proj) => (
           <article
             key={proj.id}
             className="rounded-xl border overflow-hidden"
@@ -71,6 +116,8 @@ export default async function ProjectsPage({
                 {proj.isInteractive && proj.liveDemoUrl && (
                   <a
                     href={proj.liveDemoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-xs flex items-center gap-1 hover:underline"
                     style={{ color: "var(--accent)" }}
                   >
@@ -78,6 +125,14 @@ export default async function ProjectsPage({
                     {locale === "zh" ? "在线演示" : "Live Demo"}
                   </a>
                 )}
+                <Link
+                  href={`/${locale}/projects/${proj.slug}`}
+                  className="ml-auto text-xs flex items-center gap-1 hover:underline"
+                  style={{ color: "var(--accent)" }}
+                >
+                  <BookOpen size={12} />
+                  {locale === "zh" ? "查看详情" : "View details"}
+                </Link>
               </div>
             </div>
 
@@ -162,8 +217,9 @@ export default async function ProjectsPage({
               </ul>
             </details>
           </article>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
