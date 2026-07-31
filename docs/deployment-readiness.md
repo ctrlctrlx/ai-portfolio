@@ -14,13 +14,13 @@
 
 ## 最终验收记录
 
-- [ ] Production build
-- [ ] Content verification
-- [ ] Profile verification
-- [ ] Chat contract verification
-- [ ] Browser route and interaction testing
-- [ ] 1440、1024、768、390、320 px responsive testing
-- [ ] Console、Network、Runtime、DOM 与基础可访问性检查
+- [x] Production build
+- [x] Content verification
+- [x] Profile verification
+- [x] Chat contract verification
+- [x] Browser route and interaction testing
+- [x] 1440、1024、768、390、320 px responsive testing
+- [x] Console、Network、Runtime、DOM 与基础可访问性检查
 
 这些项目会在本地最终验收完成后更新；未勾选项目不得被视为已完成。
 

@@ -8,7 +8,7 @@ export default async function LocalizedNotFound() {
     localeHeader && isValidLocale(localeHeader) ? localeHeader : defaultLocale;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-24 text-center">
+    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-24 text-center">
       <p className="text-sm font-semibold" style={{ color: "var(--accent)" }}>
         404
       </p>
@@ -30,6 +30,6 @@ export default async function LocalizedNotFound() {
       >
         {locale === "zh" ? "返回首页" : "Back to home"}
       </Link>
-    </div>
+    </main>
   );
 }

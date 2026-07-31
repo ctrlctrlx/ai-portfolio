@@ -198,8 +198,8 @@ export default async function HomePage({
                 src={publicIdentity.avatar}
                 alt={
                   locale === "zh"
-                    ? `${publicIdentity.name.zh}的个人头像`
-                    : `Portrait of ${publicIdentity.name.en}`
+                    ? "作品集配图：晚霞与树影"
+                    : "Portfolio image showing a sunset sky and tree silhouettes"
                 }
                 width={144}
                 height={144}
