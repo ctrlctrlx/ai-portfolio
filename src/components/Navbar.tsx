@@ -7,29 +7,34 @@ import { useState } from "react";
 import { Moon, Sun, Menu, X } from "lucide-react";
 import { getOppositeLocale, localeLabels } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
-import { publicProfile } from "@/src/data/publicProfile";
+import { publicIdentity, publicResearchAreas } from "@/src/data/profile";
 
 interface NavbarProps {
   lang: Locale;
 }
 
-const navLinks = {
+function getNavLinks(hasResearch: boolean) {
+  return {
   zh: [
     { href: "", label: "首页" },
     { href: "/projects", label: "项目" },
+    ...(hasResearch ? [{ href: "/research", label: "研究" }] : []),
     { href: "/blog", label: "博客" },
   ],
   en: [
     { href: "", label: "Home" },
     { href: "/projects", label: "Projects" },
+    ...(hasResearch ? [{ href: "/research", label: "Research" }] : []),
     { href: "/blog", label: "Blog" },
   ],
-};
+  };
+}
 
 export default function Navbar({ lang }: NavbarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const navLinks = getNavLinks(publicResearchAreas.length > 0);
 
   const opposite = getOppositeLocale(lang);
   const oppositePath = pathname.match(/^\/(zh|en)(?=\/|$)/)
@@ -50,7 +55,7 @@ export default function Navbar({ lang }: NavbarProps) {
           className="font-bold text-base tracking-tight hover:opacity-80 transition-opacity"
           style={{ color: "var(--foreground)" }}
         >
-          {publicProfile.name[lang]}
+          {publicIdentity?.name[lang] ?? (lang === "zh" ? "作品集" : "Portfolio")}
         </Link>
 
         {/* Desktop nav links */}
