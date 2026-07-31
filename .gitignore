@@ -35,6 +35,7 @@ yarn-error.log*
 
 # Environment files and platform state
 .env*
+!.env.example
 .vercel/
 
 # TypeScript
