@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resumeData } from "@/src/data/resumeData";
+import {
+  education,
+  identity,
+  projects,
+  publications,
+} from "@/src/data/profile";
 
 // ---------------------------------------------------------------------------
 // Rate limiting — Vercel KV (Redis). Gracefully degrades in local dev when
@@ -110,12 +115,10 @@ async function checkRateLimit(ip: string): Promise<{ allowed: boolean; remaining
 }
 
 // ---------------------------------------------------------------------------
-// Build system prompt from resumeData — the interview corpus
+// Build the interview corpus from the verified profile data.
 // ---------------------------------------------------------------------------
 
 function buildSystemPrompt(): string {
-  const { personalInfo, projects, publications } = resumeData;
-
   const projectsText = projects
     .map((p) => {
       return `
@@ -135,15 +138,15 @@ function buildSystemPrompt(): string {
     .map((p) => `- ${p.title} (${p.year}) [${p.type}]: ${p.abstract.zh}`)
     .join("\n");
 
-  return `你是"${personalInfo.name.zh}"的专业技术面试助理，名字叫 "AI 分身"。
+  return `你是"${identity.name.zh}"的专业技术面试助理，名字叫 "AI 分身"。
 你的唯一职责是：帮助来访的 HR 和技术面试官深入了解候选人的技术能力、项目经历和研究成果。
 
 ---
 ## 候选人基本信息
-- 姓名: ${personalInfo.name.zh} (${personalInfo.name.en})
-- 定位: ${personalInfo.tagline.zh}
-- 所在地: ${personalInfo.location.zh}
-- 简介: ${personalInfo.bio.zh}
+- 姓名: ${identity.name.zh} (${identity.name.en})
+- 定位: ${identity.tagline.zh}
+- 所在地: ${identity.location.zh}
+- 简介: ${identity.bio.zh}
 
 ---
 ## 核心项目经历 (STAR 法则)
@@ -181,20 +184,20 @@ function getStaticLocale(message: string): StaticLocale {
 }
 
 function buildProjectsReply(locale: StaticLocale): string {
-  const projects = resumeData.projects
+  const projectLines = projects
     .map((project) => {
       return `• ${project.title[locale]} (${project.startDate}–${project.endDate})\n  ${project.result[locale]}`;
     })
     .join("\n\n");
 
   return locale === "zh"
-    ? `${resumeData.personalInfo.name.zh}当前公开的项目经历：\n${projects}`
-    : `${resumeData.personalInfo.name.en}'s currently listed project experience:\n${projects}`;
+    ? `${identity.name.zh}当前公开的项目经历：\n${projectLines}`
+    : `${identity.name.en}'s currently listed project experience:\n${projectLines}`;
 }
 
 function buildSkillsReply(locale: StaticLocale): string {
   const skills = Array.from(
-    new Set(resumeData.projects.flatMap((project) => project.coreSkill))
+    new Set(projects.flatMap((project) => project.coreSkill))
   );
   const skillList = skills.map((skill) => `• ${skill}`).join("\n");
 
@@ -204,15 +207,15 @@ function buildSkillsReply(locale: StaticLocale): string {
 }
 
 function buildEducationReply(locale: StaticLocale): string {
-  const education = resumeData.education
+  const educationLines = education
     .map((entry) => {
       return `• ${entry.institution[locale]} — ${entry.degree[locale]} · ${entry.major[locale]} (${entry.startDate}–${entry.endDate})`;
     })
     .join("\n");
 
   return locale === "zh"
-    ? `${resumeData.personalInfo.name.zh}当前公开的教育经历：\n${education}`
-    : `${resumeData.personalInfo.name.en}'s currently listed education:\n${education}`;
+    ? `${identity.name.zh}当前公开的教育经历：\n${educationLines}`
+    : `${identity.name.en}'s currently listed education:\n${educationLines}`;
 }
 
 function buildStaticReply(message: string): string {

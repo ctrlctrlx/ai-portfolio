@@ -1,6 +1,6 @@
+import { identity } from "@/src/data/profile/identity";
+
+// Compatibility adapter for metadata and navigation consumers.
 export const publicProfile = {
-  name: {
-    zh: "杨冲",
-    en: "Yang Chong",
-  },
-} as const;
+  name: identity.name,
+};

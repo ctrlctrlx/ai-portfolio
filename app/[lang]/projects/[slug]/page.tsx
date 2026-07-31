@@ -4,16 +4,17 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Github } from "lucide-react";
 import {
   getProjectBySlug,
-  resumeData,
+  projects,
   type Project,
-} from "@/src/data/resumeData";
+} from "@/src/data/profile";
+import { identity } from "@/src/data/profile/identity";
 import type { Locale } from "@/src/lib/i18n";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
   return ["zh", "en"].flatMap((lang) =>
-    resumeData.projects.map((project) => ({ lang, slug: project.slug }))
+    projects.map((project) => ({ lang, slug: project.slug }))
   );
 }
 
@@ -36,7 +37,7 @@ export async function generateMetadata({
     };
   }
 
-  const title = `${project.title[locale]} | ${resumeData.personalInfo.name[locale]}`;
+  const title = `${project.title[locale]} | ${identity.name[locale]}`;
   const description = project.subtitle[locale];
 
   return {

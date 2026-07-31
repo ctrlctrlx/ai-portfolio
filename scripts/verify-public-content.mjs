@@ -99,16 +99,22 @@ for (const { filePath, content } of implementationFiles) {
   }
 }
 
-const resumeDataPath = join(repositoryRoot, "src", "data", "resumeData.ts");
+const identityPath = join(
+  repositoryRoot,
+  "src",
+  "data",
+  "profile",
+  "identity.ts"
+);
 const homePagePath = join(repositoryRoot, "app", "[lang]", "page.tsx");
-const resumeDataSource = readFileSync(resumeDataPath, "utf8");
+const identitySource = readFileSync(identityPath, "utf8");
 const homePageSource = readFileSync(homePagePath, "utf8");
-const resumeUrlMatch = resumeDataSource.match(
+const resumeUrlMatch = identitySource.match(
   /resumePdfUrl:\s*(null|["']([^"']+)["'])/
 );
 
 if (!resumeUrlMatch) {
-  report(resumeDataPath, "unverifiable-resume-target");
+  report(identityPath, "unverifiable-resume-target");
 } else if (resumeUrlMatch[1] !== "null") {
   const resumeUrl = resumeUrlMatch[2];
   const targetPath =
@@ -117,7 +123,7 @@ if (!resumeUrlMatch) {
       : null;
 
   if (!targetPath || !existsSync(targetPath) || !statSync(targetPath).isFile()) {
-    report(resumeDataPath, "missing-resume-target");
+    report(identityPath, "missing-resume-target");
   }
 }
 
@@ -155,11 +161,18 @@ for (const draftSlug of draftSlugs) {
 
 const publicProfilePath = join(repositoryRoot, "src", "data", "publicProfile.ts");
 const publicProfileSource = readFileSync(publicProfilePath, "utf8");
-if (!/zh:\s*["']杨冲["']/.test(publicProfileSource)) {
-  report(publicProfilePath, "incorrect-public-profile-name-zh");
+if (!/zh:\s*["']杨冲["']/.test(identitySource)) {
+  report(identityPath, "incorrect-public-profile-name-zh");
 }
-if (!/en:\s*["']Yang Chong["']/.test(publicProfileSource)) {
-  report(publicProfilePath, "incorrect-public-profile-name-en");
+if (!/en:\s*["']Yang Chong["']/.test(identitySource)) {
+  report(identityPath, "incorrect-public-profile-name-en");
+}
+if (
+  !publicProfileSource.includes(
+    'import { identity } from "@/src/data/profile/identity";'
+  )
+) {
+  report(publicProfilePath, "public-profile-bypasses-identity-source");
 }
 
 if (errors.length > 0) {

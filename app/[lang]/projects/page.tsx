@@ -1,4 +1,4 @@
-import { getSortedProjects } from "@/src/data/resumeData";
+import { getSortedProjects } from "@/src/data/profile/projects";
 import type { Locale } from "@/src/lib/i18n";
 import { Github, ExternalLink, ChevronDown, BookOpen } from "lucide-react";
 import type { Metadata } from "next";
