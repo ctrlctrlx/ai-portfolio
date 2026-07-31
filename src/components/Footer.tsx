@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Locale } from "@/src/lib/i18n";
-import { publicProfile } from "@/src/data/publicProfile";
+import { publicIdentity } from "@/src/data/profile";
 
 type VisitorResponse =
   | { available: true; count: number }
@@ -36,8 +36,8 @@ export default function Footer({ lang }: { lang: Locale }) {
       >
         <p>
           © {new Date().getFullYear()}{" "}
-          {publicProfile.name[lang]} ·{" "}
-          {lang === "zh" ? "基于 Next.js & DeepSeek 构建" : "Built with Next.js & DeepSeek"}
+          {publicIdentity?.name[lang] ?? (lang === "zh" ? "作品集" : "Portfolio")} ·{" "}
+          {lang === "zh" ? "证据导向的双语作品集" : "Evidence-based bilingual portfolio"}
         </p>
 
         {count !== null && (
