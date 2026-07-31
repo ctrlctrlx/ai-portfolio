@@ -127,9 +127,20 @@ if (!resumeUrlMatch) {
   }
 }
 
+const guardedResumePatterns = [
+  [
+    "personalInfo.resumePdfUrl &&",
+    "href={personalInfo.resumePdfUrl}",
+  ],
+  [
+    "publicIdentity.resumePdfUrl &&",
+    "href={publicIdentity.resumePdfUrl}",
+  ],
+];
 if (
-  !homePageSource.includes("personalInfo.resumePdfUrl &&") ||
-  !homePageSource.includes("href={personalInfo.resumePdfUrl}")
+  !guardedResumePatterns.some(([guard, href]) =>
+    homePageSource.includes(guard) && homePageSource.includes(href)
+  )
 ) {
   report(homePagePath, "unguarded-resume-button");
 }
@@ -167,12 +178,27 @@ if (!/zh:\s*["']杨冲["']/.test(identitySource)) {
 if (!/en:\s*["']Yang Chong["']/.test(identitySource)) {
   report(identityPath, "incorrect-public-profile-name-en");
 }
-if (
-  !publicProfileSource.includes(
-    'import { identity } from "@/src/data/profile/identity";'
-  )
-) {
+if (!publicProfileSource.includes("publicIdentity")) {
   report(publicProfilePath, "public-profile-bypasses-identity-source");
+}
+
+const legacyConsumerPatterns = [
+  {
+    name: "resumeData",
+    pattern: /from\s+["']@\/src\/data\/resumeData["']/,
+  },
+  {
+    name: "publicProfile",
+    pattern: /from\s+["']@\/src\/data\/publicProfile["']/,
+  },
+];
+
+for (const { filePath, content } of publicRouteSources) {
+  for (const { name, pattern } of legacyConsumerPatterns) {
+    if (pattern.test(content)) {
+      report(filePath, `legacy-${name}-consumer`);
+    }
+  }
 }
 
 if (errors.length > 0) {
