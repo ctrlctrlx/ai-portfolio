@@ -44,7 +44,6 @@ const printButtonSource = readFileSync(printButtonPath, "utf8");
 for (const collectionName of [
   "publicIdentity",
   "publicEducation",
-  "publicResearchAreas",
   "publicProjects",
   "publicSkills",
   "publicAwards",
