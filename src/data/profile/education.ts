@@ -32,8 +32,8 @@ export const education: EducationEntry[] = [
     },
     degree: { zh: "本科", en: "Bachelor's" },
     major: { zh: "电子信息工程", en: "Electronic Information Engineering" },
-    startDate: "2018.09",
-    endDate: "2022.06",
+    startDate: "2019.09",
+    endDate: "2023.06",
     highlights: [],
   },
 ];
