@@ -17,7 +17,6 @@ import PublicationCard from "@/src/components/PublicationCard";
 import {
   getContactHref,
   getPublicContact,
-  getPublicProjectBySlug,
   getSortedPublicProjects,
   publicEducation,
   publicIdentity,
@@ -347,67 +346,6 @@ export default async function HomePage({
               </article>
             ))}
           </div>
-        </section>
-      )}
-
-      {publicResearchAreas.length > 0 && (
-        <section aria-labelledby="home-research-heading">
-          <div>
-            <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
-              {locale === "zh" ? "当前关注" : "Current Focus"}
-            </p>
-            <h2
-              id="home-research-heading"
-              className="mt-2 text-2xl font-bold"
-              style={{ color: "var(--foreground)" }}
-            >
-              {locale === "zh" ? "研究方向" : "Research Focus"}
-            </h2>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {publicResearchAreas.map((area) => {
-              const relatedProjects = area.relatedProjectSlugs
-                .map(getPublicProjectBySlug)
-                .filter((project) => project !== null);
-
-              return (
-                <article
-                  key={area.id}
-                  className="rounded-2xl border p-6"
-                  style={{ borderColor: "var(--card-border)" }}
-                >
-                  <h3
-                    className="font-semibold leading-7"
-                    style={{ color: "var(--foreground)" }}
-                  >
-                    {area.title[locale]}
-                  </h3>
-                  {relatedProjects.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-3">
-                      {relatedProjects.map((project) => (
-                        <Link
-                          key={project.id}
-                          href={`/${locale}/projects/${project.slug}`}
-                          className="text-sm hover:underline"
-                          style={{ color: "var(--accent)" }}
-                        >
-                          {project.title[locale]} →
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-          <Link
-            href={`/${locale}/research`}
-            className="mt-5 inline-flex items-center gap-1 text-sm hover:underline"
-            style={{ color: "var(--accent)" }}
-          >
-            {locale === "zh" ? "进入研究页" : "Open research page"}
-            <ArrowRight size={14} aria-hidden="true" />
-          </Link>
         </section>
       )}
 

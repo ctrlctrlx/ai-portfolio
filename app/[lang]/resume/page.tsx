@@ -10,7 +10,6 @@ import {
   publicIdentity,
   publicPatents,
   publicProjects,
-  publicResearchAreas,
   publicSkills,
 } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
@@ -159,20 +158,6 @@ export default async function ResumePage({
         </section>
       )}
 
-      {publicResearchAreas.length > 0 && (
-        <section className="resume-section mt-10" aria-labelledby="resume-research">
-          <h2 id="resume-research" className="resume-heading">
-            {locale === "zh" ? "研究方向" : "Research Interests"}
-          </h2>
-          <ul className="mt-4 space-y-2">
-            {publicResearchAreas.map((area) => (
-              <li key={area.id} className="text-sm leading-6">
-                {area.title[locale]}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {publicProjects.length > 0 && (
         <section className="resume-section mt-10" aria-labelledby="resume-projects">
