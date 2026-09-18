@@ -1,6 +1,14 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  EMAIL_APPROVED_FILES,
+  extractPdfText,
+  findEmails,
+  hasUnapprovedPhoneNumber,
+  scanPdfRawText,
+} from "./lib-approved-contacts.mjs";
+import { isDeclaredPendingAsset } from "./lib-pending-assets.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const publicRoots = ["app", "src", "content", "public"];
@@ -17,6 +25,7 @@ const readableExtensions = new Set([
   ".tsx",
 ]);
 const errors = [];
+const notices = [];
 
 function toRepositoryPath(filePath) {
   return relative(repositoryRoot, filePath).split(sep).join("/");
@@ -63,7 +72,6 @@ const forbiddenRules = [
     rule: "forbidden-phone-number-email",
     pattern: /\b1[3-9]\d{9}@[a-z0-9.-]+\.[a-z]{2,}\b/i,
   },
-  { rule: "forbidden-phone-number", pattern: /\b1[3-9]\d{9}\b/ },
   { rule: "forbidden-fixed-visitor-count", pattern: /\b1024\b/ },
   {
     rule: "unsupported-ai-claim",
@@ -78,9 +86,22 @@ for (const { filePath, content } of implementationFiles) {
   }
 }
 
+/**
+ * 手机号校验：本人已授权公开 APPROVED_PHONE，但仅限白名单文件
+ * （见 scripts/lib-approved-contacts.mjs）。其它任何 11 位号码仍然拦截。
+ */
+const phoneApprovedFile = "src/data/profile/identity.ts";
+for (const { filePath, content } of implementationFiles) {
+  if (toRepositoryPath(filePath) === phoneApprovedFile) continue;
+  if (hasUnapprovedPhoneNumber(content)) {
+    report(filePath, "forbidden-unapproved-phone-number");
+  }
+}
+
 const localAssetPattern =
   /["'`](\/(?!\/)[^"'`\s?#]+\.(?:gif|ico|jpe?g|pdf|png|svg|webp))(?:[?#][^"'`]*)?["'`]/gi;
 const checkedAssets = new Set();
+const pendingAssets = new Set();
 
 for (const { filePath, content } of implementationFiles) {
   for (const match of content.matchAll(localAssetPattern)) {
@@ -94,39 +115,86 @@ for (const { filePath, content } of implementationFiles) {
       join(repositoryRoot, "app", relativeAssetPath),
     ];
 
-    if (!candidates.some((candidate) => existsSync(candidate) && statSync(candidate).isFile())) {
-      report(filePath, "missing-local-static-asset");
+    if (candidates.some((candidate) => existsSync(candidate) && statSync(candidate).isFile())) {
+      continue;
     }
+
+    // 已登记「待放置」的资产：跳过存在性检查并提示，文件放入后提示自动消失
+    if (isDeclaredPendingAsset(publicPath)) {
+      pendingAssets.add(publicPath);
+      continue;
+    }
+
+    report(filePath, "missing-local-static-asset");
   }
 }
 
+if (pendingAssets.size > 0) {
+  notices.push(
+    `${pendingAssets.size} reserved asset(s) not yet placed in public/ (expected, files pending upload)`
+  );
+}
+
 const identityPath = join(repositoryRoot, "src", "data", "profile", "identity.ts");
-const homePagePath = join(repositoryRoot, "app", "[lang]", "page.tsx");
 const identitySource = readFileSync(identityPath, "utf8");
-const homePageSource = readFileSync(homePagePath, "utf8");
 const approvedEmail = "yangc202706@163.com";
 const publicEmailMatches = implementationFiles.flatMap(({ filePath, content }) =>
-  [...content.matchAll(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi)].map(
-    (match) => ({ filePath, value: match[0] })
-  )
+  findEmails(content).map((value) => ({ filePath, value }))
 );
 for (const match of publicEmailMatches) {
-  if (match.value !== approvedEmail || match.filePath !== identityPath) {
+  const repositoryPath = toRepositoryPath(match.filePath);
+  if (
+    match.value !== approvedEmail ||
+    !EMAIL_APPROVED_FILES.has(repositoryPath)
+  ) {
     report(match.filePath, "unapproved-or-hardcoded-public-email");
   }
 }
 if (
   publicEmailMatches.filter(
-    (match) => match.filePath === identityPath && match.value === approvedEmail
+    (match) => toRepositoryPath(match.filePath) === "src/data/profile/identity.ts"
   ).length !== 1
 ) {
   report(identityPath, "approved-public-email-not-unique");
 }
 
-if (
-  /download\s*=|Download Resume|下载简历|\.pdf\b/i.test(homePageSource)
-) {
-  report(homePagePath, "stale-pdf-download-entry");
+/**
+ * 正式版简历 PDF 必须存在，并且与公开内容遵守同一套隐私红线：
+ * 只允许出现已批准的联系方式，其它手机号 / 邮箱一律拦截。
+ */
+const resumePdfPath = join(repositoryRoot, "public", "resume.pdf");
+if (!existsSync(resumePdfPath)) {
+  report(resumePdfPath, "missing-resume-pdf-asset");
+} else {
+  const pdfBuffer = readFileSync(resumePdfPath);
+  if (pdfBuffer.subarray(0, 5).toString("latin1") !== "%PDF-") {
+    report(resumePdfPath, "resume-pdf-invalid-header");
+  }
+  const extracted = extractPdfText(resumePdfPath);
+  if (!extracted.ok) {
+    // 本机没有 PDF 文字提取器时退回字节级扫描；正式验收请在有 pdftotext 的环境复跑
+    notices.push(`resume-pdf-text-not-audited:${extracted.reason}`);
+    const raw = scanPdfRawText(resumePdfPath);
+    if (hasUnapprovedPhoneNumber(raw)) {
+      report(resumePdfPath, "resume-pdf-unapproved-phone-number");
+    }
+    for (const email of findEmails(raw)) {
+      if (email !== approvedEmail) {
+        report(resumePdfPath, "resume-pdf-unapproved-email-address");
+      }
+    }
+  } else if (extracted.text.trim().length < 200) {
+    report(resumePdfPath, "resume-pdf-text-too-short-to-audit");
+  } else {
+    if (hasUnapprovedPhoneNumber(extracted.text)) {
+      report(resumePdfPath, "resume-pdf-unapproved-phone-number");
+    }
+    for (const email of findEmails(extracted.text)) {
+      if (email !== approvedEmail) {
+        report(resumePdfPath, "resume-pdf-unapproved-email-address");
+      }
+    }
+  }
 }
 
 const publicAssetNames = walk(join(repositoryRoot, "public")).map((filePath) =>
@@ -194,6 +262,10 @@ for (const { filePath, content } of publicRouteSources) {
   }
 }
 
+for (const notice of notices) {
+  console.log(`Public content verification notice: ${notice}`);
+}
+
 if (errors.length > 0) {
   for (const error of [...new Set(errors)].sort()) {
     console.error(`Public content verification failed: ${error}`);
@@ -201,6 +273,6 @@ if (errors.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `Public content verification passed (${implementationFiles.length} public text files, ${checkedAssets.size} local assets).`
+    `Public content verification passed (${implementationFiles.length} public text files, ${checkedAssets.size} local assets, resume.pdf audited).`
   );
 }

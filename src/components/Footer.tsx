@@ -66,7 +66,7 @@ export default function Footer({ lang }: { lang: Locale }) {
               style={{
                 background: "#4ade80",
                 boxShadow: "0 0 6px #4ade80",
-                animation: "pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
+                animation: "visitor-pulse 2s cubic-bezier(0.4,0,0.6,1) infinite",
               }}
             />
             <span>

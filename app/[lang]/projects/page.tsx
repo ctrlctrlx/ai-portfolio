@@ -73,13 +73,13 @@ export default async function ProjectsPage({
           {projects.map((proj) => (
           <article
             key={proj.id}
-            className="rounded-xl border overflow-hidden"
+            className="group overflow-hidden rounded-xl border transition-all duration-200 hover:border-[var(--accent)] hover:shadow-lg motion-reduce:transition-none"
             style={{ background: "var(--card)", borderColor: "var(--card-border)" }}
           >
             {/* Header */}
             <div className="p-6 border-b" style={{ borderColor: "var(--card-border)" }}>
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2">
                   {proj.featured && (
                     <span
                       className="text-xs px-2 py-0.5 rounded-full border font-medium"
@@ -92,13 +92,65 @@ export default async function ProjectsPage({
                     {proj.title[locale]}
                   </h2>
                 </div>
-                <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>
-                  {proj.startDate} – {proj.endDate}
-                </span>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>
+                    {proj.startDate} – {proj.endDate}
+                  </span>
+                  {/* 项目角色徽章：固定在卡片右上角 */}
+                  <span
+                    className="shrink-0 rounded-full px-3 py-1 text-xs font-semibold"
+                    style={{
+                      background: "var(--accent)",
+                      color: "var(--accent-foreground)",
+                    }}
+                  >
+                    {proj.role[locale]}
+                  </span>
+                </div>
               </div>
-              <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
+              <p className="mt-1.5 text-sm" style={{ color: "var(--muted)" }}>
                 {proj.subtitle[locale]}
               </p>
+
+              {/* 核心量化数据：主题色加粗高亮 */}
+              {proj.metrics.length > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5">
+                  {proj.metrics.map((metric) => (
+                    <li
+                      key={metric.zh}
+                      className="flex items-center gap-2 text-sm font-semibold"
+                      style={{ color: "var(--accent)" }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ background: "var(--accent)" }}
+                      />
+                      {metric[locale]}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {/* 核心亮点 */}
+              {proj.highlights.length > 0 && (
+                <ul className="mt-3 grid gap-1.5 sm:grid-cols-3">
+                  {proj.highlights.map((highlight) => (
+                    <li
+                      key={highlight.zh}
+                      className="flex items-start gap-2 text-xs leading-5"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ background: "var(--card-border)" }}
+                      />
+                      {highlight[locale]}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {/* Links */}
               <div className="mt-3 flex flex-wrap gap-3">
@@ -173,35 +225,43 @@ export default async function ProjectsPage({
               ))}
             </div>
 
-            {/* Tech Stack */}
+            {/* Tech Tags */}
             <div
-              className="px-6 py-4 border-t flex flex-wrap gap-2"
+              className="px-6 py-4 border-t flex flex-wrap items-center gap-2"
               style={{ borderColor: "var(--card-border)" }}
             >
-              <span className="text-xs font-medium mr-1" style={{ color: "var(--muted)" }}>
-                {locale === "zh" ? "技术栈：" : "Stack:"}
+              <span className="mr-1 text-xs font-medium" style={{ color: "var(--muted)" }}>
+                {locale === "zh" ? "技术标签：" : "Tech tags:"}
               </span>
-              {proj.coreSkill.map((skill) => (
+              {proj.techTags.map((tag) => (
                 <span
-                  key={skill}
-                  className="text-xs px-2 py-0.5 rounded border"
-                  style={{ color: "var(--muted)", borderColor: "var(--card-border)" }}
+                  key={tag}
+                  className="rounded-full border px-2.5 py-1 text-xs"
+                  style={{
+                    background: "var(--tag-bg)",
+                    color: "var(--tag-text)",
+                    borderColor: "var(--tag-border)",
+                  }}
                 >
-                  {skill}
+                  {tag}
                 </span>
               ))}
             </div>
 
             {/* Interview Focus — collapsible via details/summary */}
             <details
-              className="border-t"
+              className="group/details border-t"
               style={{ borderColor: "var(--card-border)" }}
             >
               <summary
                 className="px-6 py-3 flex items-center gap-2 cursor-pointer select-none text-sm font-medium list-none"
                 style={{ color: "var(--muted)" }}
               >
-                <ChevronDown size={14} className="transition-transform details-open:rotate-180" />
+                <ChevronDown
+                  size={14}
+                  className="transition-transform group-open/details:rotate-180 motion-reduce:transition-none"
+                  aria-hidden="true"
+                />
                 {locale === "zh" ? "面试重点解析" : "Interview Focus Points"}
               </summary>
               <ul className="px-6 pb-5 space-y-2">

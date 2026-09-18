@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink, Github } from "lucide-react";
+import ProjectDocuments from "@/src/components/ProjectDocuments";
+import ImageGallery from "@/src/components/ImageGallery";
 import {
   getPublicProjectBySlug,
   publicIdentity,
@@ -184,28 +186,84 @@ export default async function ProjectDetailPage({
         </div>
       </section>
 
+      {/* 核心量化数据：主题色加粗高亮 */}
+      {project.metrics.length > 0 && (
+        <section className="mt-10">
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "核心量化数据" : "Key Quantitative Results"}
+          </h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {project.metrics.map((metric) => (
+              <li
+                key={metric.zh}
+                className="flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold"
+                style={{
+                  color: "var(--accent)",
+                  background: "var(--tag-bg)",
+                  borderColor: "var(--tag-border)",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: "var(--accent)" }}
+                />
+                {metric[locale]}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* 项目展示：位于「项目描述（STAR 叙述）」与「技术标签」之间 */}
+      {project.images.length > 0 && (
+        <section className="mt-10" aria-labelledby="project-gallery-heading">
+          <h2
+            id="project-gallery-heading"
+            className="text-lg font-semibold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "项目展示" : "Project Gallery"}
+          </h2>
+          <ImageGallery
+            images={project.images}
+            locale={locale}
+            lightboxLabel={{
+              zh: "项目展示图片预览",
+              en: "Project image preview",
+            }}
+          />
+        </section>
+      )}
+
       <section className="mt-10">
         <h2
           className="text-lg font-semibold"
           style={{ color: "var(--foreground)" }}
         >
-          {locale === "zh" ? "核心技能与技术栈" : "Core skills and stack"}
+          {locale === "zh" ? "技术标签" : "Technology Tags"}
         </h2>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {project.coreSkill.map((skill) => (
-            <span
-              key={skill}
-              className="rounded-full border px-3 py-1 text-xs"
-              style={{
-                background: "var(--tag-bg)",
-                color: "var(--tag-text)",
-                borderColor: "var(--tag-border)",
-              }}
-            >
-              {skill}
-            </span>
-          ))}
-        </div>
+        {/* 技术标签 = 展示用 techTags + 项目亮点，保证与卡片标签一致 */}
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {[...project.techTags, ...project.highlights.map((h) => h[locale])].map(
+            (tag) => (
+              <li
+                key={tag}
+                className="rounded-full border px-3 py-1 text-xs"
+                style={{
+                  background: "var(--tag-bg)",
+                  color: "var(--tag-text)",
+                  borderColor: "var(--tag-border)",
+                }}
+              >
+                {tag}
+              </li>
+            )
+          )}
+        </ul>
       </section>
 
       {project.interviewFocus.length > 0 && (
@@ -232,6 +290,20 @@ export default async function ProjectDetailPage({
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* 相关文档下载：位于详情页底部 */}
+      {project.documents.length > 0 && (
+        <section className="mt-10" aria-labelledby="project-documents-heading">
+          <h2
+            id="project-documents-heading"
+            className="text-lg font-semibold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "相关文档下载" : "Related Documents"}
+          </h2>
+          <ProjectDocuments documents={project.documents} locale={locale} />
         </section>
       )}
     </article>

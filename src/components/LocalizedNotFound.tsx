@@ -25,8 +25,8 @@ export default async function LocalizedNotFound() {
       </p>
       <Link
         href={`/${locale}`}
-        className="inline-flex mt-8 px-4 py-2 rounded-lg text-sm font-medium text-white"
-        style={{ background: "var(--accent)" }}
+        className="inline-flex mt-8 px-4 py-2 rounded-lg text-sm font-medium"
+        style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
       >
         {locale === "zh" ? "返回首页" : "Back to home"}
       </Link>

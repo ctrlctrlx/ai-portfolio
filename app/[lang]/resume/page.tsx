@@ -1,10 +1,11 @@
-import { ExternalLink, Mail } from "lucide-react";
+import { ExternalLink, Mail, MessageCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PatentCard from "@/src/components/PatentCard";
-import PrintResumeButton from "@/src/components/PrintResumeButton";
+import ResumeDownloadButton from "@/src/components/ResumeDownloadButton";
 import {
   getContactHref,
+  publicAbout,
   publicAwards,
   publicEducation,
   publicIdentity,
@@ -70,6 +71,34 @@ export default async function ResumePage({
           borderColor: "var(--card-border)",
         }}
       >
+        {/*
+          正式版下载入口：ResumeDownloadButton 统一指向 public/resume.pdf
+          （本地上传的正式版简历），网页版仅用于在线浏览，不再提供浏览器打印入口。
+        */}
+        <div
+          className="mb-6 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+          style={{
+            borderColor: "var(--accent)",
+            background: "var(--tag-bg)",
+          }}
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-semibold" style={{ color: "var(--tag-text)" }}>
+              {locale === "zh" ? "正式版简历 PDF" : "Formal resume PDF"}
+            </p>
+            <p className="mt-1 text-xs leading-5" style={{ color: "var(--muted)" }}>
+              {locale === "zh"
+                ? "本页为在线浏览版；投递请下载排版固定的正式版 PDF。"
+                : "This page is the online version. For applications, download the fixed-layout formal PDF."}
+            </p>
+          </div>
+          <ResumeDownloadButton
+            locale={locale}
+            variant="primary"
+            label={locale === "zh" ? "下载正式简历 PDF" : "Download formal resume PDF"}
+          />
+        </div>
+
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
@@ -84,44 +113,63 @@ export default async function ResumePage({
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
               {identity.tagline[locale]}
             </p>
+            {publicAbout && (
+              <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
+                {locale === "zh" ? "求职意向：" : "Target roles: "}
+                {publicAbout.jobTargets.map((target) => target[locale]).join(" / ")}
+              </p>
+            )}
           </div>
-          <PrintResumeButton locale={locale} />
         </div>
 
-        {identity.contacts.length > 0 && (
-          <address className="mt-6 flex flex-wrap gap-x-5 gap-y-2 not-italic">
-            {identity.contacts.map((contact) => {
-              const isEmail = contact.kind === "email";
-              return (
-                <a
-                  key={contact.id}
-                  href={getContactHref(contact)}
-                  {...(!isEmail
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                  className="inline-flex min-w-0 items-center gap-1.5 break-all text-xs hover:underline sm:text-sm"
-                  style={{ color: "var(--foreground)" }}
-                  aria-label={
-                    isEmail
-                      ? locale === "zh"
-                        ? `发送邮件至 ${contact.value}`
-                        : `Email ${contact.value}`
-                      : locale === "zh"
-                        ? `${contact.label.zh}（新窗口打开）`
-                        : `${contact.label.en} (opens in a new tab)`
-                  }
-                >
-                  {isEmail ? (
-                    <Mail size={13} aria-hidden="true" />
-                  ) : (
-                    <ExternalLink size={13} aria-hidden="true" />
-                  )}
-                  {contact.value}
-                </a>
-              );
-            })}
-          </address>
-        )}
+        <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
+          {identity.contacts.length > 0 && (
+            <address className="flex flex-wrap gap-x-5 gap-y-2 not-italic">
+              {identity.contacts.map((contact) => {
+                const isEmail = contact.kind === "email";
+                return (
+                  <a
+                    key={contact.id}
+                    href={getContactHref(contact)}
+                    {...(!isEmail
+                      ? { target: "_blank", rel: "noopener noreferrer" }
+                      : {})}
+                    className="inline-flex min-w-0 items-center gap-1.5 break-all text-xs hover:underline sm:text-sm"
+                    style={{ color: "var(--foreground)" }}
+                    aria-label={
+                      isEmail
+                        ? locale === "zh"
+                          ? `发送邮件至 ${contact.value}`
+                          : `Email ${contact.value}`
+                        : locale === "zh"
+                          ? `${contact.label.zh}（新窗口打开）`
+                          : `${contact.label.en} (opens in a new tab)`
+                    }
+                  >
+                    {isEmail ? (
+                      <Mail size={13} aria-hidden="true" />
+                    ) : (
+                      <ExternalLink size={13} aria-hidden="true" />
+                    )}
+                    {contact.value}
+                  </a>
+                );
+              })}
+            </address>
+          )}
+
+          {/* 微信等其余联系方式来自 about.contacts，与首页/联系我页保持一致 */}
+          {publicAbout?.contacts.map((contact) => (
+            <span
+              key={contact.id}
+              className="inline-flex min-w-0 items-center gap-1.5 break-all text-xs sm:text-sm"
+              style={{ color: "var(--foreground)" }}
+            >
+              <MessageCircle size={13} aria-hidden="true" />
+              {contact.label[locale]}：{contact.value[locale]}
+            </span>
+          ))}
+        </div>
       </header>
 
       {publicEducation.length > 0 && (
@@ -172,13 +220,24 @@ export default async function ResumePage({
                 style={{ borderColor: "var(--card-border)" }}
               >
                 <div className="flex flex-wrap justify-between gap-2">
-                  <h3 className="font-semibold">{project.title[locale]}</h3>
+                  <h3 className="font-semibold">
+                    {project.title[locale]}
+                    <span
+                      className="ml-2 text-xs font-normal"
+                      style={{ color: "var(--muted)" }}
+                    >
+                      {project.role[locale]}
+                    </span>
+                  </h3>
                   <span className="text-xs" style={{ color: "var(--muted)" }}>
                     {project.startDate} – {project.endDate}
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6" style={{ color: "var(--muted)" }}>
                   {project.subtitle[locale]}
+                </p>
+                <p className="mt-2 text-xs leading-5" style={{ color: "var(--foreground)" }}>
+                  {project.result[locale]}
                 </p>
                 <p className="mt-2 text-xs leading-5" style={{ color: "var(--muted)" }}>
                   {project.coreSkill.join(" · ")}

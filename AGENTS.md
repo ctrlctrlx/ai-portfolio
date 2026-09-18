@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Project Goal
 
@@ -36,9 +36,7 @@ The website should emphasize:
 
 Never expose or commit:
 
-- Phone number.
 - Birthday.
-- Political affiliation.
 - Student number.
 - Supervisor number.
 - Home or institutional street address.
@@ -47,6 +45,30 @@ Never expose or commit:
 - Animal surgical instructions or drug dosage details.
 - Raw private research datasets.
 - API keys, tokens, passwords, or environment secrets.
+
+### Explicitly authorised exceptions
+
+Two fields are published **only** because the subject gave explicit authorisation.
+Both are declared in one place — `scripts/lib-approved-contacts.mjs` — and are
+enforced there:
+
+- **Phone number** (`18716985140`). Allowed only in
+  `src/data/profile/identity.ts` and `public/resume.pdf`. Any other 11-digit
+  number anywhere in `app/`, `src/`, `content/`, or `public/` still fails
+  verification.
+- **Political affiliation** (`政治面貌`). Allowed only in
+  `src/data/profile/about.ts`, and never on the resume route.
+
+Removing either constant from that file re-enables the original blanket ban.
+Do not treat these as precedent for any other field in the list above, and do not
+weaken the checks by editing them ad hoc — change the single authorisation file so
+the exception stays auditable.
+
+`public/resume.pdf` is a downloadable asset. Its text is extracted and audited by
+`verify:content`, `verify:resume`, and `verify:deploy` so the PDF cannot smuggle in
+an unapproved email address or a different phone number. If no PDF text extractor
+is installed, those scripts emit a notice and fall back to a raw byte scan; run
+`npm run verify:all` on a machine with `pdftotext` before release.
 
 ## Development Rules
 

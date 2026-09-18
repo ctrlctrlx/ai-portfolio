@@ -1,5 +1,4 @@
 import {
-  formatAuthors,
   getPublicProjectBySlug,
   getSortedPublicProjects,
   publicAwards,
@@ -28,7 +27,6 @@ export const resumeData = {
 };
 
 export {
-  formatAuthors,
   getPublicProjectBySlug as getProjectBySlug,
   getSortedPublicProjects as getSortedProjects,
 };

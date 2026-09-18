@@ -1,5 +1,9 @@
 import type { MetadataRoute } from "next";
 import {
+  publicAbout,
+  publicAwards,
+  publicCompetitions,
+  publicCredentials,
   publicIdentity,
   publicPatents,
   publicProjects,
@@ -18,6 +22,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       `/${locale}/projects`,
       `/${locale}/blog`,
     ];
+    if (publicAbout) {
+      basePaths.push(`/${locale}/about`, `/${locale}/contact`);
+    }
+    if (
+      publicAwards.length > 0 ||
+      publicCompetitions.length > 0 ||
+      publicCredentials.length > 0
+    ) {
+      basePaths.push(`/${locale}/honors`);
+    }
     if (publicIdentity) {
       basePaths.push(`/${locale}/resume`);
     }

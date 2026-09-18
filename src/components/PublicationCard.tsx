@@ -1,6 +1,11 @@
 import { ExternalLink } from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
-import type { Publication, PublicationStatus } from "@/src/data/profile";
+import {
+  getPublicationAuthors,
+  publicIdentity,
+  type Publication,
+  type PublicationStatus,
+} from "@/src/data/profile";
 
 const statusLabels: Record<PublicationStatus, Record<Locale, string>> = {
   draft: { zh: "草稿", en: "Draft" },
@@ -40,10 +45,18 @@ export default function PublicationCard({
         </span>
       </div>
       <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-        {publication.authors.map((author) => author.name).join(", ")}
+        {getPublicationAuthors(
+          publication,
+          publicIdentity?.name[locale] ?? "",
+          locale
+        )
+          .map((author) => author.name)
+          .join(", ")}
       </p>
       <p className="mt-1 text-xs italic" style={{ color: "var(--muted)" }}>
-        {publication.venue[locale]} · {publication.year}
+        {publication.month ? `${publication.month} · ` : ""}
+        {publication.venue[locale]}
+        {publication.authorRole ? ` · ${publication.authorRole[locale]}` : ""}
       </p>
       <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
         {publication.abstract[locale]}
