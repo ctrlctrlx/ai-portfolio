@@ -18,6 +18,7 @@ interface GalleryImage {
  *
  * - 多张图片自适应换行：移动端单列，sm 起两列，lg 起三列。
  * - 图片全部懒加载（loading="lazy"），滚动到可视区域才请求。
+ * - 由 next/image 自动输出 AVIF / WebP 并按 sizes 生成响应式 srcset，减少传输体积。
  * - 点击任意图片打开灯箱，支持关闭按钮、左右切换、键盘 Esc / ← / →。
  * - 图片路径由 profile 数据层提供，文件放入 public 后自动生效。
  * - 图片缺失时（文件尚未放入）展示占位块并标出预期路径，便于核对。
@@ -116,8 +117,10 @@ export default function ImageGallery({
                     alt={image.alt[locale]}
                     width={800}
                     height={600}
+                    /* 画廊图片全部懒加载：滚动到可视区域才请求 */
                     loading="lazy"
-                    unoptimized
+                    /* 移动端单列、sm 两列、lg 三列，按实际展示宽度取图 */
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     onError={() =>
                       setFailedSrc((previous) => ({
                         ...previous,
@@ -184,7 +187,10 @@ export default function ImageGallery({
                   alt={activeImage.alt[locale]}
                   width={1600}
                   height={1200}
-                  unoptimized
+                  /* 灯箱同样懒加载：打开时才需要更大尺寸的图 */
+                  loading="lazy"
+                  /* 灯箱最大宽度 max-w-5xl（64rem），小视口下取满宽 */
+                  sizes="(min-width: 1088px) 1024px, 100vw"
                   className="h-auto max-h-[70vh] w-full object-contain"
                 />
               )}

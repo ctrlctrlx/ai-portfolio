@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { ArrowLeft, Compass } from "lucide-react";
+import { ArrowLeft, Compass, FileText, FolderKanban, Mail, UserRound } from "lucide-react";
 import { headers } from "next/headers";
+import type { ElementType } from "react";
 import { defaultLocale, isValidLocale } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
+
+/** 单条快捷入口：只存文案与路由，图标按路径在组件内映射，字典保持纯文案 */
+interface NotFoundQuickLink {
+  href: string;
+  label: string;
+}
 
 /**
  * 404 页面双语文案。
@@ -13,7 +20,8 @@ interface NotFoundCopy {
   description: string;
   hint: string;
   backHome: string;
-  quickLinks: Array<{ href: string; label: string }>;
+  quickNavLabel: string;
+  quickLinks: NotFoundQuickLink[];
 }
 
 const notFoundCopy: Record<Locale, NotFoundCopy> = {
@@ -22,6 +30,7 @@ const notFoundCopy: Record<Locale, NotFoundCopy> = {
     description: "抱歉，你访问的链接可能已失效或地址输入有误。",
     hint: "如果你是招聘方，可先访问「关于我」与「项目经历」快速了解我的背景与成果。",
     backHome: "返回首页",
+    quickNavLabel: "快捷导航",
     quickLinks: [
       { href: "/about", label: "关于我" },
       { href: "/projects", label: "项目经历" },
@@ -32,15 +41,24 @@ const notFoundCopy: Record<Locale, NotFoundCopy> = {
   en: {
     title: "Page not found",
     description: "Sorry, this link may have expired or the address was mistyped.",
-    hint: "If you are a recruiter, start with About and Projects for a quick overview of my background and results.",
+    hint: "If you are a recruiter, you can view About and Projects to learn about my background and achievements.",
     backHome: "Back to home",
+    quickNavLabel: "Quick navigation",
     quickLinks: [
-      { href: "/about", label: "About" },
+      { href: "/about", label: "About Me" },
       { href: "/projects", label: "Projects" },
       { href: "/resume", label: "Resume" },
       { href: "/contact", label: "Contact" },
     ],
   },
+};
+
+/** 快捷入口图标：与首页 / 导航栏同类入口保持一致 */
+const quickLinkIcons: Record<string, ElementType> = {
+  "/about": UserRound,
+  "/projects": FolderKanban,
+  "/resume": FileText,
+  "/contact": Mail,
 };
 
 /**
@@ -69,25 +87,6 @@ export default async function LocalizedNotFound() {
         {copy.description}
       </p>
 
-      {/* 面向招聘方的友好提示 */}
-      <div
-        className="mt-6 flex items-start gap-3 rounded-2xl border p-4 text-left"
-        style={{
-          background: "var(--card)",
-          borderColor: "var(--card-border)",
-        }}
-      >
-        <Compass
-          size={16}
-          className="mt-0.5 shrink-0"
-          style={{ color: "var(--accent)" }}
-          aria-hidden="true"
-        />
-        <p className="text-sm leading-7" style={{ color: "var(--muted)" }}>
-          {copy.hint}
-        </p>
-      </div>
-
       <Link
         href={`/${locale}`}
         className="mt-8 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
@@ -97,20 +96,52 @@ export default async function LocalizedNotFound() {
         {copy.backHome}
       </Link>
 
-      {/* 常用入口，避免访客走到死路 */}
-      <ul className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
-        {copy.quickLinks.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={`/${locale}${link.href}`}
-              className="hover:underline"
-              style={{ color: "var(--accent)" }}
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {/*
+        面向招聘方的快捷导航卡片：位于「返回首页」按钮下方，
+        卡片风格与全站一致，移动端两列、sm 起四列，避免横向溢出。
+        按钮沿用全站现有按钮样式（边框 + 主题色 hover），无额外动画。
+      */}
+      <section
+        className="mt-8 rounded-2xl border p-5 text-left sm:p-6"
+        style={{
+          background: "var(--card)",
+          borderColor: "var(--card-border)",
+        }}
+        aria-label={copy.quickNavLabel}
+      >
+        <div className="flex items-start gap-3">
+          <Compass
+            size={16}
+            className="mt-0.5 shrink-0"
+            style={{ color: "var(--accent)" }}
+            aria-hidden="true"
+          />
+          <p className="text-sm leading-7" style={{ color: "var(--muted)" }}>
+            {copy.hint}
+          </p>
+        </div>
+
+        <ul className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {copy.quickLinks.map((link) => {
+            const Icon = quickLinkIcons[link.href] ?? Compass;
+            return (
+              <li key={link.href}>
+                <Link
+                  href={`/${locale}${link.href}`}
+                  className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:border-[var(--accent)] hover:bg-[var(--tag-bg)]"
+                  style={{
+                    borderColor: "var(--card-border)",
+                    color: "var(--foreground)",
+                  }}
+                >
+                  <Icon size={15} aria-hidden="true" />
+                  {link.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </main>
   );
 }

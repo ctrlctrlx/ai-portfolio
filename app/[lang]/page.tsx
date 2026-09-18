@@ -378,9 +378,13 @@ export default async function HomePage({
                 }
                 width={960}
                 height={720}
+                /* 首屏核心图片：eager + preload 优先加载，避免 LCP 延迟 */
+                loading="eager"
+                preload
+                fetchPriority="high"
+                /* 移动端卡片满宽，md 起固定为 24rem 卡片宽度 */
+                sizes="(max-width: 767px) 100vw, 384px"
                 className="h-full w-full object-cover object-center"
-                priority
-                unoptimized
               />
             </div>
           </div>
