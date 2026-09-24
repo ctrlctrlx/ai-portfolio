@@ -1,10 +1,5 @@
 import {
   ArrowRight,
-  BookOpen,
-  ExternalLink,
-  FileText,
-  Github,
-  Globe,
   Mail,
   MapPin,
   ScrollText,
@@ -13,32 +8,24 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import About from "@/src/components/About";
 import Contact from "@/src/components/Contact";
 import Education from "@/src/components/Education";
 import Honors from "@/src/components/Honors";
 import OpenChatButton from "@/src/components/OpenChatButton";
+import ResearchDirectionTags from "@/src/components/ResearchDirectionTags";
 import ResumeDownloadButton from "@/src/components/ResumeDownloadButton";
 import Skills from "@/src/components/Skills";
 import type { Project } from "@/src/data/profile";
 import {
-  getContactHref,
   getProjectsPublications,
-  getPublicContact,
   getSortedPublicProjects,
   publicAbout,
   publicEducation,
   publicIdentity,
-  publicResearchAreas,
+  publicPublications,
 } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
-
-const iconMap: Record<string, React.ElementType> = {
-  Github,
-  Globe,
-  Mail,
-};
 
 /**
  * 首页只展示最高权重的 2 个代表项目。
@@ -100,7 +87,7 @@ function ProjectPreviewCard({
     >
       <div className="flex items-start justify-between gap-3">
         <p className="pt-1 text-xs" style={{ color: "var(--muted)" }}>
-          {project.startDate} – {project.endDate}
+          {project.startDate} – {project.endDate[locale]}
         </p>
         {/* 项目角色徽章：固定在卡片右上角 */}
         <span
@@ -158,14 +145,19 @@ function ProjectPreviewCard({
         </p>
       ))}
 
-      <Link
-        href={`/${locale}/projects/${project.slug}`}
-        className="mt-auto inline-flex items-center gap-1 pt-6 text-sm font-medium hover:underline"
-        style={{ color: "var(--accent)" }}
-      >
-        {locale === "zh" ? "查看详情" : "View details"}
-        <ArrowRight size={14} aria-hidden="true" />
-      </Link>
+      <div className="mt-auto pt-6">
+        <Link
+          href={`/${locale}/projects/${project.slug}`}
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+          style={{
+            background: "var(--accent)",
+            color: "var(--accent-foreground)",
+          }}
+        >
+          {locale === "zh" ? "查看详情" : "View details"}
+          <ArrowRight size={15} aria-hidden="true" />
+        </Link>
+      </div>
     </article>
   );
 }
@@ -178,20 +170,36 @@ export default async function HomePage({
   const { lang } = await params;
   const locale = lang as Locale;
   if (!publicIdentity) notFound();
-  const identity = publicIdentity;
 
-  const oppositeLocale: Locale = locale === "zh" ? "en" : "zh";
+  const allProjects = getSortedPublicProjects();
   const featuredProjects = HOME_PROJECT_SLUGS.map((slug) =>
-    getSortedPublicProjects().find((project) => project.slug === slug)
+    allProjects.find((project) => project.slug === slug)
   ).filter((project): project is Project => project !== undefined);
+  /** 首屏核心亮点短句用到的可核验计数，直接从公开数据派生 */
+  const publicProjectCount = allProjects.length;
+  const eiPaperCount = publicPublications.filter(
+    (publication) => publication.publicationType === "ei-conference"
+  ).length;
   const currentEducation = publicEducation[0];
-  const publicEmail = getPublicContact("email");
-  const publicProfileLinks = publicIdentity.contacts.filter(
-    (contact) => contact.kind === "website" || contact.kind === "github"
-  );
+
+  /**
+   * 籍贯 · 现居行（政治面貌已独立成行，见下方 JSX）。
+   * 籍贯来自 about.nativePlace（本人已授权公开），现居来自 identity.location；
+   * 缺数据时对应片段自动省略。
+   */
+  const locationParts = [
+    publicAbout
+      ? locale === "zh"
+        ? `籍贯：${publicAbout.nativePlace.zh}`
+        : `Hometown: ${publicAbout.nativePlace.en}`
+      : null,
+    locale === "zh"
+      ? `现居：${publicIdentity.location.zh}`
+      : `Based in ${publicIdentity.location.en}`,
+  ].filter((part): part is string => part !== null);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-28 px-4 py-12 sm:space-y-32 sm:px-6 sm:py-16">
+    <div className="mx-auto max-w-6xl space-y-20 px-4 py-12 sm:space-y-22 sm:px-6 sm:py-16">
       <section className="relative overflow-hidden rounded-3xl border px-5 py-8 sm:px-10 sm:py-12"
         style={{
           background:
@@ -212,42 +220,85 @@ export default async function HomePage({
               style={{ color: "var(--foreground)" }}
             >
               {publicIdentity.name[locale]}
-              <span
-                className="ml-3 align-middle text-base font-normal sm:text-lg"
-                style={{ color: "var(--muted)" }}
-              >
-                {publicIdentity.name[oppositeLocale]}
-              </span>
+              {/*
+                中文姓名对照仅保留在中文首页；英文首页不再出现任何中文字符
+                （原「杨冲」副标题会以中文出现在 /en 首屏）。
+              */}
+              {locale === "zh" && (
+                <span
+                  className="ml-3 align-middle text-base font-normal sm:text-lg"
+                  style={{ color: "var(--muted)" }}
+                >
+                  {publicIdentity.name.en}
+                </span>
+              )}
             </h1>
             {currentEducation && (
-              <p className="mt-4 text-sm" style={{ color: "var(--muted)" }}>
-                {currentEducation.degree[locale]} · {currentEducation.major[locale]} ·{" "}
-                {currentEducation.institution[locale]} · {currentEducation.startDate} –{" "}
-                {currentEducation.endDate}
+              /*
+                学历信息行：按 HR 阅读优先级排序
+                「学校 | 专业 | 学位 | GPA | 起止时间」，全部取自 education.ts
+                结构化字段（GPA 与起止时间自动同步，无独立硬编码）。
+                视觉层级：正文主色 + 加粗 + text-base（较原次级小字提升一级），
+                权重仅次于姓名，与下方政治面貌行同级。
+
+                响应式：窄屏（<lg）两组各自成行——第一行「学校 | 专业」、
+                第二行「学位 | GPA | 起止时间」；桌面端（lg+）合并为单行。
+                组内分隔符写作「空格 + 竖线 + 不换行空格」，竖线始终跟随后一段文字，
+                不会单独滞留在行尾。
+              */
+              <p
+                className="mt-4 text-base font-semibold leading-7"
+                style={{ color: "var(--foreground)" }}
+              >
+                <span className="block lg:inline">
+                  {currentEducation.institution[locale]}
+                  {" |\u00A0"}
+                  {currentEducation.major[locale]}
+                </span>
+                {/* 组间分隔符仅桌面端显示；窄屏用换行体现两组界限，避免行尾滞留竖线 */}
+                <span className="hidden lg:inline">{" |\u00A0"}</span>
+                <span className="block lg:inline">
+                  {currentEducation.degree[locale]}
+                  {currentEducation.gpa && (
+                    <>
+                      {" |\u00A0"}GPA {currentEducation.gpa[locale]}
+                    </>
+                  )}
+                  {" |\u00A0"}
+                  {currentEducation.startDate} – {currentEducation.endDate}
+                </span>
               </p>
             )}
 
-            {/* 求职意向 */}
-            {publicAbout && publicAbout.jobTargets.length > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium" style={{ color: "var(--muted)" }}>
-                  {locale === "zh" ? "求职意向" : "Seeking"}
-                </span>
-                {publicAbout.jobTargets.map((target) => (
-                  <span
-                    key={target.zh}
-                    className="rounded-full border px-2.5 py-1 text-xs font-medium"
-                    style={{
-                      background: "var(--tag-bg)",
-                      color: "var(--tag-text)",
-                      borderColor: "var(--tag-border)",
-                    }}
-                  >
-                    {target[locale]}
-                  </span>
-                ))}
-              </div>
+            {/* 政治面貌行：独立成行，位于「求职方向」上方，与学历行同级视觉权重 */}
+            {publicAbout && (
+              <p
+                className="mt-2 text-base font-semibold leading-7"
+                style={{ color: "var(--foreground)" }}
+              >
+                {publicAbout.politicalStatus[locale]}
+              </p>
             )}
+
+            {/*
+              求职方向：名称/头衔下方的次级强调文字，替代原「求职意向」标签组，
+              避免同一处出现两套不同的求职目标表述；移动端自然换行，不溢出。
+              文案直接取 about.jobTargets，保证与简历页「求职意向」全站唯一口径。
+            */}
+            {publicAbout && publicAbout.jobTargets.length > 0 && (
+              <p
+                className="mt-4 max-w-2xl text-sm leading-7"
+                style={{ color: "var(--muted)" }}
+              >
+                {locale === "zh" ? "求职方向：" : "Job Objective: "}
+                {publicAbout.jobTargets.map((target) => target[locale]).join(" / ")}
+              </p>
+            )}
+
+            {/* 研究方向标签行：与项目经历页顶部标签统一样式，便于快速匹配研究领域 */}
+            <div className="mt-4">
+              <ResearchDirectionTags locale={locale} />
+            </div>
 
             {/* 一句话个人定位 */}
             {publicAbout && (
@@ -260,24 +311,30 @@ export default async function HomePage({
             )}
 
             <div
-              className="mt-4 flex items-center gap-1.5 text-xs"
+              className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs"
               style={{ color: "var(--muted)" }}
             >
               <MapPin size={13} aria-hidden="true" />
-              {publicIdentity.location[locale]}
+              {/* 籍贯 / 现居 / 政治面貌同一行，用间隔符分隔，不新增独立行 */}
+              <span>{locationParts.join(" · ")}</span>
             </div>
             <div className="mt-7 flex flex-wrap gap-3">
+              {/* 主操作：下载正式版简历 PDF（唯一实心主按钮，操作层级清晰） */}
+              <ResumeDownloadButton locale={locale} variant="primary" />
               <Link
                 href={`/${locale}/projects`}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
-                style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--card)]"
+                style={{
+                  borderColor: "var(--card-border)",
+                  color: "var(--foreground)",
+                }}
               >
                 {locale === "zh" ? "查看项目" : "View Projects"}
                 <ArrowRight size={15} aria-hidden="true" />
               </Link>
               {publicAbout && (
-                <a
-                  href="#about-heading"
+                <Link
+                  href={`/${locale}/about`}
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--card)]"
                   style={{
                     borderColor: "var(--card-border)",
@@ -285,79 +342,42 @@ export default async function HomePage({
                   }}
                 >
                   {locale === "zh" ? "关于我" : "About Me"}
-                </a>
-              )}
-              {publicResearchAreas.length > 0 && (
-                <Link
-                  href={`/${locale}/research`}
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--card)]"
-                  style={{
-                    borderColor: "var(--card-border)",
-                    color: "var(--foreground)",
-                  }}
-                >
-                  <BookOpen size={15} aria-hidden="true" />
-                  {locale === "zh" ? "了解研究" : "Explore Research"}
                 </Link>
               )}
               <OpenChatButton locale={locale} />
-              {publicEmail && (
-                <a
-                  href={getContactHref(publicEmail)}
+              {publicAbout && (
+                /*
+                  「联系我」改为站内路由跳转，与顶部导航栏最右侧入口指向完全一致
+                  （原为 mailto: 直接发邮件）。当前页跳转、不打开新标签页，
+                  按钮样式、图标与文字保持不变。
+                */
+                <Link
+                  href={`/${locale}/contact`}
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
                   style={{
                     borderColor: "var(--card-border)",
                     color: "var(--foreground)",
                   }}
-                  aria-label={
-                    locale === "zh"
-                      ? `发送邮件至公开求职邮箱 ${publicEmail.value}`
-                      : `Email the public contact address ${publicEmail.value}`
-                  }
                 >
                   <Mail size={15} aria-hidden="true" />
                   {locale === "zh" ? "联系我" : "Contact"}
-                </a>
+                </Link>
               )}
-              <Link
-                href={`/${locale}/resume`}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium hover:bg-[var(--card)]"
-                style={{
-                  borderColor: "var(--card-border)",
-                  color: "var(--foreground)",
-                }}
-              >
-                <FileText size={15} aria-hidden="true" />
-                {locale === "zh" ? "在线简历" : "Resume"}
-              </Link>
-              {/* 正式版简历下载：指向本地 public/resume.pdf */}
-              <ResumeDownloadButton locale={locale} />
+              {/* 「在线简历」与「了解研究」按钮已移除：研究内容整合进项目经历页 */}
             </div>
-            {publicProfileLinks.length > 0 && (
-              <div className="mt-5 flex flex-wrap gap-3">
-                {publicProfileLinks.map((contact) => {
-                  const Icon = iconMap[contact.icon ?? ""] ?? ExternalLink;
-                  return (
-                    <a
-                      key={contact.id}
-                      href={getContactHref(contact)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs hover:underline"
-                      style={{ color: "var(--muted)" }}
-                      aria-label={
-                        locale === "zh"
-                          ? `${identity.name.zh}的${contact.label.zh}（新窗口打开）`
-                          : `${identity.name.en}'s ${contact.label.en} (opens in a new tab)`
-                      }
-                    >
-                      <Icon size={13} aria-hidden="true" />
-                      {contact.label[locale]}
-                    </a>
-                  );
-                })}
-              </div>
-            )}
+            {/*
+              核心亮点短句：数量由数据层派生（EI 会议论文数 / 公开落地项目数），
+              不在组件内硬编码个人事实，数据变动时文案自动跟随。
+            */}
+            <p
+              className="mt-4 max-w-2xl text-sm leading-7"
+              style={{ color: "var(--muted)" }}
+            >
+              {locale === "zh"
+                ? `软硬协同工程型硕士 | ${eiPaperCount}篇EI会议论文 | ${publicProjectCount}个落地项目`
+                : `Engineering Master with Software-Hardware Skills | ${eiPaperCount} EI Papers | ${publicProjectCount} Field Projects`}
+            </p>
+            {/* 个人网站 / GitHub 外链小图标组已按需求从首屏移除，联系方式统一收敛到在线简历页与页脚 */}
           </div>
           {/* 照片卡片：PC 端明显放大为矩形，移动端限制宽度并居中，不与正文重叠 */}
           <div className="mx-auto w-full max-w-[21rem] md:mx-0 md:max-w-[24rem] md:justify-self-end">
@@ -393,13 +413,13 @@ export default async function HomePage({
 
       {/*
         首页板块顺序（严格遵循）：
-        Hero 首屏 → 个人简介（精简）→ 教育经历 → 荣誉与资质（预览）
-        → 技能栈（精简）→ 代表项目（2 个预览卡片）→ 联系我
-        完整内容全部下沉：实践经历与核心优势 → /[lang]/about，
+        Hero 首屏 → 教育经历 → 荣誉与资质（预览）→ 技能栈（精简）
+        → 代表项目（2 个预览卡片）→ 联系我
+        个人简介板块已整体移除（正文与完整三段式简介下沉到 /[lang]/about），
+        首屏因此承担定位表达，并新增一行核心亮点短句。
+        完整内容下沉：个人简介与实践经历/核心优势 → /[lang]/about，
         全部荣誉/竞赛/证书/论文 → /[lang]/honors，第三项目与全部指标 → /[lang]/projects。
       */}
-      {publicAbout && <About locale={locale} summaryOnly />}
-
       <Education locale={locale} />
 
       <Honors locale={locale} variant="preview" />
@@ -438,7 +458,7 @@ export default async function HomePage({
         </section>
       )}
 
-      {publicAbout && <Contact locale={locale} />}
+      {publicAbout && <Contact locale={locale} showPhone />}
     </div>
   );
 }

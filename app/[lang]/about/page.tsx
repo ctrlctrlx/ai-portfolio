@@ -23,8 +23,8 @@ export async function generateMetadata({
   const title = locale === "zh" ? `关于我 | ${name}` : `About | ${name}`;
   const description =
     locale === "zh"
-      ? `${name}的个人简介、政治面貌与三大核心优势：全栈工程能力、严谨科研素养、综合素质过硬。`
-      : `${name}'s profile, political status, and three core strengths: full-stack engineering, rigorous research practice, and comprehensive capability.`;
+      ? `${name}的个人定位、研究方向、教育与实践经历、三大核心优势与政治面貌。`
+      : `${name}'s positioning, research directions, education and practical experience, core strengths, and political status.`;
   const pageUrl = getAbsolutePageUrl(`/${locale}/about`);
 
   return {
@@ -59,13 +59,11 @@ export default async function AboutPage({
         >
           {locale === "zh" ? "关于我" : "About Me"}
         </h1>
-        {/* 完整版个人简介：首页只展示精简 summary，此处保留全量 bio */}
-        <p
-          className="mt-4 text-sm leading-8"
-          style={{ color: "var(--muted)" }}
-        >
-          {publicIdentity.bio[locale]}
-        </p>
+        {/*
+          原此处重复渲染 publicIdentity.bio，与下方 About 组件的「个人简介」板块完全一致；
+          已移除，bio 只在 About 内渲染一次，页面结构改为：
+          个人定位 → 研究方向 → 教育经历 → 实践经历 → 能力特点 → 政治面貌。
+        */}
         <div className="mt-6">
           <ResumeDownloadButton locale={locale} />
         </div>
@@ -75,9 +73,9 @@ export default async function AboutPage({
         <About locale={locale} />
       </div>
 
-      {/* 联系我：与首页、联系我页共用同一组件，保证全站联系方式一致 */}
+      {/* 联系我：与首页、联系我页共用同一组件；三处均展示邮箱/微信/电话三项 */}
       <div className="mt-16">
-        <Contact locale={locale} />
+        <Contact locale={locale} showPhone />
       </div>
     </div>
   );

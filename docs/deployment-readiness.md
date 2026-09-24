@@ -5,7 +5,7 @@
 ## 已完成的工程能力
 
 - 统一的 Profile 事实数据层与 public + verified 过滤
-- 中英文首页、项目页、项目详情、研究页、荣誉与资质页和在线公开简历
+- 中英文首页、项目经历页（含研究领域总览筛选与学术成果/专利）、项目详情、荣誉与资质页和在线公开简历
 - 两篇 EI 会议论文的完整学术成果展示，与项目①互相关联
 - `public/resume.pdf` 正式版简历下载，PDF 文字纳入隐私审计
 - 一项已核验实用新型专利展示
@@ -13,7 +13,10 @@
 - 内容、Profile、Chat 和部署准备专项验证脚本
 - 基于确认域名的 canonical、Open Graph URL、robots 与 sitemap 条目
 - `.env.example` 与安全的站点 URL 校验
-- 已授权公开的手机号 / 政治面貌集中在 `scripts/lib-approved-contacts.mjs` 声明
+- 已授权公开的手机号 / 政治面貌 / 籍贯集中在 `scripts/lib-approved-contacts.mjs` 声明
+- 求职信息助理双层架构：规则引擎为主路径，可选 `DEEPSEEK_API_KEY` 启用外部模型兜底；
+  未配置密钥时自动降级为纯规则模式。密钥仅服务端读取（无 `NEXT_PUBLIC_` 前缀），
+  由 `verify:chat` 校验其不进入客户端组件与构建产物
 
 ## 最终验收记录
 
@@ -45,10 +48,10 @@ Career Agent 当前不调用外部 AI，因此不需要 AI API Key。若未来�
 
 ## 简历发布要求
 
-- `/[lang]/resume` 是在线浏览版，只读取 public + verified Profile 数据，包含电话与政治面貌以外的公开事实。
+- 全站联系方式统一为「邮箱 + 微信 + 电话」三项：`/[lang]/contact`、`/[lang]/about`、`/[lang]/resume`、`/[lang]/` 首页的「联系我」板块，以及全站页脚；电话一律使用 `tel:` 协议。政治面貌按隐私条款只出现在 `/[lang]/about` 的个人简介末尾，不进入在线简历路由。
 - 全站下载入口统一指向 `public/resume.pdf`（本人提供的正式版文件）；已移除浏览器打印 / 另存为 PDF 入口。
 - `public/resume.pdf` 的文字由 `verify:content`、`verify:resume`、`verify:deploy` 提取并审计，只允许出现已批准的邮箱与手机号。
-- 已授权公开的联系方式（手机号、政治面貌）集中声明在 `scripts/lib-approved-contacts.mjs`；除此之外不得公开电话、生日、学号、住址、证件二维码、在投论文或其他私人资料。
+- 已授权公开的联系方式与个人信息（手机号、政治面貌、籍贯）集中声明在 `scripts/lib-approved-contacts.mjs`；除此之外不得公开电话、生日、学号、住址、证件二维码、在投论文或其他私人资料。
 
 ## 发布边界
 

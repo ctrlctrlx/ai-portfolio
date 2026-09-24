@@ -5,20 +5,22 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Moon, Sun, Menu, X } from "lucide-react";
-import { getOppositeLocale, localeLabels } from "@/src/lib/i18n";
+import { getOppositeLocale, localeSwitchLabels } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
-import {
-  publicAbout,
-  publicAwards,
-  publicCompetitions,
-  publicCredentials,
-  publicIdentity,
-  publicPatents,
-  publicResearchAreas,
-} from "@/src/data/profile";
 
+/**
+ * 数据可用性由服务端布局判定后以布尔值传入。
+ *
+ * 本组件是客户端组件；若在此 import "@/src/data/profile"，整个双语 profile
+ * 数据集（about / projects / publications / skills 等全部中英文本）都会被
+ * 序列化进客户端 chunk，使英文页面的资源包里出现大量中文字符。
+ */
 interface NavbarProps {
   lang: Locale;
+  /** 站点署名（已按 locale 解析为纯字符串） */
+  name: string;
+  hasAbout: boolean;
+  hasHonors: boolean;
 }
 
 interface NavLink {
@@ -29,14 +31,15 @@ interface NavLink {
 }
 
 /**
- * 导航链接按数据可用性动态生成：
- * 「研究」仅在存在公开研究方向或专利时出现，「荣誉」仅在存在荣誉/竞赛/证书时出现，
+ * 导航链接按数据可用性动态生成。
+ * 「荣誉」仅在存在荣誉/竞赛/证书时出现，
  * 「关于我」「联系我」仅在 about 数据公开时出现。
+ * 「研究」入口已移除：研究内容整合进「项目经历」（方向标签筛选 + 学术成果/专利），
+ * 原 /[lang]/research 由 next.config.ts 永久重定向到 /[lang]/projects。
  * 「博客」当前所有文章均为草稿（content/posts 全部 draft），暂时隐藏以避免空页面。
  */
 function getNavLinks(
   locale: Locale,
-  hasResearch: boolean,
   hasAbout: boolean,
   hasHonors: boolean
 ): NavLink[] {
@@ -45,7 +48,6 @@ function getNavLinks(
     { href: "", label: zh ? "首页" : "Home" },
     ...(hasAbout ? [{ href: "/about", label: zh ? "关于我" : "About" }] : []),
     { href: "/projects", label: zh ? "项目经历" : "Projects" },
-    ...(hasResearch ? [{ href: "/research", label: zh ? "研究" : "Research" }] : []),
     ...(hasHonors ? [{ href: "/honors", label: zh ? "荣誉资质" : "Honors" }] : []),
     { href: "/resume", label: zh ? "在线简历" : "Resume" },
     { href: "/blog", label: zh ? "博客" : "Blog", hidden: true },
@@ -60,19 +62,19 @@ function isActiveLink(pathname: string, locale: Locale, href: string): boolean {
   return pathname === `${base}${href}` || pathname.startsWith(`${base}${href}/`);
 }
 
-export default function Navbar({ lang }: NavbarProps) {
+export default function Navbar({
+  lang,
+  name,
+  hasAbout,
+  hasHonors,
+}: NavbarProps) {
   const { resolvedTheme, setTheme } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
 
-  const navLinks = getNavLinks(
-    lang,
-    publicResearchAreas.length > 0 || publicPatents.length > 0,
-    publicAbout !== null,
-    publicAwards.length > 0 ||
-      publicCompetitions.length > 0 ||
-      publicCredentials.length > 0
-  ).filter((link) => !link.hidden);
+  const navLinks = getNavLinks(lang, hasAbout, hasHonors).filter(
+    (link) => !link.hidden
+  );
 
   const opposite = getOppositeLocale(lang);
   const oppositePath = pathname.match(/^\/(zh|en)(?=\/|$)/)
@@ -90,8 +92,11 @@ export default function Navbar({ lang }: NavbarProps) {
     return () => query.removeEventListener("change", handleChange);
   }, []);
 
-  // 主题解析前 resolvedTheme 为 undefined，此时默认展示月亮图标
-  const isDark = resolvedTheme === "dark";
+  // 主题图标不参与服务端/客户端的分支判断：
+  // 服务端解析不出 resolvedTheme（恒为 undefined），若按它切换图标，
+  // 服务端会输出月亮、客户端水合后输出太阳，导致全站每页的 Hydration Mismatch。
+  // 因此两个图标都常驻 DOM，由既有 dark 变体用纯 CSS 决定显示哪一个，
+  // 服务端与客户端输出因此完全一致；resolvedTheme 只用于点击时的目标主题计算。
 
   return (
     <nav
@@ -106,7 +111,7 @@ export default function Navbar({ lang }: NavbarProps) {
           className="min-w-0 shrink truncate text-base font-bold tracking-tight transition-opacity hover:opacity-80"
           style={{ color: "var(--foreground)" }}
         >
-          {publicIdentity?.name[lang] ?? (lang === "zh" ? "作品集" : "Portfolio")}
+          {name}
         </Link>
 
         {/* Desktop nav links */}
@@ -143,23 +148,20 @@ export default function Navbar({ lang }: NavbarProps) {
                 : "Switch to Chinese and keep the current page"
             }
           >
-            {localeLabels[opposite]}
+            {localeSwitchLabels[lang]}
           </Link>
 
-          {/* Theme toggle */}
+          {/* Theme toggle：点击时按当前已解析主题切换；图标由 dark 变体纯 CSS 决定 */}
           <button
             type="button"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
             className="rounded-md p-1.5 transition-colors hover:bg-[var(--card)]"
             style={{ color: "var(--muted)" }}
             aria-label={lang === "zh" ? "切换深色或浅色主题" : "Toggle dark or light theme"}
             title={lang === "zh" ? "切换主题" : "Toggle theme"}
           >
-            {isDark ? (
-              <Sun size={16} aria-hidden="true" />
-            ) : (
-              <Moon size={16} aria-hidden="true" />
-            )}
+            <Moon size={16} aria-hidden="true" className="dark:hidden" />
+            <Sun size={16} aria-hidden="true" className="hidden dark:block" />
           </button>
 
           {/* Mobile menu button */}

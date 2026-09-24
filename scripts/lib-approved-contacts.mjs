@@ -14,6 +14,19 @@ import { existsSync, readFileSync } from "node:fs";
 export const APPROVED_EMAIL = "yangc202706@163.com";
 export const APPROVED_PHONE = "18716985140";
 
+/**
+ * 已授权公开的籍贯。
+ *
+ * 背景：本人先前要求全站移除籍贯，verify-profile-data.mjs 因此以 blanket ban
+ * （正则匹配「籍贯」或 Chongqing）拦截该字段。现本人重新授权公开籍贯（重庆），
+ * 因此在此集中声明授权值：verify-profile-data.mjs 放行该值，
+ * 其它籍贯值或来源仍然拦截。新增/撤销授权只需改这一处，保持可审计。
+ */
+export const APPROVED_NATIVE_PLACE = Object.freeze({
+  zh: "重庆",
+  en: "Chongqing",
+});
+
 /** 允许包含已批准手机号的文件（仓库相对路径，POSIX 分隔符） */
 export const PHONE_APPROVED_FILES = new Set([
   "src/data/profile/identity.ts",

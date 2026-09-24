@@ -56,9 +56,9 @@ export function getPublicContact(kind: ContactKind): ContactPoint | null {
 }
 
 export function getContactHref(contact: ContactPoint): string {
-  return contact.kind === "email"
-    ? `mailto:${contact.value}`
-    : contact.value;
+  if (contact.kind === "email") return `mailto:${contact.value}`;
+  if (contact.kind === "phone") return `tel:${contact.value}`;
+  return contact.value;
 }
 
 export const publicSkills: SkillCategory[] = skills

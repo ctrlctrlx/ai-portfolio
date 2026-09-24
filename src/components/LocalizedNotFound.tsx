@@ -1,6 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowLeft, Compass, FileText, FolderKanban, Mail, UserRound } from "lucide-react";
-import { headers } from "next/headers";
 import type { ElementType } from "react";
 import { defaultLocale, isValidLocale } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
@@ -63,13 +65,19 @@ const quickLinkIcons: Record<string, ElementType> = {
 
 /**
  * 本地化 404。
- * 沿用原有的 x-portfolio-locale 请求头判定语言，不改变路由行为；
- * 使用主页一致的卡片与按钮样式，无动画。
+ *
+ * 语言来源改为从当前路径首段判定（与站内 `/[lang]/...` 路由结构一致），
+ * 不再读取 `x-portfolio-locale` 请求头——`headers()` 属于动态 API，
+ * 一旦出现在 `not-found.tsx` 所属的段里，会把整段路由强制改为按请求渲染，
+ * 使所有页面的静态预渲染失效（详见 `app/layout.tsx` 注释）。
+ * 404 页面本身不需要 SEO 预渲染，客户端判定语言没有副作用。
  */
-export default async function LocalizedNotFound() {
-  const localeHeader = (await headers()).get("x-portfolio-locale");
-  const locale: Locale =
-    localeHeader && isValidLocale(localeHeader) ? localeHeader : defaultLocale;
+export default function LocalizedNotFound() {
+  const pathname = usePathname();
+  const pathnameLocale = pathname.split("/")[1] ?? "";
+  const locale: Locale = isValidLocale(pathnameLocale)
+    ? pathnameLocale
+    : defaultLocale;
   const copy = notFoundCopy[locale];
 
   return (

@@ -280,17 +280,37 @@ if (
   fail("env-example-site-url-mismatch");
 }
 
+/**
+ * sitemap 契约：必须与当前真实公开路由清单一致。
+ *
+ * 当前有效公开路由：`/[lang]`、`/[lang]/about`、`/[lang]/contact`、
+ * `/[lang]/honors`、`/[lang]/projects`、`/[lang]/projects/[slug]`、`/[lang]/resume`，
+ * 以及（仅在存在已发布文章时）`/[lang]/blog` 与 `/[lang]/blog/[slug]`。
+ * `/[lang]/research` 已永久重定向到 `/[lang]/projects`，不得再出现在 sitemap 中。
+ */
 const sitemapSource = readFileSync(
   join(repositoryRoot, "app", "sitemap.ts"),
   "utf8"
 );
+const sitemapRequiredFragments = [
+  "`/${locale}`",
+  "`/${locale}/projects`",
+  "`/${locale}/about`",
+  "`/${locale}/contact`",
+  "`/${locale}/honors`",
+  "`/${locale}/resume`",
+  "publicProjects",
+  "getAllPostMetas",
+];
 if (
-  !sitemapSource.includes("publicProjects") ||
-  !sitemapSource.includes("publicResearchAreas") ||
-  !sitemapSource.includes("publicPatents") ||
-  !sitemapSource.includes('basePaths.push(`/${locale}/resume`)')
+  sitemapRequiredFragments.some(
+    (fragment) => !sitemapSource.includes(fragment)
+  )
 ) {
   fail("sitemap-public-route-contract-missing");
+}
+if (sitemapSource.includes("${locale}/research")) {
+  fail("sitemap-lists-retired-route", "/research");
 }
 
 for (const notice of notices) {

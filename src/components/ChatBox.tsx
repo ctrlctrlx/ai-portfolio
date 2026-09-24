@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageCircle, X, Send, Bot, ChevronDown } from "lucide-react";
-import { publicIdentity } from "@/src/data/profile";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,7 +17,7 @@ const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
     { label: "核心技能", key: "skills" },
     { label: "教育经历", key: "education" },
     { label: "研究方向", key: "research" },
-    { label: "论文信息", key: "publications" },
+    { label: "荣誉资质", key: "honors" },
   ],
   en: [
     { label: "Introduction", key: "introduction" },
@@ -26,7 +25,7 @@ const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
     { label: "Core Skills", key: "skills" },
     { label: "Education", key: "education" },
     { label: "Research Focus", key: "research" },
-    { label: "Publications", key: "publications" },
+    { label: "Honors & Awards", key: "honors" },
   ],
 };
 
@@ -51,17 +50,21 @@ const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
     zh: "你的研究方向是什么？",
     en: "What is your research focus?",
   },
-  publications: {
-    zh: "目前有哪些论文信息？",
-    en: "What publication information is currently available?",
+  // 「论文信息」快捷入口与问答规则已整体移除：该类提问改为规则未命中后走 API 兜底
+  honors: {
+    zh: "有哪些荣誉资质？",
+    en: "What honors and awards do you have?",
   },
 };
 
-const GREETING: Record<Lang, string> = {
-  zh: `你好！我是${publicIdentity?.name.zh ?? "候选人"}的求职信息助理。请问您想了解哪个项目或技能？`,
-  en: `Hi! I'm ${publicIdentity?.name.en ?? "the candidate"}'s career information assistant. What project or skill would you like to know about?`,
-};
-
+/**
+ * 开场白由服务端布局按当前 locale 组装后以纯字符串传入。
+ *
+ * 这里不再直接 import profile 数据层：ChatBox 是客户端组件，一旦在客户端
+ * 引用 "@/src/data/profile"，整个双语 profile 数据集（about / projects /
+ * publications 等全部中英文本）都会被序列化进客户端 chunk，使英文页面的
+ * 资源包里出现大量中文字符。改为只传一句已解析好的问候语。
+ */
 const BUSY_MSG: Record<Lang, string> = {
   zh: "AI 助理正在忙碌，请稍后再试，或点击下方快捷按钮获取答案。",
   en: "AI is busy right now. Please try again later or use the quick buttons below.",
@@ -75,7 +78,13 @@ const NET_ERR: Record<Lang, string> = {
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
-export default function ChatBox({ lang }: { lang: Lang }) {
+export default function ChatBox({
+  lang,
+  greeting,
+}: {
+  lang: Lang;
+  greeting: string;
+}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -88,9 +97,9 @@ export default function ChatBox({ lang }: { lang: Lang }) {
   // Show greeting on first open
   useEffect(() => {
     if (open && messages.length === 0) {
-      setMessages([{ role: "assistant", content: GREETING[lang] }]);
+      setMessages([{ role: "assistant", content: greeting }]);
     }
-  }, [open, lang, messages.length]);
+  }, [open, greeting, messages.length]);
 
   // Scroll to latest message
   useEffect(() => {
@@ -349,7 +358,9 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                   }
                 }}
                 placeholder={
-                  lang === "zh" ? "询问公开资料…" : "Ask about public profile…"
+                  lang === "zh"
+                    ? "可自由提问，或点击下方快捷问题"
+                    : "Feel free to ask, or click quick questions below"
                 }
                 disabled={loading}
                 maxLength={2000}

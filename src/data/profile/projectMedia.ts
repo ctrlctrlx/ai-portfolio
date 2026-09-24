@@ -7,20 +7,20 @@ import type { ProjectDocument } from "./types";
  *
  * 目录约定：全部文档放在 public/docs/。
  *
- * 项目1（鱼类个体重识别研究）当前未挂载可下载文档：
+ * 项目1（东星斑个体重识别研究）当前未挂载可下载文档：
  *   其 EI 论文全文未放入 public/docs/，论文条目本身已在
  *   /[lang]/honors 与 /[lang]/research 的「学术成果」中完整展示。
  *   后续如需提供下载，在 projectOneDocuments 中补一条即可，组件会自动渲染。
  */
 export const projectOneDocuments: ProjectDocument[] = [];
 
-/** 项目2：RFID 与多目视觉双模态鱼类识别数据采集装置 */
+/** 项目2：RFID 与多目视觉双模态东星斑识别数据采集装置 */
 export const projectTwoDocuments: ProjectDocument[] = [
   {
     id: "p2-design-doc",
     title: {
-      zh: "基于 RFID 与多目视觉双模态关联的鱼类个体识别数据采集装置",
-      en: "Fish Individual Identification Data Acquisition Device Based on RFID and Multi-View Vision Dual-Modality Association",
+      zh: "基于 RFID 与多目视觉双模态关联的东星斑个体识别数据采集装置",
+      en: "Crimson Snapper Individual Identification Data Acquisition Device Based on RFID and Multi-View Vision Dual-Modality Association",
     },
     tag: { zh: "设计文档", en: "Design Document" },
     pdfUrl: "/docs/report-rfid-vision-device.pdf",
@@ -33,7 +33,7 @@ export const projectThreeDocuments: ProjectDocument[] = [
     id: "p3-experiment-report",
     title: {
       zh: "东星斑个体标记方法筛选实验报告",
-      en: "Experiment Report on Screening Individual Tagging Methods for Leopard Coral Grouper",
+      en: "Experiment Report on Screening Individual Tagging Methods for Crimson Snapper",
     },
     tag: { zh: "实验报告", en: "Experiment Report" },
     pdfUrl: "/docs/report-fish-marker-screen.pdf",
@@ -42,7 +42,7 @@ export const projectThreeDocuments: ProjectDocument[] = [
     id: "p3-tag-spec",
     title: {
       zh: "东星斑鱼体标记方法对比与 RFID 芯片注射标准化操作规范",
-      en: "Comparison of Tagging Methods and Standardized Operating Specification for RFID Chip Injection in Leopard Coral Grouper",
+      en: "Comparison of Tagging Methods and Standardized Operating Specification for RFID Chip Injection in Crimson Snapper",
     },
     tag: { zh: "操作规范", en: "Operating Specification" },
     pdfUrl: "/docs/spec-rfid-inject-standard.pdf",

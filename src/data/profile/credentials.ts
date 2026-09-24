@@ -18,6 +18,8 @@ export const credentials: Credential[] = [
       zh: "教育部教育考试院",
       en: "National Education Examinations Authority, MOE",
     },
+    /** 取证时间；与全站经历类信息一致采用 YYYY.MM */
+    year: "2021.03",
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-ncree-level-2",

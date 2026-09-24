@@ -1,8 +1,9 @@
-import { ExternalLink, Mail, MessageCircle } from "lucide-react";
+import { Mail, MessageCircle, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PatentCard from "@/src/components/PatentCard";
 import ResumeDownloadButton from "@/src/components/ResumeDownloadButton";
+import { firstParagraph, toPlainText } from "@/src/components/RichText";
 import {
   getContactHref,
   publicAbout,
@@ -123,38 +124,47 @@ export default async function ResumePage({
         </div>
 
         <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2">
-          {identity.contacts.length > 0 && (
+          {/*
+            简历页头部只保留邮箱与电话（+ 下方微信）三项核心联系信息。
+            个人网站与 GitHub 外链已按需求移除，避免打印/导出 PDF 时出现
+            无效的蓝色下划线，版面更整洁。
+          */}
+          {identity.contacts.some(
+            (contact) => contact.kind === "email" || contact.kind === "phone"
+          ) && (
             <address className="flex flex-wrap gap-x-5 gap-y-2 not-italic">
-              {identity.contacts.map((contact) => {
-                const isEmail = contact.kind === "email";
-                return (
-                  <a
-                    key={contact.id}
-                    href={getContactHref(contact)}
-                    {...(!isEmail
-                      ? { target: "_blank", rel: "noopener noreferrer" }
-                      : {})}
-                    className="inline-flex min-w-0 items-center gap-1.5 break-all text-xs hover:underline sm:text-sm"
-                    style={{ color: "var(--foreground)" }}
-                    aria-label={
-                      isEmail
-                        ? locale === "zh"
-                          ? `发送邮件至 ${contact.value}`
-                          : `Email ${contact.value}`
-                        : locale === "zh"
-                          ? `${contact.label.zh}（新窗口打开）`
-                          : `${contact.label.en} (opens in a new tab)`
-                    }
-                  >
-                    {isEmail ? (
-                      <Mail size={13} aria-hidden="true" />
-                    ) : (
-                      <ExternalLink size={13} aria-hidden="true" />
-                    )}
-                    {contact.value}
-                  </a>
-                );
-              })}
+              {identity.contacts
+                .filter(
+                  (contact) =>
+                    contact.kind === "email" || contact.kind === "phone"
+                )
+                .map((contact) => {
+                  const isEmail = contact.kind === "email";
+                  return (
+                    <a
+                      key={contact.id}
+                      href={getContactHref(contact)}
+                      className="inline-flex min-w-0 items-center gap-1.5 break-all text-xs hover:underline sm:text-sm"
+                      style={{ color: "var(--foreground)" }}
+                      aria-label={
+                        isEmail
+                          ? locale === "zh"
+                            ? `发送邮件至 ${contact.value}`
+                            : `Email ${contact.value}`
+                          : locale === "zh"
+                            ? `拨打电话 ${contact.value}`
+                            : `Call ${contact.value}`
+                      }
+                    >
+                      {isEmail ? (
+                        <Mail size={13} aria-hidden="true" />
+                      ) : (
+                        <Phone size={13} aria-hidden="true" />
+                      )}
+                      {contact.value}
+                    </a>
+                  );
+                })}
             </address>
           )}
 
@@ -166,14 +176,16 @@ export default async function ResumePage({
               style={{ color: "var(--foreground)" }}
             >
               <MessageCircle size={13} aria-hidden="true" />
-              {contact.label[locale]}：{contact.value[locale]}
+              {contact.label[locale]}
+              {locale === "zh" ? "：" : ": "}
+              {contact.value[locale]}
             </span>
           ))}
         </div>
       </header>
 
       {publicEducation.length > 0 && (
-        <section className="resume-section mt-10" aria-labelledby="resume-education">
+        <section className="resume-section mt-7" aria-labelledby="resume-education">
           <h2 id="resume-education" className="resume-heading">
             {locale === "zh" ? "教育经历" : "Education"}
           </h2>
@@ -192,11 +204,12 @@ export default async function ResumePage({
                 </div>
                 <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
                   {entry.degree[locale]} · {entry.major[locale]}
+                  {entry.gpa ? ` · GPA ${entry.gpa[locale]}` : ""}
                 </p>
                 {entry.highlights.length > 0 && (
                   <ul className="mt-2 space-y-1 text-xs" style={{ color: "var(--muted)" }}>
                     {entry.highlights.map((highlight) => (
-                      <li key={highlight.zh}>{highlight[locale]}</li>
+                      <li key={highlight.en}>{highlight[locale]}</li>
                     ))}
                   </ul>
                 )}
@@ -208,7 +221,7 @@ export default async function ResumePage({
 
 
       {publicProjects.length > 0 && (
-        <section className="resume-section mt-10" aria-labelledby="resume-projects">
+        <section className="resume-section mt-7" aria-labelledby="resume-projects">
           <h2 id="resume-projects" className="resume-heading">
             {locale === "zh" ? "项目经历" : "Projects"}
           </h2>
@@ -230,17 +243,18 @@ export default async function ResumePage({
                     </span>
                   </h3>
                   <span className="text-xs" style={{ color: "var(--muted)" }}>
-                    {project.startDate} – {project.endDate}
+                    {project.startDate} – {project.endDate[locale]}
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6" style={{ color: "var(--muted)" }}>
                   {project.subtitle[locale]}
                 </p>
+                {/* 打印简历保持单行摘要口径：取四段式结果的首段纯文本，完整叙述见项目详情页 */}
                 <p className="mt-2 text-xs leading-5" style={{ color: "var(--foreground)" }}>
-                  {project.result[locale]}
+                  {toPlainText(firstParagraph(project.result[locale]))}
                 </p>
                 <p className="mt-2 text-xs leading-5" style={{ color: "var(--muted)" }}>
-                  {project.coreSkill.join(" · ")}
+                  {project.coreSkill.map((entry) => entry[locale]).join(" · ")}
                 </p>
               </article>
             ))}
@@ -249,7 +263,7 @@ export default async function ResumePage({
       )}
 
       {publicSkills.length > 0 && (
-        <section className="resume-section mt-10" aria-labelledby="resume-skills">
+        <section className="resume-section mt-7" aria-labelledby="resume-skills">
           <h2 id="resume-skills" className="resume-heading">
             {locale === "zh" ? "核心技能" : "Core Skills"}
           </h2>
@@ -267,7 +281,7 @@ export default async function ResumePage({
       )}
 
       {publicAwards.length > 0 && (
-        <section className="resume-section mt-10" aria-labelledby="resume-awards">
+        <section className="resume-section mt-7" aria-labelledby="resume-awards">
           <h2 id="resume-awards" className="resume-heading">
             {locale === "zh" ? "荣誉奖项" : "Honors & Awards"}
           </h2>
@@ -293,7 +307,7 @@ export default async function ResumePage({
       )}
 
       {publicPatents.length > 0 && (
-        <section className="resume-section mt-10" aria-labelledby="resume-patent">
+        <section className="resume-section mt-7" aria-labelledby="resume-patent">
           <h2 id="resume-patent" className="resume-heading">
             {locale === "zh" ? "专利" : "Patent"}
           </h2>

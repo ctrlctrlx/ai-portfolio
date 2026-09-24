@@ -22,8 +22,8 @@ export async function generateMetadata({
   const title = locale === "zh" ? `联系我 | ${name}` : `Contact | ${name}`;
   const description =
     locale === "zh"
-      ? `${name}的公开联系方式：求职邮箱与微信。`
-      : `${name}'s public contact details: job-hunting email and WeChat.`;
+      ? `${name}的公开联系方式：求职邮箱、微信与电话。`
+      : `${name}'s public contact details: email, WeChat, and phone.`;
   const pageUrl = getAbsolutePageUrl(`/${locale}/contact`);
 
   return {
@@ -69,7 +69,8 @@ export default async function ContactPage({
       </header>
 
       <div className="mt-10">
-        <Contact locale={locale} showHeading={false} />
+        {/* showPhone：仅联系页展示已授权公开的电话；首页/关于页不传该开关 */}
+        <Contact locale={locale} showHeading={false} showPhone />
       </div>
     </div>
   );

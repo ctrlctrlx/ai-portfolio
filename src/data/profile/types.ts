@@ -13,7 +13,7 @@ export interface EvidenceStatus {
   sourceNote?: string;
 }
 
-export type ContactKind = "email" | "website" | "github";
+export type ContactKind = "email" | "phone" | "website" | "github";
 
 export interface ContactPoint extends EvidenceStatus {
   id: string;
@@ -28,7 +28,11 @@ export interface EducationEntry extends EvidenceStatus {
   institution: BilingualText;
   degree: BilingualText;
   major: BilingualText;
-  gpa?: string;
+  /**
+   * GPA，形如「3.6/4.0」；按本人要求不展示专业排名。
+   * 保留双语结构以保证中英一致；数值由本人提供。
+   */
+  gpa?: BilingualText;
   startDate: string;
   endDate: string;
   highlights: BilingualText[];
@@ -59,6 +63,11 @@ export interface Publication extends EvidenceStatus {
   slug: string;
   title: BilingualText;
   authors: Author[];
+  /**
+   * 作者署名展示文案，形如「第一作者：<本人姓名>」/「First author: <name>」。
+   * 由 identity 派生，不在数据层重复书写本人姓名；缺省时展示层回退到 authors 顺序。
+   */
+  author?: BilingualText;
   venue: BilingualText;
   year: number;
   /** 发表年月，形如 "2026.05"；用于按时间展示 */
@@ -122,18 +131,24 @@ export interface Project extends EvidenceStatus {
   role: BilingualText;
   featured: boolean;
   startDate: string;
-  endDate: string;
+  /** 项目起止时间的结束项；「至今」类文案按 locale 取词，英文为 "Present" */
+  endDate: BilingualText;
   situation: BilingualText;
   task: BilingualText;
   action: BilingualText;
   result: BilingualText;
-  coreSkill: string[];
-  /** 卡片与详情页底部展示的技术标签（与简历上的技能描述分开维护） */
-  techTags: string[];
+  /** 简历页展示的核心技能条目（双语，按 locale 取词） */
+  coreSkill: BilingualText[];
+  /** 卡片与详情页底部展示的技术标签（与简历上的技能描述分开维护），双语 */
+  techTags: BilingualText[];
+  /**
+   * 该项目所属的通用研究方向 id（可多个）。
+   * 供项目经历页的「研究领域总览」标签筛选使用；不改变项目本身的展示内容。
+   */
+  researchDirections: ResearchDirectionId[];
   /** 卡片上与 metrics 并列展示的核心亮点（比 metrics 更强调业务价值） */
   highlights: BilingualText[];
   metrics: BilingualText[];
-  interviewFocus: BilingualText[];
   /** 项目展示图片（仅详情页渲染，首页预览卡片不使用） */
   images: ProjectImage[];
   /** 相关文档下载（仅详情页渲染，首页预览卡片不使用） */
@@ -143,11 +158,19 @@ export interface Project extends EvidenceStatus {
   isInteractive?: boolean;
 }
 
+/** 荣誉级别：国家级 / 省部级 / 校级，用于荣誉页分级展示与机器人回答分级 */
+export type AwardLevel = "national" | "provincial" | "university";
+
 export interface Award extends EvidenceStatus {
   id: string;
   title: BilingualText;
   issuer: BilingualText;
+  /**
+   * 获奖时间，形如 "2026.09"（精确到月）。
+   * 采用 YYYY.MM 字符串，按字典序即等于时间倒序，便于列表排序。
+   */
   year: string;
+  level: AwardLevel;
 }
 
 export interface ResearchArea extends EvidenceStatus {
@@ -205,7 +228,7 @@ export interface PracticeEntry {
   role?: BilingualText;
   /** 地点，可选（例如「文昌冯家湾」） */
   location?: BilingualText;
-  /** 起止时间，例如 2020.09 – 2023.06 */
+  /** 起止时间，例如 2019.09 – 2022.12 */
   period: BilingualText;
   bullets: PracticeBullet[];
 }
@@ -226,6 +249,38 @@ export interface AboutGalleryImage {
   alt: BilingualText;
 }
 
+/**
+ * 通用研究方向 id。
+ * 用于「项目 ↔ 研究方向」筛选映射：既作为项目上的标注，也作为展示层筛选键，
+ * 与具体课题名（research.areas）区分开。
+ */
+export type ResearchDirectionId =
+  | "computer-vision"
+  | "reid"
+  | "vision-language"
+  | "embedded-sensing";
+
+/** 通用研究方向：机器人与首页/项目页标签组、以及项目筛选共用 */
+export interface ResearchDirection {
+  id: ResearchDirectionId;
+  label: BilingualText;
+}
+
+/**
+ * 个人简介中的一个文本片段。
+ * strong=true 的片段在展示层以加粗 + 主文字色强调，用于突出核心身份与技术关键词。
+ */
+export interface BioSegment {
+  text: BilingualText;
+  strong?: boolean;
+}
+
+/** 个人简介中的一个段落，由若干片段组成，支持段落内局部加粗 */
+export interface BioSection {
+  id: string;
+  segments: BioSegment[];
+}
+
 export interface IdentityContact {
   id: string;
   label: BilingualText;
@@ -243,8 +298,24 @@ export interface AboutProfile extends EvidenceStatus {
   headline: BilingualText;
   /** 首页「个人简介」板块使用的精简版简介；完整版见 identity.bio 与 about 页 */
   summary: BilingualText;
+  /**
+   * 「关于我」页三段式完整简介：段落 + 关键词加粗。
+   * identity.bio 为其纯文本形式（供页面 meta description 与 AI 助理自我介绍复用）。
+   */
+  bioSections: BioSection[];
   /** 政治面貌 */
   politicalStatus: BilingualText;
+  /**
+   * 籍贯。本人先前要求全站移除、现已重新授权公开，
+   * 授权值与放行规则集中在 scripts/lib-approved-contacts.mjs 声明。
+   */
+  nativePlace: BilingualText;
+  /**
+   * 通用研究方向（4 项），用于求职信息助理的「研究方向」回答、
+   * 首页与项目经历页的标签组，以及项目按方向筛选。
+   * 与个人简介中的术语保持一致，不使用项目名式的具体课题表述。
+   */
+  researchDirections: ResearchDirection[];
   /** 三大核心优势（可见性继承 AboutProfile，不单独标注） */
   strengths: Array<{
     id: string;

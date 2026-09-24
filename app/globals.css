@@ -234,7 +234,8 @@ h3,
   }
 
   .resume-section {
-    margin-top: 7mm !important;
+    /* 与屏幕端同步压缩约 30%，控制打印/导出 PDF 的篇幅 */
+    margin-top: 5mm !important;
   }
 
   .resume-section:first-child {

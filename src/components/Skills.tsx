@@ -4,10 +4,10 @@ import { publicSkills } from "@/src/data/profile";
 /**
  * 技能栈板块（可复用）。
  *
- * variant="compact" —— 首页预览：仅「分类标题 + 标签云」，不渲染分类说明与分组小标题。
- * variant="full"    —— 内页/简历：保留分类说明与分组小标题，信息完整。
+ * variant="compact" —— 首页预览：分类标题 + 分组小标题 + 标签云，不渲染分类说明。
+ * variant="full"    —— 内页/简历：额外渲染分类说明，信息完整。
  *
- * 两种模式都读取同一份 publicSkills，展示差异只由 variant 控制。
+ * 两种模式都读取同一份 publicSkills，分组层级一致，展示差异只由 variant 控制。
  */
 export default function Skills({
   locale,
@@ -19,6 +19,15 @@ export default function Skills({
   if (publicSkills.length === 0) return null;
 
   const showNotes = variant === "full";
+  /**
+   * 首页（compact）在 lg 及以上三列等宽并排，平板两列、手机单列；
+   * 分组标题与标签云的行距同步收紧，卡片内边距由 p-5 降至 p-3.75（-25%），
+   * 消除三列后卡片内的大面积空白。
+   */
+  const gridClass =
+    variant === "compact"
+      ? "mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+      : "mt-6 grid gap-4 lg:grid-cols-2";
 
   return (
     <section aria-labelledby="skills-heading">
@@ -36,17 +45,17 @@ export default function Skills({
         {showNotes && (
           <p className="mt-3 text-sm leading-6" style={{ color: "var(--muted)" }}>
             {locale === "zh"
-              ? "按算法与框架、硬件与嵌入式、工程与部署、工具与其他四大类展示，每一项都对应实际项目实践。"
-              : "Grouped into four areas — algorithms and frameworks, hardware and embedded, engineering and deployment, and tools — each backed by hands-on project work."}
+              ? "按编程语言、框架与工具、研究方向三类分组展示，每一项都对应实际项目实践。"
+              : "Grouped into three areas — programming languages, frameworks and tools, and research directions — each backed by hands-on project work."}
           </p>
         )}
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className={gridClass}>
         {publicSkills.map((category) => (
           <article
             key={category.id}
-            className="rounded-2xl border p-5 transition-all duration-200 hover:shadow-md motion-reduce:transition-none"
+            className="rounded-2xl border p-3.75 transition-all duration-200 hover:shadow-md motion-reduce:transition-none"
             style={{
               background: "var(--card)",
               borderColor: "var(--card-border)",
@@ -61,17 +70,15 @@ export default function Skills({
               </p>
             )}
 
-            {/* 有 groups 时按分组渲染；compact 模式隐藏分组小标题，只留标签云 */}
+            {/* 分组展示：分类标题在上，分组小标题在每组标签云之上（两种 variant 均显示层级） */}
             {category.groups && category.groups.length > 0 ? (
-              <div className={showNotes ? "mt-4 space-y-4" : "mt-4 space-y-3"}>
+              <div className="mt-3 space-y-3">
                 {category.groups.map((group) => (
                   <div key={group.id}>
-                    {showNotes && (
-                      <p className="text-xs font-medium" style={{ color: "var(--muted)" }}>
-                        {group.label[locale]}
-                      </p>
-                    )}
-                    <ul className={showNotes ? "mt-2 flex flex-wrap gap-2" : "flex flex-wrap gap-2"}>
+                    <p className="text-xs font-medium" style={{ color: "var(--muted)" }}>
+                      {group.label[locale]}
+                    </p>
+                    <ul className="mt-1.5 flex flex-wrap gap-1.5">
                       {group.items.map((item) => (
                         <li
                           key={`${group.id}-${item.id}`}
@@ -90,7 +97,7 @@ export default function Skills({
                 ))}
               </div>
             ) : (
-              <ul className="mt-4 flex flex-wrap gap-2">
+              <ul className="mt-3 flex flex-wrap gap-1.5">
                 {category.items.map((item) => (
                   <li
                     key={item.id}

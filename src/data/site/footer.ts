@@ -1,12 +1,5 @@
 import type { Locale } from "@/src/lib/i18n";
 import { lastUpdated } from "@/src/data/site/lastUpdated";
-import {
-  publicAbout,
-  publicAwards,
-  publicCompetitions,
-  publicCredentials,
-  publicIdentity,
-} from "@/src/data/profile";
 
 export interface FooterNavLink {
   href: string;
@@ -15,7 +8,8 @@ export interface FooterNavLink {
 
 export interface FooterExtraContact {
   id: string;
-  label: Record<Locale, string>;
+  /** 已按当前 locale 解析为纯字符串 */
+  label: string;
   value: string;
 }
 
@@ -32,22 +26,40 @@ export interface FooterDictionary {
   navHeading: string;
   /** 联系方式小标题 */
   contactHeading: string;
+  /** 邮箱条目前缀（值与链接在服务端布局解析后作为 prop 传入） */
+  emailLabel: string;
+  /** 电话条目前缀（值与链接在服务端布局解析后作为 prop 传入） */
+  phoneLabel: string;
   /** 访客计数文案 */
   visitors: (count: string) => string;
   /** 邮箱链接的无障碍标签 */
   emailAriaLabel: (email: string) => string;
   /** 站内导航链接 */
   navLinks: FooterNavLink[];
-  /** 邮箱之外的公开联系方式（微信等），来自 about.contacts */
+  /** 邮箱之外的公开联系方式（微信等），由服务端布局从 about.contacts 解析后传入 */
   extraContacts: FooterExtraContact[];
 }
 
-/** 站内导航：与顶部导航保持同一组入口 */
+/**
+ * 页脚所需的 profile 派生信息，由服务端布局解析后传入。
+ *
+ * 本模块不再 import "@/src/data/profile"：它被客户端组件 Footer 引用，
+ * 一旦在客户端模块图里引入 profile 数据层，整个双语数据集都会被序列化进
+ * 客户端 chunk，使英文页面的资源包里出现大量中文字符。
+ */
+export interface FooterProfileSummary {
+  /** 版权行署名（固定使用英文姓名） */
+  name: string;
+  /** 是否存在荣誉/竞赛/证书板块 */
+  hasHonors: boolean;
+  extraContacts: FooterExtraContact[];
+}
+
+/** 站内导航：与顶部导航保持同一组入口（研究入口已并入「项目经历」） */
 function buildNavLinks(hasHonors: boolean): FooterNavLink[] {
   const links: FooterNavLink[] = [
     { href: "/about", label: { zh: "关于我", en: "About" } },
     { href: "/projects", label: { zh: "项目经历", en: "Projects" } },
-    { href: "/research", label: { zh: "研究", en: "Research" } },
   ];
   if (hasHonors) {
     links.push({ href: "/honors", label: { zh: "荣誉资质", en: "Honors" } });
@@ -76,16 +88,14 @@ export function formatLastUpdated(
   }).format(date);
 }
 
-export function getFooterDictionary(locale: Locale): FooterDictionary {
+export function getFooterDictionary(
+  locale: Locale,
+  summary: FooterProfileSummary
+): FooterDictionary {
   const isZh = locale === "zh";
-  const name = publicIdentity?.name.en ?? "Yang Chong";
-  const hasHonors =
-    publicAwards.length > 0 ||
-    publicCompetitions.length > 0 ||
-    publicCredentials.length > 0;
 
   return {
-    copyright: `© ${new Date().getFullYear()} ${name}. All rights reserved.`,
+    copyright: `© ${new Date().getFullYear()} ${summary.name}. All rights reserved.`,
     disclaimer: isZh
       ? "本网站仅用于个人求职展示，所有项目资料未经许可禁止转载、商用。"
       : "This site is for personal job-seeking presentation only. All project materials may not be reproduced or used commercially without permission.",
@@ -93,18 +103,15 @@ export function getFooterDictionary(locale: Locale): FooterDictionary {
     lastUpdatedValue: formatLastUpdated(lastUpdated.iso, locale),
     navHeading: isZh ? "站内导航" : "Site navigation",
     contactHeading: isZh ? "联系方式" : "Contact",
+    emailLabel: isZh ? "邮箱" : "Email",
+    phoneLabel: isZh ? "电话" : "Phone",
     visitors: (count) =>
       isZh ? `全球访客 ${count} 人次` : `${count} global visitors`,
     emailAriaLabel: (email) =>
       isZh
         ? `发送邮件至公开求职邮箱 ${email}`
         : `Email the public contact address ${email}`,
-    navLinks: buildNavLinks(hasHonors),
-    extraContacts:
-      publicAbout?.contacts.map((contact) => ({
-        id: contact.id,
-        label: { zh: contact.label.zh, en: contact.label.en },
-        value: contact.value[locale],
-      })) ?? [],
+    navLinks: buildNavLinks(summary.hasHonors),
+    extraContacts: summary.extraContacts,
   };
 }

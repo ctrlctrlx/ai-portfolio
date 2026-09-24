@@ -1,5 +1,5 @@
 // 使用相对路径而非 @/ 别名：profile 数据层需要能被 Node 校验脚本直接加载
-import type { Project } from "./types";
+import type { BilingualText, Project } from "./types";
 import {
   projectOneDocuments,
   projectThreeDocuments,
@@ -20,71 +20,117 @@ export const projects: Project[] = [
     verificationStatus: "verified",
     sourceId: "profile-project-fish-reid",
     title: {
-      zh: "基于视觉语言先验的开放世界鱼类个体重识别研究",
-      en: "Open-World Fish Individual Re-Identification via Vision-Language Priors",
+      zh: "基于视觉语言先验的开放世界东星斑个体重识别研究",
+      en: "Open-World Crimson Snapper Individual Re-Identification via Vision-Language Priors",
     },
     subtitle: {
-      zh: "以 CLIP-ReID 为基座，做特征压缩与开放集拒识一体化设计",
-      en: "Feature compression and open-set rejection unified on a CLIP-ReID backbone",
+      zh: "以 CLIP-ReID 为基座，做特征压缩与开放集拒识一体化设计；身份错误率优化27%，达成单鱼阶段工程冻结标准",
+      en: "Feature compression and open-set rejection unified on a CLIP-ReID backbone; identity error rate improved by 27%, meeting the single-fish engineering freeze standard",
     },
     role: { zh: "核心研发", en: "Core R&D" },
     featured: true,
     startDate: "2025.03",
-    endDate: "至今",
+    endDate: { zh: "至今", en: "Present" },
     situation: {
-      zh: "水产养殖场景下需要长期追踪鱼类个体，但个体外观差异细微、水下成像质量波动大，且实际部署中新个体与未注册个体持续出现，闭集识别假设不成立。",
-      en: "Long-term tracking of individual fish in aquaculture is difficult: inter-individual appearance differences are subtle, underwater image quality fluctuates, and in real deployment new and unregistered individuals appear continuously — so a closed-set recognition assumption does not hold.",
+      zh: "水产养殖场景下需要长期追踪东星斑个体，但个体外观差异细微、水下成像质量波动大，且实际部署中新个体与未注册个体持续出现，闭集识别假设不成立。",
+      en: "Long-term tracking of individual crimson snapper in aquaculture is difficult: inter-individual appearance differences are subtle, underwater image quality fluctuates, and in real deployment new and unregistered individuals appear continuously — so a closed-set recognition assumption does not hold.",
     },
     task: {
       zh: "在视觉语言先验基础上构建一套既能识别已知身份、又能拒绝未知个体的开放世界识别方法，并把模型压缩到可部署规模。",
       en: "Build an open-world recognition method on vision-language priors that both identifies known identities and rejects unknown ones, while compressing the model to a deployable size.",
     },
     action: {
-      zh: "基于 CLIP-ReID 设计 Compact256 投影层，将特征维度压缩至 1/5；提出 QACM 质量感知身份原型机制，把图像质量估计融入身份原型建模，实现已知识别与未知拒识一体化；构建覆盖 92 个身份、万余张图像的鱼类个体数据集，并完成闭集评测与部署级开放集评测。",
-      en: "Designed a Compact256 projection layer on the CLIP-ReID backbone to compress feature dimensionality by 5×; proposed a Quality-Aware Identity Prototype Mechanism (QACM) that folds image-quality estimation into identity prototype modelling, unifying known-identity recognition and unknown-identity rejection; built a fish individual dataset covering 92 identities and over ten thousand images, then ran both closed-set and deployment-level open-set evaluations.",
+      zh: "基于 CLIP-ReID 设计 Compact256 投影层，将特征维度压缩至 1/5；提出 QACM 质量感知身份原型机制，把图像质量估计融入身份原型建模，实现已知识别与未知拒识一体化；构建覆盖 92 个身份、万余张图像的东星斑个体数据集，并完成闭集评测与部署级开放集评测。",
+      en: "Designed a Compact256 projection layer on the CLIP-ReID backbone to compress feature dimensionality by 5×; proposed a Quality-Aware Identity Prototype Mechanism (QACM) that folds image-quality estimation into identity prototype modelling, unifying known-identity recognition and unknown-identity rejection; built a crimson snapper individual dataset covering 92 identities and over ten thousand images, then ran both closed-set and deployment-level open-set evaluations.",
     },
+    /**
+     * 结果段落：精简为两段（核心机制 → 工程价值）。
+     * 空行分段，**…** 为页面加粗标记（RichText 渲染，问答层会剥离标记）。
+     * 量化指标统一收敛到 metrics 模块，本段不再重复展开学术讨论。
+     */
     result: {
-      zh: "闭集 Rank-1 达到 76.3%；部署级测试中 FAR 6.91%、AUROC 0.7108；研究成果写入论文，并集成 Web 原型系统用于交互式验证。",
-      en: "Reached 76.3% closed-set Rank-1; deployment-level evaluation gave FAR 6.91% and AUROC 0.7108. The results were written into a paper and integrated into a web prototype for interactive validation.",
+      zh: "本项目构建了面向开放世界鱼类个体识别的单鱼视频运行时系统，围绕轨迹级身份生命周期管理，通过Fast Warm-up、确认后身份保持、动态置信度更新等五大核心机制，解决了轨迹断裂、帧质量波动、身份冲突等场景下的稳定识别问题。\n\n系统V3.1.1已达到单鱼阶段工程冻结标准，可输出稳定、可审计的身份结果，为后续多鱼场景的主动身份管理、多轨迹冲突处理提供可复用技术基线。",
+      en: "This project delivers a single-fish video runtime system for open-world fish individual re-identification. Centred on track-level identity lifecycle management, five core mechanisms — including Fast Warm-up, post-confirmation identity retention, and dynamic confidence updating — solve stable recognition under track breaks, frame-quality fluctuation, and identity conflicts.\n\nSystem V3.1.1 meets the single-fish engineering freeze standard: it outputs stable, auditable identity results and provides a reusable technical baseline for active identity management and multi-track conflict handling in future multi-fish scenarios.",
     },
-    coreSkill: ["Python", "PyTorch", "CLIP", "ReID", "Open-Set Recognition", "特征压缩"],
-    techTags: ["PyTorch", "CLIP-ReID", "特征压缩", "开放集识别", "论文成果"],
+    coreSkill: [
+      { zh: "Python", en: "Python" },
+      { zh: "PyTorch", en: "PyTorch" },
+      { zh: "CLIP", en: "CLIP" },
+      { zh: "ReID", en: "ReID" },
+      { zh: "Open-Set Recognition", en: "Open-Set Recognition" },
+      { zh: "特征压缩", en: "Feature Compression" },
+    ],
+    techTags: [
+      { zh: "PyTorch", en: "PyTorch" },
+      { zh: "CLIP-ReID", en: "CLIP-ReID" },
+      { zh: "特征压缩", en: "Feature Compression" },
+      { zh: "开放集识别", en: "Open-Set Recognition" },
+      { zh: "论文成果", en: "Research Publication" },
+    ],
+    researchDirections: ["computer-vision", "reid", "vision-language"],
     highlights: [
       { zh: "Compact256 投影层实现 5 倍维度压缩", en: "Compact256 projection layer: 5× dimensionality compression" },
       { zh: "QACM 实现已知识别与未知拒识一体化", en: "QACM unifies known-ID recognition with unknown rejection" },
       { zh: "自建 92 身份、万余张图像数据集", en: "Self-built dataset: 92 identities, 10k+ images" },
     ],
+    /**
+     * 核心量化数据：本模块只保留部署级与 dev70 运营口径指标（数值保持原值）。
+     * 闭集/论文口径指标与后续迭代类描述均已按要求整条移除，
+     * 数值、变量与注释均不在代码中残留。
+     */
     metrics: [
-      { zh: "闭集 Rank-1 76.3%", en: "Closed-set Rank-1 76.3%" },
       { zh: "部署级 FAR 6.91%", en: "Deployment-level FAR 6.91%" },
-      { zh: "AUROC 0.7108", en: "AUROC 0.7108" },
       { zh: "特征维度压缩 5×", en: "5× feature compression" },
+      { zh: "dev70 已知个体错误率 20.10% → 14.65%（相对优化 27%）", en: "dev70 known-identity error rate 20.10% → 14.65% (27% relative improvement)" },
+      { zh: "dev70 未知鱼误接收率 25.90% → 20.75%（相对优化 20%）", en: "dev70 unknown-fish false acceptance 25.90% → 20.75% (20% relative improvement)" },
     ],
-    interviewFocus: [
-      {
-        zh: "为什么用 CLIP 的视觉语言先验做 ReID，而不是纯视觉度量学习？",
-        en: "Why use CLIP vision-language priors for ReID rather than purely visual metric learning?",
-      },
-      {
-        zh: "Compact256 投影层如何在压缩 5 倍维度的同时保持检索精度？",
-        en: "How does the Compact256 projection layer preserve retrieval accuracy at 5× compression?",
-      },
-      {
-        zh: "QACM 的质量估计具体如何参与身份原型建模？",
-        en: "How exactly does QACM's quality estimate participate in identity prototype modelling?",
-      },
-      {
-        zh: "开放集场景下 AUROC 0.7108 说明什么？哪些因素仍然是瓶颈？",
-        en: "What does AUROC 0.7108 tell us in the open-set setting, and which factors remain bottlenecks?",
-      },
-    ],
+    /**
+     * 项目展示图：界面图在前（视频识别 → 鱼档案 → 新个体注册），算法框架图收尾。
+     * 界面截图存放于 /images/projects/open-world-reid/，中英文共用同一份图片资源。
+     */
     images: [
       {
-        id: "p1-fig-1-framework",
+        id: "p1-ui-1-video-inference",
+        src: "/images/projects/open-world-reid/open-world-reid-video-inference.jpg",
+        caption: {
+          zh: "图1 视频识别实时检测界面",
+          en: "Fig.1 Real-time Video Recognition Interface",
+        },
+        alt: {
+          zh: "Web 视频识别界面实时检测画面：东星斑被绿色检测框标注为 ID 3，置信度 1.0",
+          en: "Real-time detection view in the web video recognition interface: a crimson snapper marked with a green bounding box labelled ID 3 at confidence 1.0",
+        },
+      },
+      {
+        id: "p1-ui-2-fish-registry",
+        src: "/images/projects/open-world-reid/open-world-reid-fish-registry.jpg",
+        caption: {
+          zh: "图2 鱼个体档案管理列表",
+          en: "Fig.2 Fish Individual Registry List",
+        },
+        alt: {
+          zh: "鱼个体档案管理列表界面：已登记 80 条个体记录，列出 Fish ID、名称别名、来源、登记状态、Prototype 状态与更新时间",
+          en: "Fish individual registry list interface: 80 registered records listing Fish ID, name or alias, source, registration status, prototype status, and update time",
+        },
+      },
+      {
+        id: "p1-ui-3-enrollment",
+        src: "/images/projects/open-world-reid/open-world-reid-enrollment.jpg",
+        caption: {
+          zh: "图3 新个体注册审核界面",
+          en: "Fig.3 New Individual Enrollment Interface",
+        },
+        alt: {
+          zh: "新个体注册审核界面：待审 Candidate 列表含状态、样本数与正常纳入进度，并提示下一个可用 Dynamic ID",
+          en: "New individual enrollment review interface: candidate list with status, sample counts and acceptance progress, plus the next available Dynamic ID",
+        },
+      },
+      {
+        id: "p1-fig-4-framework",
         src: "/images/projects/project-1/fig-1-framework.jpg",
         caption: {
-          zh: "图1 算法整体框架图",
-          en: "Fig. 1 Overall algorithm framework",
+          zh: "图4 算法整体框架图",
+          en: "Fig.4 Overall algorithm framework",
         },
         alt: {
           zh: "算法整体框架图",
@@ -102,8 +148,8 @@ export const projects: Project[] = [
     verificationStatus: "verified",
     sourceId: "profile-project-rfid-acquisition",
     title: {
-      zh: "RFID 与多目视觉双模态鱼类识别数据采集装置",
-      en: "RFID and Multi-View Vision Dual-Modality Fish Data Acquisition Device",
+      zh: "RFID 与多目视觉双模态东星斑识别数据采集装置",
+      en: "RFID and Multi-View Vision Dual-Modality Crimson Snapper Data Acquisition Device",
     },
     subtitle: {
       zh: "从过鱼通道结构设计到多线程同步采集程序的整机工程实现",
@@ -112,10 +158,10 @@ export const projects: Project[] = [
     role: { zh: "项目负责人", en: "Project Lead" },
     featured: true,
     startDate: "2025.06",
-    endDate: "2026.09",
+    endDate: { zh: "2026.09", en: "2026.09" },
     situation: {
-      zh: "双模态鱼类识别研究需要同一时刻的标签与多视角图像，但人工拍摄与标注无法保证 ID 与图像严格对应，数据一致性差、采集效率低。",
-      en: "Dual-modality fish recognition research needs labels and multi-view images captured at the same instant, but manual shooting and annotation cannot guarantee a strict ID-to-image correspondence — data consistency was poor and throughput low.",
+      zh: "双模态东星斑识别研究需要同一时刻的标签与多视角图像，但人工拍摄与标注无法保证 ID 与图像严格对应，数据一致性差、采集效率低。",
+      en: "Dual-modality crimson snapper recognition research needs labels and multi-view images captured at the same instant, but manual shooting and annotation cannot guarantee a strict ID-to-image correspondence — data consistency was poor and throughput low.",
     },
     task: {
       zh: "负责整机方案设计与落地，实现 RFID 标签触发下的多机位同步采集，并让数据按个体 ID 自动归档。",
@@ -129,8 +175,24 @@ export const projects: Project[] = [
       zh: "3 路 25fps 视频稳定采集，采集与标注效率较人工方式提升 80%；形成可复用的工程化搭建与操作规范，支撑后续数据集生产。",
       en: "Three 25 fps video streams are captured stably, and acquisition-plus-annotation efficiency improved by 80% over the manual workflow. A reusable engineering build-and-operation standard now supports downstream dataset production.",
     },
-    coreSkill: ["嵌入式系统", "RFID", "全局快门相机", "Python 多线程", "USB 3.2", "UPVC 结构设计"],
-    techTags: ["Python", "多线程", "RFID", "机器视觉", "嵌入式系统", "硬件搭建"],
+    coreSkill: [
+      { zh: "嵌入式系统", en: "Embedded Systems" },
+      { zh: "RFID", en: "RFID" },
+      { zh: "全局快门相机", en: "Global Shutter Cameras" },
+      { zh: "Python 多线程", en: "Python Multithreading" },
+      { zh: "USB 3.2", en: "USB 3.2" },
+      { zh: "UPVC 结构设计", en: "UPVC Structural Design" },
+    ],
+    techTags: [
+      { zh: "Python", en: "Python" },
+      { zh: "多线程", en: "Multithreading" },
+      { zh: "RFID", en: "RFID" },
+      { zh: "机器视觉", en: "Machine Vision" },
+      { zh: "嵌入式系统", en: "Embedded Systems" },
+      { zh: "硬件搭建", en: "Hardware Assembly" },
+      { zh: "AutoCAD", en: "AutoCAD" },
+    ],
+    researchDirections: ["computer-vision", "embedded-sensing"],
     highlights: [
       { zh: "RFID 触发 + 三机位同步采集", en: "RFID-triggered, three-camera synchronized capture" },
       { zh: "数据按个体 ID 自动归档", en: "Automatic per-ID data archiving" },
@@ -140,24 +202,6 @@ export const projects: Project[] = [
       { zh: "3 路 25fps 稳定采集", en: "3× 25 fps stable capture" },
       { zh: "134.2kHz RFID 集成", en: "134.2 kHz RFID integration" },
       { zh: "采集效率提升 80%", en: "80% acquisition efficiency gain" },
-    ],
-    interviewFocus: [
-      {
-        zh: "跨壁式倒 U 型过鱼通道的结构约束是如何确定的？鱼体通过姿态如何影响成像？",
-        en: "How were the structural constraints of the cross-wall inverted-U fish passage determined, and how does passage posture affect imaging?",
-      },
-      {
-        zh: "多线程同步采集程序如何保证三机位的时间对齐？同步误差来源有哪些？",
-        en: "How does the multi-threaded program guarantee temporal alignment across three cameras, and what are the sources of synchronization error?",
-      },
-      {
-        zh: "USB3.2 带宽瓶颈的具体表现是什么？如何评估带宽余量？",
-        en: "How did the USB 3.2 bandwidth bottleneck manifest, and how is bandwidth headroom assessed?",
-      },
-      {
-        zh: "采集与标注效率提升 80% 的统计口径是什么？",
-        en: "What is the measurement basis for the 80% efficiency improvement?",
-      },
     ],
     images: [
       {
@@ -188,12 +232,12 @@ export const projects: Project[] = [
         id: "p2-device-3-cad",
         src: "/images/projects/project-2/device-3-cad.jpg",
         caption: {
-          zh: "图3 天线外壳3D结构设计图",
-          en: "Fig. 3 3D structural design of the antenna housing",
+          zh: "图3 天线外壳CAD结构设计图",
+          en: "Fig. 3 CAD Structural Design of Antenna Housing",
         },
         alt: {
-          zh: "天线外壳 3D 结构设计图",
-          en: "3D structural design of the antenna housing",
+          zh: "天线外壳 CAD 结构设计图",
+          en: "CAD structural design of the antenna housing",
         },
       },
       {
@@ -244,7 +288,7 @@ export const projects: Project[] = [
     sourceId: "profile-project-grouper-tagging",
     title: {
       zh: "东星斑个体标记方法筛选与标准化体系建立",
-      en: "Screening and Standardization of Individual Tagging Methods for Leopard Coral Grouper",
+      en: "Screening and Standardization of Individual Tagging Methods for Crimson Snapper",
     },
     subtitle: {
       zh: "多方案对照实验驱动的标记工艺标准化与选型指南",
@@ -253,10 +297,10 @@ export const projects: Project[] = [
     role: { zh: "实验负责人", en: "Experiment Lead" },
     featured: true,
     startDate: "2025.12",
-    endDate: "2026.08",
+    endDate: { zh: "2026.08", en: "2026.08" },
     situation: {
       zh: "东星斑个体标记缺乏统一工艺标准，不同规格鱼体在芯片植入与体外标记下的存活率与标记保持率差异明显，实验结果难以横向比较。",
-      en: "Individual tagging of leopard coral grouper lacked a unified process standard: survival and tag-retention rates varied markedly across fish sizes and between chip implantation and external marking, making results hard to compare.",
+      en: "Individual tagging of crimson snapper lacked a unified process standard: survival and tag-retention rates varied markedly across fish sizes and between chip implantation and external marking, making results hard to compare.",
     },
     task: {
       zh: "通过多方案对照实验筛选适用标记方法，建立标准化操作与术后养护流程，并输出不同规格鱼体的标记方案选型指南。",
@@ -270,8 +314,19 @@ export const projects: Project[] = [
       zh: "成鱼背部注射标记存活率提升至 80%；形成不同规格鱼体的标记方案选型指南，为后续个体识别数据集建设提供稳定的标记基础。",
       en: "Dorsal injection marking survival for adult fish improved to 80%; a tagging-method selection guide by fish size class was produced, providing a stable marking basis for subsequent individual-recognition dataset construction.",
     },
-    coreSkill: ["实验设计", "对照实验", "标准化流程", "动物标记技术", "数据整理"],
-    techTags: ["对照实验", "SOP标准化", "工程落地"],
+    coreSkill: [
+      { zh: "实验设计", en: "Experimental Design" },
+      { zh: "对照实验", en: "Control Experiment" },
+      { zh: "标准化流程", en: "Standardized Workflow" },
+      { zh: "动物标记技术", en: "Animal Tagging Techniques" },
+      { zh: "数据整理", en: "Data Consolidation" },
+    ],
+    techTags: [
+      { zh: "对照实验", en: "Control Experiment" },
+      { zh: "SOP标准化", en: "SOP Standardization" },
+      { zh: "工程落地", en: "Engineering Implementation" },
+    ],
+    researchDirections: ["embedded-sensing"],
     highlights: [
       { zh: "百余尾多规格鱼体全流程验证", en: "100+ fish across size classes, full-workflow validation" },
       { zh: "成鱼背部注射标记存活率提升至 80%", en: "Adult dorsal injection survival raised to 80%" },
@@ -281,20 +336,6 @@ export const projects: Project[] = [
       { zh: "成鱼存活率 80%", en: "Adult survival rate 80%" },
       { zh: "百余尾鱼体全流程验证", en: "100+ fish validated end to end" },
       { zh: "标准化操作与养护流程", en: "Standardized operating and care procedure" },
-    ],
-    interviewFocus: [
-      {
-        zh: "对照实验的分组与样本量是如何确定的？如何处理个体差异带来的干扰？",
-        en: "How were the experiment groups and sample sizes determined, and how was individual variation controlled?",
-      },
-      {
-        zh: "存活率 80% 的统计样本与观测周期是怎样的？",
-        en: "What sample and observation window underlie the 80% survival figure?",
-      },
-      {
-        zh: "为什么不同规格鱼体需要不同的标记方案？关键约束是什么？",
-        en: "Why do different size classes need different tagging methods, and what are the key constraints?",
-      },
     ],
     images: [
       {
@@ -396,7 +437,8 @@ export function findProjectBySlug(
 /**
  * 卡片/详情页使用的技术标签：优先使用为展示准备的 techTags，
  * 为空时回退到简历上的 coreSkill，保证任何项目都有标签可渲染。
+ * 两者均为双语结构，调用方按当前 locale 取词。
  */
-export function getProjectTechTags(project: Project): string[] {
+export function getProjectTechTags(project: Project): BilingualText[] {
   return project.techTags.length > 0 ? project.techTags : project.coreSkill;
 }

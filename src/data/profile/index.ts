@@ -26,7 +26,11 @@ export const profileData = {
 
 export * from "@/src/data/profile/types";
 export { about } from "@/src/data/profile/about";
-export { awards } from "@/src/data/profile/awards";
+export {
+  awardLevelLabels,
+  awardLevelOrder,
+  awards,
+} from "@/src/data/profile/awards";
 export { competitions } from "@/src/data/profile/competitions";
 export { credentials } from "@/src/data/profile/credentials";
 export { education } from "@/src/data/profile/education";

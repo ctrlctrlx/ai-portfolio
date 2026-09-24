@@ -3,12 +3,15 @@ import {
   ArrowRight,
   Award as AwardIcon,
   FileBadge,
+  GraduationCap,
   Medal,
   ScrollText,
 } from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
-import type { BilingualText, Credential } from "@/src/data/profile";
+import type { AwardLevel, BilingualText, Credential } from "@/src/data/profile";
 import {
+  awardLevelLabels,
+  awardLevelOrder,
   publicAwards,
   publicCompetitions,
   publicCredentials,
@@ -16,6 +19,13 @@ import {
 
 /** 首页预览模式下展示的条目数量 */
 const PREVIEW_ITEM_COUNT = 3;
+
+/** 各级别对应的线性图标，提升分级辨识度 */
+const levelIcons: Record<AwardLevel, React.ElementType> = {
+  national: AwardIcon,
+  provincial: Medal,
+  university: GraduationCap,
+};
 
 interface HonorsItem {
   id: string;
@@ -45,10 +55,10 @@ function toItems(
 /**
  * 「荣誉与资质」板块。
  *
- * variant="full"    —— 荣誉独立页：荣誉奖项 / 竞赛获奖 / 证书与专利 / 学术论文 四类完整展开。
- * variant="preview" —— 首页预览：只列出按重要性排序的前 PREVIEW_ITEM_COUNT 条，
- *                      底部给出「查看更多」入口跳转 /[lang]/honors，四类与两篇 EI 论文
- *                      的完整内容仍在独立页展开，首页不重复全量信息。
+ * variant="full"    —— 荣誉独立页：评奖与竞赛合并后按「国家级 → 省部级 → 校级」
+ *                      分级展示（组内按时间倒序），证书与专利、学术论文各成一类。
+ * variant="preview" —— 首页预览：只列出按分类优先级排序的前 PREVIEW_ITEM_COUNT 条，
+ *                      底部给出「查看更多」入口跳转 /[lang]/honors，完整内容仍在独立页展开。
  *
  * 全部数据来自 public + verified 集合，任一类为空时不渲染该分类，避免出现空标题。
  */
@@ -67,19 +77,27 @@ export default function Honors({
     (entry) => entry.kind === "paper"
   );
 
+  // 评奖与竞赛合并后按级别分组，级别顺序固定为 国家级 → 省部级 → 校级
+  const honorEntries = [...publicAwards, ...publicCompetitions];
   const categories = [
-    {
-      id: "awards",
-      label: { zh: "荣誉奖项", en: "Honors & Awards" },
-      icon: AwardIcon,
-      items: toItems(locale, publicAwards),
-    },
-    {
-      id: "competitions",
-      label: { zh: "竞赛获奖", en: "Competitions" },
-      icon: Medal,
-      items: toItems(locale, publicCompetitions),
-    },
+    ...awardLevelOrder.map((level) => ({
+      id: `level-${level}`,
+      label: awardLevelLabels[level],
+      icon: levelIcons[level],
+      items: toItems(
+        locale,
+        honorEntries
+          .filter((entry) => entry.level === level)
+          // 时间倒序；同年月返回 0 以保持数据层既定顺序（稳定排序）
+          .sort((first, second) =>
+            first.year < second.year
+              ? 1
+              : first.year > second.year
+                ? -1
+                : 0
+          )
+      ),
+    })),
     {
       id: "credentials",
       label: { zh: "证书与专利", en: "Certificates & Patents" },
@@ -186,7 +204,8 @@ export default function Honors({
         </h2>
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+      {/* 分级卡片：三级奖励标题清晰、组别间留出更大间距以提升扫读区分度 */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
         {categories.map((category) => {
           const Icon = category.icon;
           return (

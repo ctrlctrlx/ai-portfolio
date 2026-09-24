@@ -1,146 +1,228 @@
 # Yang Chong — Evidence-based Portfolio
 
-杨冲的中英双语求职作品集。页面、metadata 与求职信息助理统一使用 `src/data/profile/` 中允许公开且已经核验的结构化资料；未经确认、非公开或待核验条目不会进入页面或 AI 回答。
+杨冲 / Yang Chong 的中英双语个人求职作品集。页面、metadata、在线简历、简历 PDF 与求职信息助理
+统一使用 `src/data/profile/` 中**允许公开且已经核验**的结构化资料；未经确认、非公开或待核验条目
+不会进入页面、不会进入 AI 回答，也不会进入导出的 PDF。
 
-## 技术栈
+- 站点内容：算法（鱼类个体重识别 / 开放集识别 / 特征压缩）+ 硬件（RFID 与多目视觉采集装置）双线项目与量化成果
+- 渲染形态：公开页面全部**静态预渲染（SSG）**，仅 `/api/*` 为按请求执行的 Route Handler
+- 语言：`zh` / `en` 两套完整文案，无硬编码单语言文本；英文页零中文字符残留
 
-- Next.js 16 App Router、React 19、严格 TypeScript
-- Tailwind CSS 4、`next-themes`
-- MDX、KaTeX
-- 可选 Vercel KV 访客计数与聊天请求频率控制
+---
 
-没有安装或要求外部 AI 服务。Career Agent 使用确定性规则，只从 public + verified Profile 数据生成回答。
+## 一、技术栈
 
-## 本地开发
+| 类别 | 技术 | 版本 |
+| --- | --- | --- |
+| 框架 | Next.js（App Router + Turbopack） | 16.1.6 |
+| UI | React / React DOM | 19.2.3 |
+| 语言 | TypeScript（`strict`） | 5.x |
+| 样式 | Tailwind CSS（CSS-first，`@theme inline` 令牌） | 4.x |
+| 主题 | next-themes（`class` 策略，浅色 / 深色两套 CSS 变量） | 0.4.x |
+| 图标 | lucide-react | 0.575.x |
+| 内容 | MDX（gray-matter + next-mdx-remote）、KaTeX、remark-gfm / remark-math | — |
+| 可选服务 | Vercel KV（访客计数 + 聊天限流）、DeepSeek API（问答兜底） | — |
+| 工具 | ESLint 9（flat config）、PostCSS + `@tailwindcss/postcss` | — |
+| 运行时 | Node.js ≥ 22.15.0、npm 10.9.2 | `package.json` 的 `engines` / `packageManager` |
 
-需要 Node.js 22.15.0 或更高版本，以及 npm 10.9.2。依赖已存在时无需重新安装。
+不依赖任何第三方 UI 组件库与网络字体（使用系统字体栈），无自建 Webpack 配置。
 
-```bash
-npm run dev
+---
+
+## 二、项目结构
+
+```
+app/                        路由层（App Router）
+  layout.tsx                根布局：只做静态判定，禁止使用 headers()/cookies() 等动态 API
+  [lang]/
+    layout.tsx              语言段布局：导航、页脚、AI 助理、Skip Link、<main id="main-content">
+    page.tsx                首页    about/ 关于我    projects/ 项目列表    projects/[slug]/ 项目详情
+    honors/ 荣誉与资质         resume/ 在线简历        contact/ 联系我        blog/[slug]/ 技术文章
+    not-found.tsx           404 边界
+  api/chat/route.ts         求职问答（规则引擎优先，可选外部模型兜底）
+  api/visitor/route.ts      可选访客计数（未配置 KV 时返回不可用）
+  robots.ts / sitemap.ts / globals.css
+proxy.ts                    Next 16 的中间件替代文件：语言前缀重写 + 注入 x-portfolio-locale
+src/
+  components/               21 个展示组件（服务端为主，ChatBox / ImageGallery / ThemeProvider 为客户端）
+  data/profile/             唯一事实数据层（16 个文件：identity / about / education / projects /
+                            publications / patents / awards / competitions / credentials / skills /
+                            research / types / visibility / public / index / projectMedia）
+  data/{resumeData,publicProfile}.ts   旧兼容适配层（禁止新代码引用，仅校验脚本读取）
+  lib/                      i18n、siteUrl、MDX 读取、career-agent.mjs（规则引擎）、deepseekAgent.ts
+  providers/ThemeProvider.tsx
+content/posts/              MDX 技术文章（当前 3 篇均为 draft，不公开、不进 sitemap）
+public/                     头像、双语简历 PDF、项目文档、项目与实践配图
+scripts/                    发布前校验脚本（见「五、校验」）+ 构建期 lastUpdated 生成
+docs/deployment-readiness.md  部署准备状态与人工验收清单
 ```
 
-开发服务器默认位于 `http://localhost:3000`。本地地址只用于开发，不会写入 canonical 或 sitemap。
+---
 
-## 验证
+## 三、当前路由与页面
 
-```bash
-npm run verify:content
-npm run verify:profile
-npm run verify:chat
-npm run verify:resume
-npm run lint
-npm run typecheck
+| 路由 | 内容 | 渲染 |
+| --- | --- | --- |
+| `/` | 按 `Accept-Language` 进入 `zh` / `en` | 静态（重定向） |
+| `/[lang]` | 首页：求职定位、学历行、政治面貌、研究方向标签、代表项目 3 张卡、荣誉预览、技能栈 | SSG |
+| `/[lang]/about` | 关于我：三段式简介、研究方向、教育经历、实践经历、三大核心优势、实践配图 | SSG |
+| `/[lang]/projects` | 项目经历：3 张项目卡（STAR + 量化指标 + 技术标签）+ 学术成果与专利 | SSG |
+| `/[lang]/projects/[slug]` | 项目详情：STAR 四段、核心量化数据、项目图集（灯箱缩放）、技术标签、相关文档下载 | SSG |
+| `/[lang]/honors` | 荣誉与资质：国家级 / 省部级 / 校级 + 证书与专利 + 学术论文 | SSG |
+| `/[lang]/resume` | 在线公开简历（教育 / 项目 / 技能 / 荣誉 / 专利）+ A4 打印样式 + 双语 PDF 下载 | SSG |
+| `/[lang]/contact` | 联系我：公开求职邮箱、微信、电话（`tel:`） | SSG |
+| `/[lang]/blog`、`/[lang]/blog/[slug]` | 技术文章；当前无已发布文章（3 篇草稿），导航入口隐藏且不进入 sitemap | SSG |
+| `/[lang]/research` | **已永久重定向（301）到 `/[lang]/projects`**，研究内容并入项目经历页 | 重定向 |
+| `/api/chat`、`/api/visitor` | 求职问答 / 可选访客计数 | 动态 |
+| `/robots.txt`、`/sitemap.xml` | 按确认域名生成；sitemap 只收录真实存在的公开路由 | 静态 |
+
+**静态化约束（重要）**：`app/layout.tsx`、`app/[lang]/layout.tsx` 以及 404 组件都不得调用
+`headers()` / `cookies()` 等动态 API——一旦调用，整棵路由树会被强制改为按请求渲染，页面级
+`generateStaticParams` 全部失效，`.next` 中不会产出任何页面 HTML。语言由 `proxy.ts` 注入的请求头
+仅用于 404 文案，正常页面的 `<html lang>` 由 `DocumentLocale` 按当前路由在客户端校正。
+
+---
+
+## 四、内容资产（`src/data/profile/`）
+
+| 集合 | 数量 | 说明 |
+| --- | --- | --- |
+| 项目经历 | 3 | 鱼类 ReID 研究 → RFID 多目视觉采集装置 → 东星斑标记标准化 |
+| 研究方向 | 3 | 计算机视觉、个体重识别（ReID）、嵌入式智能感知 |
+| 论文 | 2 | 均为第一作者 EI 会议论文，含 DOI；会议全称待补充（占位不得改写为「已收录」） |
+| 专利 | 1 | 已授权实用新型专利，年份与授权日期一致 |
+| 荣誉奖项 | 11 | 国家级 2、省部级 1、校级 8（含 1 项结业证书） |
+| 竞赛获奖 | 2 | 大唐杯（省级）、蓝桥杯（省级） |
+| 证书与论文引用 | 5 | `kind: "paper"` 条目由 `verify:profile` 校验与 `publications.ts` 标题一一对应 |
+| 技能 | 27 | 3 大类 9 个子组（`groups` 与扁平 `items` 必须一致） |
+| 实践经历 | 2 个阶段 | 本科学生工作 + 硕士驻场项目 |
+| 联系方式 | 4 | 邮箱、电话、个人网站、GitHub |
+
+### 双语简历 PDF
+
+| 文件 | 语言 | 来源 | 大小 / 页数 |
+| --- | --- | --- | --- |
+| `public/resume.pdf` | 中文 | `/[lang]/resume` 页面打印 | ≈ 300 KB / 3 页 A4 |
+| `public/resume-en.pdf` | 英文 | `/[lang]/resume` 页面打印 | ≈ 105 KB / 4 页 A4 |
+
+- 中文页的下载按钮指向 `resume.pdf`，英文页指向 `resume-en.pdf`（`ResumeDownloadButton` 按 locale 选择）。
+- 两个文件都由 `/[lang]/resume` 页面（同一份 profile 数据源）打印生成，因此与网页内容天然一致；
+  页面打印样式（`app/globals.css` 的 `@media print`）会隐藏导航、页脚与 AI 助理，并按 A4 分页。
+- 两份 PDF 的文字都会被 `verify:content` 与 `verify:resume` 提取并审计：只允许出现已批准的邮箱与手机号，
+  且必须分别包含中文名 / 英文名，避免出现空白或语言错配的文件。
+
+重新生成（需要本机安装 Chrome 或 Edge，项目不引入 PDF 依赖）：
+
+```powershell
 npm run build
-npm run verify
-npm run verify:deploy
-npm run verify:all
+npx next start -p 3331          # 另开一个终端
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
+  --no-pdf-header-footer --virtual-time-budget=10000 `
+  --print-to-pdf="$PWD\public\resume.pdf"    "http://127.0.0.1:3331/zh/resume"
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
+  --no-pdf-header-footer --virtual-time-budget=10000 `
+  --print-to-pdf="$PWD\public\resume-en.pdf" "http://127.0.0.1:3331/en/resume"
+npm run verify:content && npm run verify:resume
 ```
 
-- `verify:content`：检查公开姓名、禁用内容、草稿、简历入口和静态资产。
-- `verify:profile`：检查证据状态、双语字段、slug、隐私模式和事实边界。
-- `verify:chat`：检查请求契约、快捷问题、项目问答、注入拒绝和缺失资料回答。
-- `verify:resume`：检查在线公开简历路由、Profile 数据边界、隐私字段与打印入口。
-- `verify:deploy`：检查运行时版本、脚本、production build 产物、环境文件、公开隐私模式、静态资产和站点 URL 配置。
-- `verify:all`：按发布前顺序运行内容、Profile、Chat、lint、TypeScript、build 和 readiness 检查。
+---
 
-## 当前路由
+## 五、本地开发与校验
 
-- `/`：按请求语言进入本地化首页
-- `/zh`、`/en`：中英文首页（求职意向、一句话简介、关于我、实践经历、荣誉与资质、技能栈、代表项目、教育、联系我）
-- `/[lang]/about`：关于我（个人简介、政治面貌、实践经历、三大核心优势）
-- `/[lang]/honors`：荣誉与资质（荣誉奖项 / 竞赛获奖 / 证书与专利 / 学术论文）
-- `/[lang]/contact`：联系我（公开求职邮箱、微信、籍贯）
-- `/[lang]/projects`：公开项目列表（含角色徽章、量化指标、技术标签、STAR 与面试重点）
-- `/[lang]/projects/[slug]`：公开项目详情
-- `/[lang]/research`：公开研究方向、学术成果（论文）与专利
-- `/[lang]/resume`：双语在线公开简历（在线浏览版）
-- `/resume.pdf`：正式版简历 PDF（本地上传，全站统一的下载入口）
-- `/[lang]/blog`、`/[lang]/blog/[slug]`：非草稿技术文章；当前文章均为草稿，导航栏入口已隐藏
-- `/api/chat`：仅基于公开 Profile 的确定性求职问答
-- `/api/visitor`：可选访客计数；未配置时返回不可用
-- `/robots.txt`、`/sitemap.xml`：使用确认域名生成公开路由，包含关于我、荣誉与资质、联系我、在线简历与研究页
+```bash
+npm ci            # 安装依赖（有 package-lock.json）
+npm run dev       # 开发服务器 http://localhost:3000
+```
 
-## 项目详情页媒体与文档（路径已预留）
-
-项目详情页 `/[lang]/projects/[slug]` 含「项目展示」图片区与「相关文档下载」区，
-但**只有详情页有**，首页预览卡片与项目列表页均不展示，保持首页精简。
-
-路径登记在 `src/data/profile/projectMedia.ts`，实体文件由本人放入 `public/` 对应目录：
-
-| 用途 | 存放目录 |
+| 命令 | 作用 |
 | --- | --- |
-| 项目1 图片 | `public/images/projects/project-1/` |
-| 项目2 图片 | `public/images/projects/project-2/` |
-| 项目3 图片 | `public/images/projects/project-3/` |
-| 「关于我」实践经历配图 | `public/images/about/` |
-| 全部文档 | `public/docs/` |
+| `npm run lint` | ESLint（`eslint.config.mjs`） |
+| `npm run typecheck` | `tsc --noEmit`，严格模式 |
+| `npm run build` | 生产构建（`prebuild` 自动生成 `lastUpdated`） |
+| `npm run verify:content` | 公开文案、禁用内容、草稿、静态资产、双语简历 PDF 文字审计 |
+| `npm run verify:profile` | 事实数据层：证据状态、双语字段、slug、隐私边界、数量守卫 |
+| `npm run verify:chat` | 问答请求契约、快捷问题、项目问答、注入拒绝、密钥不进入客户端 |
+| `npm run verify:resume` | 在线简历路由、数据边界、隐私字段、双语 PDF 审计 |
+| `npm run verify:deploy` | 运行时版本、脚本、构建产物、环境文件、站点 URL、sitemap 契约 |
+| `npm run verify` | content → profile → chat → resume → lint → typecheck → build（提交前必过） |
+| `npm run verify:all` | 在 `verify` 之后追加 `verify:deploy`（发布前在有 `pdftotext` 的机器上执行） |
 
-- 这些预留路径已在 `scripts/lib-pending-assets.mjs` 登记为「待放置资产」：
-  文件放入前 `npm run verify` 只输出 notice，不判失败；放入后 notice 自动消失。
-- 图片缺失时详情页会显示占位块并标出预期路径，便于核对文件名是否一致。
-- 新增预留目录时必须同步登记到 `scripts/lib-pending-assets.mjs`。
+---
 
-## 简历下载
+## 六、环境变量
 
-- 网页版 `/[lang]/resume` 只用于在线浏览。
-- 所有下载入口统一指向 `public/resume.pdf`（本地放置的正式版文件），由
-  `src/components/ResumeDownloadButton.tsx` 渲染，不再提供浏览器打印 / 另存为 PDF 入口。
-- `public/resume.pdf` 的文字会被校验脚本提取并审计，确保 PDF 内不出现未批准的邮箱或其它手机号。
-- 替换简历时直接覆盖 `public/resume.pdf`，然后重跑 `npm run verify`。
+复制 `.env.example` 中的变量名，**不要提交任何 `.env*` 文件**（`.env.local` 仅本地使用，其存在会使 `verify:deploy` 失败，属预期设计）。
 
-## Profile 事实原则
+| 变量 | 必填 | 作用 | 未配置时 |
+| --- | --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | 建议 | canonical / Open Graph / sitemap / robots 的 origin；只接受无路径、无凭据的 HTTPS origin | 回退已确认的 `https://ctrlctrlx.top` |
+| `KV_REST_API_URL` + `KV_REST_API_TOKEN` | 生产建议 | 访客计数与 `/api/chat` 频率限制 | 访客计数不可用；**聊天限流放行** |
+| `DEEPSEEK_API_KEY` | 可选 | 规则未命中时的外部模型兜底 | 静默降级为纯规则引擎模式 |
 
-- 公开个人事实只能维护在 `src/data/profile/`。
-- UI、metadata、兼容层和 Career Agent 必须使用 public + verified 过滤集合。
+`DEEPSEEK_API_KEY` 仅服务端读取，无 `NEXT_PUBLIC_` 前缀，`verify:chat` 会断言它不进入客户端 chunk。
+
+---
+
+## 七、求职信息助理（双层架构）
+
+1. **规则引擎（主路径）**：`src/lib/career-agent.mjs` 从 public + verified 数据确定性作答，零成本、秒响应，
+   覆盖自我介绍、教育、技能、项目、研究方向、专利、实践经历、证书、荣誉、联系方式、简历与文档等高频问题。
+2. **外部模型（兜底）**：配置 `DEEPSEEK_API_KEY` 后，规则未命中的开放问题由 `src/lib/deepseekAgent.ts`
+   以同一份公开语料作为 RAG 上下文作答；未配置则直接使用友好兜底文案。
+
+- 提示词注入由规则引擎直接拒绝，**不会**转发给外部模型。
+- 资料不足时统一回答「当前公开资料中没有足够信息支持这一结论。」。
+- 任何一层都不得输出公开数据之外的个人信息。
+
+---
+
+## 八、Profile 事实原则
+
+- 公开个人事实只能维护在 `src/data/profile/`；UI、metadata、简历 PDF 与助理必须使用 public + verified 过滤集合。
 - `pending`、`private`、`hidden` 不得进入公开集合。
 - 不得猜测或补写论文、专利、奖项、项目角色、设备、指标、链接或状态。
 - 当前公开论文集合为 2 篇 EI 会议论文，均为第一作者：
-  - `publications.ts` 是论文事实的唯一来源；`credentials.ts` 中的 `kind: "paper"` 条目仅为「荣誉与资质」分类引用，由 `verify:profile` 校验两者标题一一对应。
+  - `publications.ts` 是论文事实的唯一来源；`credentials.ts` 中 `kind: "paper"` 条目仅为分类引用，由 `verify:profile` 校验标题一一对应。
   - 会议全称尚未确认，`venue` 保留【待补充会议全称】占位；在补全之前只能表述为「EI 会议论文」，不得声称 EI 已收录。
-  - 论文指标（Rank-1 94.83% / AUROC 87.75%）与项目①的部署级指标（Rank-1 76.3% / AUROC 0.7108）口径不同，两处各自如实标注，不互相覆盖。
-  - 论文作者只记录顺序与「是否本人」，本人姓名唯一来源仍是 `identity.ts`。
-- 当前公开奖励与证书集合：`awards.ts` 4 项荣誉、`competitions.ts` 2 项竞赛获奖、`credentials.ts` 3 项证书与专利。
-- 当前公开专利集合为 1（`patents.ts` 为事实来源，`credentials.ts` 仅作展示引用，年份必须与授权日期一致）。
-- 项目经历为 3 项，按「鱼类 ReID 研究 → RFID 多目视觉采集装置 → 东星斑标记标准化」重要性排序；`techTags` 用于卡片标签，`coreSkill` 用于简历技能描述，两者分开维护。
-- 技能栈四大分类的 `groups` 与扁平 `items` 必须保持一致，由 `verify:profile` 校验。
-- 不得公开私人邮箱、生日、学号、住址、证件、密钥或原始私有研究数据。
+  - 论文指标（Rank-1 94.83% / AUROC 87.75%）与项目①的部署级指标（FAR 6.91%）口径不同，两处分别如实标注，不互相覆盖。
+  - 本人姓名唯一来源仍是 `identity.ts`。
+- 当前公开奖励与证书：`awards.ts` 11 项荣誉、`competitions.ts` 2 项竞赛、`credentials.ts` 5 项证书与论文引用、`patents.ts` 1 项专利。
+- 技能栈 `groups` 与扁平 `items` 的 id 集合与顺序必须一致（由 `verify:profile` 校验）。
+- 不得公开生日、学号、住址、证件、密钥或原始私有研究数据。
 - **已授权公开的例外**（唯一声明位置：`scripts/lib-approved-contacts.mjs`）：
-  - 手机号仅允许出现在 `src/data/profile/identity.ts` 与 `public/resume.pdf`；其它 11 位号码一律拦截。
-  - 政治面貌仅允许出现在 `src/data/profile/about.ts`，不得进入在线简历路由。
-  - 撤销授权只需删除该文件中的常量，即恢复原有的全面禁止。
+  - 手机号只允许出现在 `src/data/profile/identity.ts` 与两份简历 PDF；其它 11 位号码一律拦截。
+  - 政治面貌只允许出现在 `src/data/profile/about.ts`，不得进入在线简历路由与简历 PDF。
+  - 籍贯只允许作为 `about.nativePlace`，且必须等于授权值。
+  - 删除该文件中的常量即恢复全面禁止。
 
-`src/data/resumeData.ts` 与 `src/data/publicProfile.ts` 仅是旧代码兼容适配器，不维护独立事实；新代码不得依赖它们。
+`src/data/resumeData.ts` 与 `src/data/publicProfile.ts` 是旧代码兼容适配器，不维护独立事实，新代码不得依赖。
 
-## 环境变量
+---
 
-复制变量名时以 `.env.example` 为准，不要提交任何 `.env` 文件：
+## 九、无障碍与响应式
 
-- `NEXT_PUBLIC_SITE_URL`：正式站点 origin；默认使用已确认的 `https://ctrlctrlx.top`，覆盖值必须是无路径、无凭据的公开 HTTPS URL。
-- `KV_REST_API_URL`：可选 Vercel KV 地址。
-- `KV_REST_API_TOKEN`：可选 Vercel KV 令牌。
+- 顶部提供「跳转至主内容 / Skip to main content」Skip Link，键盘首次 Tab 即可聚焦并跳过导航。
+- 图片灯箱：打开时焦点移入对话框、`Tab` / `Shift+Tab` 在灯箱内循环、`Esc` 关闭、`←`/`→` 切换图片，关闭后焦点归还触发按钮。
+- 全局 `*:focus-visible` 主题色描边；浅色/深色两套令牌的正文与次要文字对比度均达到 WCAG AA 以上。
+- 响应式：移动端单列、`sm` 两列、`lg` 三列；`overflow-x: clip`、图片 `max-width: 100%`、GFM 表格与 KaTeX 公式横向滚动，避免窄屏溢出。
 
-未配置 `NEXT_PUBLIC_SITE_URL` 时使用已确认的正式域名生成 canonical、绝对 Open Graph URL、robots 与 sitemap。合法 HTTPS origin 可以覆盖；非法 URL 会使 build/readiness 失败。
+---
 
-## Vercel 预览部署（人工操作）
+## 十、部署
 
-本仓库不会自动连接或调用 Vercel。维护者准备预览时应：
+**形态**：标准 Next.js SSR/SSG 应用，**不支持静态导出**（需要 Node 运行时承载 Route Handler 与 `proxy.ts`）。
 
-1. 在代码审查后人工 push 目标分支。
-2. 在 Vercel 中导入仓库并保持项目的 Node/npm 版本。
-3. 按需在 Vercel 项目设置中配置 KV；不要把值写进仓库。
-4. 如需覆盖确认域名，仅使用经过审核的公开 HTTPS origin，再运行完整验证。
-5. 检查中英文页面、项目详情、研究页、Career Agent、404、robots 和 sitemap。
+| 平台 | 可行性 | 说明 |
+| --- | --- | --- |
+| Vercel | ✅ 推荐，零改造 | `proxy.ts`、API Route、`next/image`、KV 原生支持 |
+| 自建 / 阿里云 ECS / Docker | ✅ 可行 | `node:22-alpine` + `npm ci && npm run build && npm start`；需安装 `sharp`、反代透传 `x-forwarded-for`、自建 Redis 限流 |
+| Netlify | ⚠️ 需 `@netlify/plugin-nextjs` | 中间件与图片优化能力受限 |
+| GitHub Pages | ❌ 不可用 | 纯静态托管无法承载 API Route、`proxy.ts`、`next/image` 优化与 301 重定向 |
 
-push、预览部署和正式发布必须由维护者人工执行。
+发布前：`npm run verify:all` 全绿（含 PDF 文字审计）→ 人工浏览器验收 → 由维护者手动 push 与部署
+（仓库内不包含任何自动 push / deploy 脚本）。
 
-## 正式发布前检查
+换域名只需改两处：部署环境的 `NEXT_PUBLIC_SITE_URL` 与仓库内 `.env.example`（`verify:deploy` 校验两者一致），
+再在平台绑定域名并配置 DNS / HTTPS；canonical、Open Graph、`robots.txt`、`sitemap.xml` 会自动跟随。
 
-- `npm run verify:all` 和 Browser 验收全部通过。
-- 验证确认域名 `https://ctrlctrlx.top` 或经审核的 HTTPS 覆盖值。
-- 人工审核在线公开简历；当前只提供浏览器“打印 / 保存为 PDF”，不提供 PDF 下载文件。
-- 公开求职邮箱只从 Profile 数据层读取。
-- 在投论文继续保持非公开；专利只使用已确认字段。
-- 确认 `.env`、证书、私人资料和原始研究数据未被跟踪。
-- 由维护者人工完成 push 和部署；本项目不包含自动 push/deploy 脚本。
-
-详细状态见 [`docs/deployment-readiness.md`](docs/deployment-readiness.md)。
+详细状态与人工验收清单见 [`docs/deployment-readiness.md`](docs/deployment-readiness.md)。

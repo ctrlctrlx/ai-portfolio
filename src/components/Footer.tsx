@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Locale } from "@/src/lib/i18n";
 import {
-  getContactHref,
-  getPublicContact,
-  publicIdentity,
-} from "@/src/data/profile";
-import { getFooterDictionary } from "@/src/data/site/footer";
+  getFooterDictionary,
+  type FooterExtraContact,
+} from "@/src/data/site/footer";
 
+/**
+ * 署名、公开邮箱、荣誉板块可用性与额外联系方式均由服务端布局解析后传入。
+ *
+ * 本组件是客户端组件；若在此 import "@/src/data/profile"，整个双语 profile
+ * 数据集都会被序列化进客户端 chunk，使英文页面的资源包里出现大量中文字符。
+ */
 type VisitorResponse =
   | { available: true; count: number }
   | { available: false };
@@ -23,10 +27,33 @@ type VisitorResponse =
  * - 样式沿用主题令牌（--card-border / --muted / --foreground / --accent），
  *   移动端单列堆叠，桌面端分栏并排。
  */
-export default function Footer({ lang }: { lang: Locale }) {
+export default function Footer({
+  lang,
+  brandName,
+  copyrightName,
+  email,
+  phone,
+  hasHonors,
+  extraContacts,
+}: {
+  lang: Locale;
+  /** 品牌署名（按 locale 解析） */
+  brandName: string;
+  /** 版权行署名（固定英文姓名） */
+  copyrightName: string;
+  /** 公开求职邮箱；无公开邮箱时传 null，该行不渲染 */
+  email: string | null;
+  /** 已授权公开的手机号；无该联系人时传 null，该行不渲染 */
+  phone: string | null;
+  hasHonors: boolean;
+  extraContacts: FooterExtraContact[];
+}) {
   const [count, setCount] = useState<number | null>(null);
-  const publicEmail = getPublicContact("email");
-  const dictionary = getFooterDictionary(lang);
+  const dictionary = getFooterDictionary(lang, {
+    name: copyrightName,
+    hasHonors,
+    extraContacts,
+  });
 
   useEffect(() => {
     fetch("/api/visitor", { method: "POST" })
@@ -42,8 +69,6 @@ export default function Footer({ lang }: { lang: Locale }) {
       .catch(() => {});
   }, []);
 
-  const name =
-    publicIdentity?.name[lang] ?? (lang === "zh" ? "作品集" : "Portfolio");
   const showLastUpdated =
     dictionary.lastUpdatedLabel !== null && dictionary.lastUpdatedValue !== null;
 
@@ -60,7 +85,7 @@ export default function Footer({ lang }: { lang: Locale }) {
               className="text-sm font-semibold"
               style={{ color: "var(--foreground)" }}
             >
-              {name}
+              {brandName}
             </p>
             <p className="mt-2 leading-5">{dictionary.copyright}</p>
           </div>
@@ -97,23 +122,41 @@ export default function Footer({ lang }: { lang: Locale }) {
               {dictionary.contactHeading}
             </h2>
             <ul className="mt-3 space-y-2">
-              {publicEmail && (
+              {email && (
                 <li>
                   <a
-                    href={getContactHref(publicEmail)}
+                    href={`mailto:${email}`}
                     className="break-all hover:underline"
                     style={{ color: "var(--muted)" }}
-                    aria-label={dictionary.emailAriaLabel(publicEmail.value)}
+                    aria-label={dictionary.emailAriaLabel(email)}
                   >
-                    {publicEmail.value}
+                    {dictionary.emailLabel}
+                    {lang === "zh" ? "：" : ": "}
+                    {email}
                   </a>
                 </li>
               )}
               {dictionary.extraContacts.map((contact) => (
                 <li key={contact.id} className="break-all">
-                  {contact.label[lang]}：{contact.value}
+                  {contact.label}
+                  {lang === "zh" ? "：" : ": "}
+                  {contact.value}
                 </li>
               ))}
+              {/* 电话：与邮箱、微信并列，tel: 协议支持移动端直接拨号 */}
+              {phone && (
+                <li>
+                  <a
+                    href={`tel:${phone}`}
+                    className="break-all hover:underline"
+                    style={{ color: "var(--muted)" }}
+                  >
+                    {dictionary.phoneLabel}
+                    {lang === "zh" ? "：" : ": "}
+                    {phone}
+                  </a>
+                </li>
+              )}
               {count !== null && (
                 <li className="flex items-center gap-1.5">
                   <span
@@ -141,7 +184,9 @@ export default function Footer({ lang }: { lang: Locale }) {
           <p className="leading-5">{dictionary.disclaimer}</p>
           {showLastUpdated && (
             <p className="whitespace-nowrap">
-              {dictionary.lastUpdatedLabel}：{dictionary.lastUpdatedValue}
+              {dictionary.lastUpdatedLabel}
+              {lang === "zh" ? "：" : ": "}
+              {dictionary.lastUpdatedValue}
             </p>
           )}
         </div>

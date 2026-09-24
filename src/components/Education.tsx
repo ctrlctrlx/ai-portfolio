@@ -38,12 +38,16 @@ export default function Education({ locale }: { locale: Locale }) {
             </div>
             <p className="mt-2 text-sm" style={{ color: "var(--foreground)" }}>
               {entry.degree[locale]} · {entry.major[locale]}
+              {/* GPA 与专业排名：同字号、次级色，与专业信息自然衔接 */}
+              {entry.gpa ? (
+                <span style={{ color: "var(--muted)" }}>{` · GPA ${entry.gpa[locale]}`}</span>
+              ) : null}
             </p>
             {entry.highlights.length > 0 && (
               <ul className="mt-3 space-y-1.5">
                 {entry.highlights.map((highlight) => (
                   <li
-                    key={highlight.zh}
+                    key={highlight.en}
                     className="flex items-start gap-2 text-xs leading-5"
                     style={{ color: "var(--muted)" }}
                   >

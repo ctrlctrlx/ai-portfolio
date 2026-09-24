@@ -72,9 +72,11 @@ expect(
 );
 expect(!/resumeData|publicProfile/.test(resumeSource), "resume-uses-legacy-source");
 
-// 下载入口必须指向本地正式版 PDF，且页面内不得再保留浏览器打印入口
+// 下载入口必须指向本地正式版 PDF（中文 /resume.pdf、英文 /resume-en.pdf），
+// 且页面内不得再保留浏览器打印入口
 expect(
-  /href=["']\/resume\.pdf["']/.test(downloadButtonSource) &&
+  downloadButtonSource.includes("/resume.pdf") &&
+    downloadButtonSource.includes("/resume-en.pdf") &&
     /download/.test(downloadButtonSource),
   "resume-download-button-not-pointing-to-local-pdf"
 );
@@ -110,39 +112,59 @@ expect(
   "resume-email-hardcoded"
 );
 
-// 正式版 PDF 的文字必须可提取，才能对下载内容做同样的隐私审计
-const extracted = extractPdfText(resumePdfPath);
-if (!extracted.ok) {
-  notices.push(`resume-pdf-text-not-audited:${extracted.reason}`);
-  const raw = scanPdfRawText(resumePdfPath);
-  expect(!hasUnapprovedPhoneNumber(raw), "resume-pdf-unapproved-phone-number");
-  expect(
-    findEmails(raw).every((email) => email === APPROVED_EMAIL),
-    "resume-pdf-unapproved-email-address"
-  );
-} else {
+/**
+ * 正式版 PDF 的文字必须可提取，才能对下载内容做同样的隐私审计。
+ * 中文 /resume.pdf 与英文 /resume-en.pdf 都必须通过同一套隐私红线，
+ * 并各自包含对应语言下的候选人姓名，避免拿到空白或语言错配的文件。
+ */
+const resumePdfAssets = [
+  { fileName: "resume.pdf", expectedName: "杨冲" },
+  { fileName: "resume-en.pdf", expectedName: "Yang Chong" },
+];
+for (const asset of resumePdfAssets) {
+  const pdfPath = join(repositoryRoot, "public", asset.fileName);
+  expect(existsSync(pdfPath), `resume-pdf-asset-missing:${asset.fileName}`);
+
+  const extracted = extractPdfText(pdfPath);
+  if (!extracted.ok) {
+    notices.push(`${asset.fileName}-text-not-audited:${extracted.reason}`);
+    const raw = scanPdfRawText(pdfPath);
+    expect(
+      !hasUnapprovedPhoneNumber(raw),
+      `resume-pdf-unapproved-phone-number:${asset.fileName}`
+    );
+    expect(
+      findEmails(raw).every((email) => email === APPROVED_EMAIL),
+      `resume-pdf-unapproved-email-address:${asset.fileName}`
+    );
+    continue;
+  }
+
   expect(
     extracted.text.trim().length >= 200,
-    "resume-pdf-text-too-short-to-audit"
+    `resume-pdf-text-too-short-to-audit:${asset.fileName}`
   );
   expect(
     !hasUnapprovedPhoneNumber(extracted.text),
-    "resume-pdf-unapproved-phone-number"
+    `resume-pdf-unapproved-phone-number:${asset.fileName}`
   );
   expect(
     findEmails(extracted.text).every((email) => email === APPROVED_EMAIL),
-    "resume-pdf-unapproved-email-address"
+    `resume-pdf-unapproved-email-address:${asset.fileName}`
   );
   // 授权公开的联系方式应当能在正式版简历中找到，避免拿到空白/错误的 PDF
   expect(
     extracted.text.includes(APPROVED_PHONE),
-    "resume-pdf-missing-approved-phone"
+    `resume-pdf-missing-approved-phone:${asset.fileName}`
   );
   expect(
     extracted.text.includes(APPROVED_EMAIL),
-    "resume-pdf-missing-approved-email"
+    `resume-pdf-missing-approved-email:${asset.fileName}`
   );
-  expect(extracted.text.includes("杨冲"), "resume-pdf-missing-candidate-name");
+  expect(
+    extracted.text.includes(asset.expectedName),
+    `resume-pdf-missing-candidate-name:${asset.fileName}`
+  );
 }
 
 const publicContacts = identity.contacts.filter(isPublicVerified);
@@ -152,7 +174,7 @@ expect(
   ).length === 1,
   "resume-profile-email-mismatch"
 );
-expect(awards.filter(isPublicVerified).length === 4, "resume-award-count-mismatch");
+expect(awards.filter(isPublicVerified).length === 11, "resume-award-count-mismatch");
 expect(patents.filter(isPublicVerified).length === 1, "resume-patent-count-mismatch");
 expect(
   publications.filter(isPublicVerified).length === 2,

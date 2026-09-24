@@ -17,3 +17,14 @@ export const localeLabels: Record<"zh" | "en", string> = {
   zh: "中文",
   en: "EN",
 };
+
+/**
+ * 语言切换按钮的可见文案，按「当前页面语言」取值。
+ *
+ * 中文页面维持原有的 "EN" 不变；英文页面不再显示目标语言的中文字面「中文」，
+ * 改为 "Chinese"，避免英文页面出现任何中文字符。
+ */
+export const localeSwitchLabels: Record<"zh" | "en", string> = {
+  zh: "EN",
+  en: "Chinese",
+};

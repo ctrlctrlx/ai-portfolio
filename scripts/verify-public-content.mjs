@@ -161,11 +161,15 @@ if (
 /**
  * 正式版简历 PDF 必须存在，并且与公开内容遵守同一套隐私红线：
  * 只允许出现已批准的联系方式，其它手机号 / 邮箱一律拦截。
+ * 中文 `resume.pdf` 与英文 `resume-en.pdf` 都要审计，避免出现未被覆盖的公开文件。
  */
-const resumePdfPath = join(repositoryRoot, "public", "resume.pdf");
-if (!existsSync(resumePdfPath)) {
-  report(resumePdfPath, "missing-resume-pdf-asset");
-} else {
+const resumePdfFiles = ["resume.pdf", "resume-en.pdf"];
+for (const resumePdfName of resumePdfFiles) {
+  const resumePdfPath = join(repositoryRoot, "public", resumePdfName);
+  if (!existsSync(resumePdfPath)) {
+    report(resumePdfPath, "missing-resume-pdf-asset");
+    continue;
+  }
   const pdfBuffer = readFileSync(resumePdfPath);
   if (pdfBuffer.subarray(0, 5).toString("latin1") !== "%PDF-") {
     report(resumePdfPath, "resume-pdf-invalid-header");
@@ -173,7 +177,7 @@ if (!existsSync(resumePdfPath)) {
   const extracted = extractPdfText(resumePdfPath);
   if (!extracted.ok) {
     // 本机没有 PDF 文字提取器时退回字节级扫描；正式验收请在有 pdftotext 的环境复跑
-    notices.push(`resume-pdf-text-not-audited:${extracted.reason}`);
+    notices.push(`${resumePdfName}-text-not-audited:${extracted.reason}`);
     const raw = scanPdfRawText(resumePdfPath);
     if (hasUnapprovedPhoneNumber(raw)) {
       report(resumePdfPath, "resume-pdf-unapproved-phone-number");

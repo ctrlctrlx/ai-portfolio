@@ -12,14 +12,21 @@ export const about: AboutProfile = {
   visibility: "public",
   verificationStatus: "verified",
   sourceId: "profile-about",
+  /**
+   * 求职意向：全站唯一口径，与 identity.jobTargets、首页首屏「求职方向」、
+   * 在线简历页「求职意向」四处表述完全一致（见 scripts/verify-profile-data.mjs）。
+   */
   jobTargets: [
-    { zh: "硬件测试工程师", en: "Hardware Test Engineer" },
     { zh: "计算机视觉算法工程师", en: "Computer Vision Algorithm Engineer" },
-    { zh: "嵌入式系统工程师", en: "Embedded Systems Engineer" },
+    { zh: "嵌入式AI/边缘部署工程师", en: "Embedded AI / Edge Deployment Engineer" },
   ],
+  /**
+   * 一句话核心标语（首页首屏）。
+   * 术语与关于页简介、项目详情页保持一致：CLIP-ReID / 5 倍压缩 / 开放集识别 / Web 原型系统。
+   */
   headline: {
-    zh: "算法与硬件双线并进的工程型硕士，专注把视觉模型落到真实设备上。",
-    en: "An engineering-minded M.S. candidate working both ends of the stack, focused on landing vision models on real devices.",
+    zh: "算法与硬件双线并进的工程型硕士，专注视觉算法工程化：主导 CLIP-ReID 特征 5 倍压缩与开放集识别方案，并集成至 Web 原型系统。",
+    en: "An engineering-minded master's candidate working both ends of the stack, focused on engineering visual algorithms: led 5× CLIP-ReID feature compression and open-set recognition solutions, integrated into a web prototype.",
   },
   /**
    * 首页「个人简介」板块的精简版：只保留定位与两条主线能力。
@@ -29,7 +36,116 @@ export const about: AboutProfile = {
     zh: "研究方向为计算机视觉、个体重识别（ReID）与嵌入式智能感知。算法侧做过 CLIP-ReID 特征压缩与开放集拒识，硬件侧主导过 RFID 与多目视觉同步采集装置的整机搭建，习惯用可复现的实验数据验证结论。",
     en: "My research covers computer vision, individual re-identification (ReID), and embedded intelligent sensing. On the algorithm side I have worked on CLIP-ReID feature compression and open-set rejection; on the hardware side I led the construction of an RFID plus multi-camera synchronized acquisition device. I validate conclusions with reproducible experimental data.",
   },
-  politicalStatus: { zh: "中共党员", en: "Member of the Communist Party of China" },
+  /**
+   * 「关于我」页个人简介：标签行 + 量化增强正文。
+   *
+   * 结构：① 开篇标签行（整行加粗，含学历/政治面貌/奖学金三个身份标签）
+   * ② 量化正文（核心数据局部加粗）③ 行事风格。
+   *
+   * 注意：政治面貌字面量按 AGENTS.md 的隐私条款只允许出现在本文件。
+   */
+  bioSections: [
+    {
+      id: "identity-tags",
+      segments: [
+        {
+          strong: true,
+          text: {
+            zh: "海南大学新一代电子信息技术工学硕士在读 | 中共党员 | 国家奖学金获得者",
+            en: "M.Eng. Candidate in New Generation Electronic Information Technology, Hainan University | CPC Member | National Scholarship Winner",
+          },
+        },
+      ],
+    },
+    {
+      id: "quantified-profile",
+      segments: [
+        {
+          text: {
+            zh: "算法与硬件双线并进的工程型硕士，专注视觉模型落地与嵌入式感知系统交付。算法侧主导 CLIP-ReID 特征压缩与开放集识别方案，设计 Compact256 投影层将特征从 1280 维压缩至 256 维（",
+            en: "An engineering-minded master's candidate working both ends of the stack, focused on landing vision models and delivering embedded perception systems. On the algorithm side I led CLIP-ReID feature compression and open-set recognition: the Compact256 projection layer compresses features from 1280 to 256 dimensions (",
+          },
+        },
+        {
+          strong: true,
+          text: { zh: "5 倍降维", en: "5× dimensionality reduction" },
+        },
+        {
+          text: { zh: "），", en: "), with " },
+        },
+        {
+          strong: true,
+          text: { zh: "精度损失<2%", en: "accuracy loss <2%" },
+        },
+        {
+          text: {
+            zh: "，已部署至 Web 原型系统；硬件侧主导 RFID 与三目视觉同步采集装置整机搭建，实现 ",
+            en: ", already deployed to a web prototype. On the hardware side I led the full-device construction of an RFID plus three-camera synchronized acquisition rig, achieving ",
+          },
+        },
+        {
+          strong: true,
+          text: { zh: "3 路 25fps 稳定采集", en: "3× 25 fps stable capture" },
+        },
+        {
+          text: { zh: " 与 ", en: " and " },
+        },
+        {
+          strong: true,
+          text: { zh: "USB3.2 带宽优化", en: "USB 3.2 bandwidth optimization" },
+        },
+        {
+          text: {
+            zh: "，完成工业级防水封装，在文昌冯家湾基地高频驻场约6个月（每周3-4天）完成个体识别装置交付与标准化体系输出。",
+            en: ", completed the industrial-grade waterproof enclosure, and spent about six months on high-frequency on-site work at the Fengjiawan base in Wenchang (3–4 days per week) delivering the individual-identification device and the standardized operating framework.",
+          },
+        },
+      ],
+    },
+    {
+      id: "working-style",
+      segments: [
+        {
+          text: {
+            zh: "习惯用可复现的实验数据与可交付的工程规范验证结论，坚持「方向确认后快速推进、迭代修正」，兼顾方案严谨性与落地节奏。",
+            en: "I verify conclusions with reproducible experimental data and deliverable engineering practices, adhering to \"move fast once the direction is confirmed, iterate and correct along the way\" to balance rigor with delivery pace.",
+          },
+        },
+      ],
+    },
+  ],
+  /** 入党时间由本人提供，随政治面貌一并展示 */
+  politicalStatus: {
+    zh: "中共党员（2021.12）",
+    en: "Member of the CPC (Dec. 2021)",
+  },
+  /**
+   * 籍贯：本人先前要求全站移除，现已重新授权公开（重庆）。
+   * 授权值与放行规则集中在 scripts/lib-approved-contacts.mjs 声明。
+   */
+  nativePlace: { zh: "重庆", en: "Chongqing" },
+  /** 通用研究方向：与个人简介、机器人回答、首页与项目页标签三处术语统一 */
+  researchDirections: [
+    { id: "computer-vision", label: { zh: "计算机视觉", en: "Computer Vision" } },
+    {
+      id: "reid",
+      label: {
+        zh: "个体重识别（ReID）",
+        en: "Individual Re-identification (ReID)",
+      },
+    },
+    {
+      id: "vision-language",
+      label: { zh: "视觉语言模型", en: "Vision-Language Models" },
+    },
+    {
+      id: "embedded-sensing",
+      label: {
+        zh: "嵌入式智能感知系统",
+        en: "Embedded Intelligent Perception Systems",
+      },
+    },
+  ],
   /**
    * 三大核心优势属于对该条目的自我评价，不单独标注可见性，
    * 统一继承 AboutProfile 的 public + verified 状态。
@@ -47,8 +163,8 @@ export const about: AboutProfile = {
       id: "rigorous-research",
       title: { zh: "严谨科研素养", en: "Rigorous Research Practice" },
       description: {
-        zh: "习惯用可复现实验与量化指标说话：自建 92 个身份、万余张图像的鱼类数据集，闭集 Rank-1 达 76.3%，并额外报告部署级 FAR 6.91% 与 AUROC 0.7108，不回避开放集场景下的性能边界。",
-        en: "I let reproducible experiments and quantified metrics speak. I built a fish dataset of 92 identities and over ten thousand images, reached 76.3% closed-set Rank-1, and additionally reported deployment-level FAR 6.91% and AUROC 0.7108 rather than hiding the limits of open-set performance.",
+        zh: "习惯用可复现实验与量化指标说话：自建 92 个身份、万余张图像的东星斑数据集，dev70 测试集上已知个体错误率从 20.10% 优化至 14.65%（相对优化 27%），并如实报告部署级 FAR 6.91%，不回避开放集场景下的性能边界。",
+        en: "I let reproducible experiments and quantified metrics speak. I built a crimson snapper dataset of 92 identities and over ten thousand images, cut the known-identity error rate on the dev70 test set from 20.10% to 14.65% (a 27% relative improvement), and report the deployment-level FAR of 6.91% rather than hiding the limits of open-set performance.",
       },
     },
     {
@@ -73,7 +189,7 @@ export const about: AboutProfile = {
         {
           id: "bachelor-class-monitor",
           title: { zh: "班级班长", en: "Class Monitor" },
-          period: { zh: "2020.09 – 2023.06", en: "2020.09 – 2023.06" },
+          period: { zh: "2019.09 – 2022.12", en: "2019.09 – 2022.12" },
           bullets: [
             {
               text: {
@@ -135,7 +251,7 @@ export const about: AboutProfile = {
           id: "master-grouper-farm",
           title: {
             zh: "工厂化东星斑养殖智能管理项目",
-            en: "Industrial Leopard Coral Grouper Smart Aquaculture Management Project",
+            en: "Industrial Crimson Snapper Smart Aquaculture Management Project",
           },
           role: { zh: "驻场出差负责人", en: "On-site Lead" },
           location: { zh: "文昌冯家湾", en: "Fengjiawan, Wenchang" },
@@ -183,11 +299,11 @@ export const about: AboutProfile = {
       src: "/images/about/practice-01.jpg",
       caption: {
         zh: "图1 工厂化东星斑养殖现场与驻场工作环境",
-        en: "Fig. 1 On-site working environment at the industrial grouper aquaculture facility",
+        en: "Fig. 1 On-site working environment at the industrial crimson snapper aquaculture facility",
       },
       alt: {
         zh: "工厂化东星斑养殖现场与驻场工作环境",
-        en: "On-site working environment at the industrial grouper aquaculture facility",
+        en: "On-site working environment at the industrial crimson snapper aquaculture facility",
       },
     },
     {
@@ -206,12 +322,12 @@ export const about: AboutProfile = {
       id: "practice-03",
       src: "/images/about/practice-03.jpg",
       caption: {
-        zh: "图3 RFID芯片注射标准化操作流程执行现场",
-        en: "Fig. 3 Executing the standardized RFID chip injection procedure",
+        zh: "图3 东星斑RFID推荐植入位点示意图",
+        en: "Fig. 3 Schematic Diagram of Recommended RFID Implantation Sites for Crimson Snapper",
       },
       alt: {
-        zh: "RFID 芯片注射标准化操作流程执行现场",
-        en: "Executing the standardized RFID chip injection procedure",
+        zh: "东星斑RFID推荐植入位点示意图",
+        en: "Schematic Diagram of Recommended RFID Implantation Sites for Crimson Snapper",
       },
     },
   ],

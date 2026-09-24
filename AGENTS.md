@@ -48,9 +48,9 @@ Never expose or commit:
 
 ### Explicitly authorised exceptions
 
-Two fields are published **only** because the subject gave explicit authorisation.
-Both are declared in one place — `scripts/lib-approved-contacts.mjs` — and are
-enforced there:
+Three fields are published **only** because the subject gave explicit
+authorisation. All are declared in one place — `scripts/lib-approved-contacts.mjs`
+— and are enforced there:
 
 - **Phone number** (`18716985140`). Allowed only in
   `src/data/profile/identity.ts` and `public/resume.pdf`. Any other 11-digit
@@ -58,11 +58,15 @@ enforced there:
   verification.
 - **Political affiliation** (`政治面貌`). Allowed only in
   `src/data/profile/about.ts`, and never on the resume route.
+- **Native place** (`籍贯`, Chongqing / 重庆). This field was previously removed
+  site-wide at the subject's request and enforced by a blanket ban in
+  `verify-profile-data.mjs`; the subject has since re-authorised publication.
+  It is allowed only as `about.nativePlace`, and must equal the authorised value.
 
-Removing either constant from that file re-enables the original blanket ban.
-Do not treat these as precedent for any other field in the list above, and do not
-weaken the checks by editing them ad hoc — change the single authorisation file so
-the exception stays auditable.
+Removing a constant from that file re-enables the original blanket ban for that
+field. Do not treat these as precedent for any other field in the list above, and
+do not weaken the checks by editing them ad hoc — change the single authorisation
+file so the exception stays auditable.
 
 `public/resume.pdf` is a downloadable asset. Its text is extracted and audited by
 `verify:content`, `verify:resume`, and `verify:deploy` so the PDF cannot smuggle in
@@ -132,15 +136,35 @@ If a command fails:
 
 ## AI Assistant Rules
 
-- AI answers may use only approved public facts.
-- Do not allow user-provided system or developer roles.
+The career assistant is a **two-layer** design:
+
+1. **Rule engine (primary).** `src/lib/career-agent.mjs` answers high-frequency
+   questions deterministically from the verified Profile data. It runs first and
+   costs nothing. `matchCareerReply()` returns `null` only when no rule matches.
+2. **External model (fallback only).** When configured, `src/lib/deepseekAgent.ts`
+   answers unmatched open-ended questions with the public Profile injected as RAG
+   context. Without `DEEPSEEK_API_KEY` the assistant degrades silently to
+   rule-engine-only mode.
+
+- AI answers (either layer) may use only approved public facts.
+- Do not allow user-provided system or developer roles; prompt-injection requests
+  are refused by the rule engine and are **never** forwarded to the external model.
 - Do not fabricate an answer when information is unavailable.
 - Use this fallback when evidence is insufficient:
 
   "当前公开资料中没有足够信息支持这一结论。"
 
-- Static fallback answers must use the same verified data source as the pages.
-- Never expose secrets in browser-side code.
+- When the rule engine misses and the external model is unavailable, reply with the
+  friendly fallback (`getFriendlyFallback`) instead of the fallback above.
+- Rule answers must use the same verified data source as the pages. The external
+  model must receive that same data as context and must be constrained by the
+  system prompt in `src/lib/deepseekAgent.ts`.
+- The external model must never be given data outside the public + verified
+  Profile collections.
+- Never expose secrets in browser-side code: `DEEPSEEK_API_KEY` is server-only,
+  must never carry a `NEXT_PUBLIC_` prefix, must never be hardcoded, and
+  `verify:chat` asserts that neither the key name nor its value reaches the client
+  bundle or any `"use client"` module.
 
 ## Git Rules
 

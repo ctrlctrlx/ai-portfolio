@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   APPROVED_EMAIL,
+  APPROVED_NATIVE_PLACE,
   APPROVED_PHONE,
   hasUnapprovedPhoneNumber,
 } from "./lib-approved-contacts.mjs";
@@ -80,12 +81,17 @@ if (identity.name.zh !== "杨冲") fail("incorrect-identity-name-zh");
 if (identity.name.en !== "Yang Chong") fail("incorrect-identity-name-en");
 validateEvidence(identity, "identity");
 
+// 联系方式标签完整性：邮箱、手机号各必须存在且带双语标签（全站展示依赖这两项）
 const publicContacts = identity.contacts.filter(isPublicVerified);
 const emailContacts = publicContacts.filter((contact) => contact.kind === "email");
+const phoneContacts = publicContacts.filter((contact) => contact.kind === "phone");
 const websiteContacts = publicContacts.filter((contact) => contact.kind === "website");
 const githubContacts = publicContacts.filter((contact) => contact.kind === "github");
 if (emailContacts.length !== 1 || emailContacts[0]?.value !== approvedEmail) {
   fail("incorrect-public-email");
+}
+if (phoneContacts.length !== 1 || phoneContacts[0]?.value !== APPROVED_PHONE) {
+  fail("incorrect-public-phone");
 }
 if (websiteContacts.length !== 1 || websiteContacts[0]?.value !== approvedWebsite) {
   fail("incorrect-public-website");
@@ -136,6 +142,10 @@ for (const entry of education) {
   for (const field of ["institution", "degree", "major"]) {
     if (!isBilingual(entry[field])) fail("missing-bilingual-field", `education:${entry.id}:${field}`);
   }
+  // GPA 与专业排名为双语结构（中文全角括号 / 英文半角括号），缺英文即视为非法
+  if (entry.gpa !== undefined && !isBilingual(entry.gpa)) {
+    fail("missing-bilingual-field", `education:${entry.id}:gpa`);
+  }
 }
 
 validateEvidence(about, "about");
@@ -159,13 +169,30 @@ if (!Array.isArray(about.strengths) || about.strengths.length !== 3) {
     }
   }
 }
+// 关于页三段式简介：每段至少一个片段，片段文本必须双语齐全
+if (!Array.isArray(about.bioSections) || about.bioSections.length === 0) {
+  fail("missing-about-bio-sections");
+} else {
+  for (const section of about.bioSections) {
+    if (!Array.isArray(section.segments) || section.segments.length === 0) {
+      fail("empty-about-bio-section", section.id ?? "unknown");
+      continue;
+    }
+    for (const segment of section.segments) {
+      if (!isBilingual(segment.text)) {
+        fail("missing-bilingual-field", `about:bio:${section.id}:segment`);
+      }
+    }
+  }
+}
+
 for (const contact of about.contacts) {
   if (!isBilingual(contact.label) || !isBilingual(contact.value)) {
     fail("missing-bilingual-field", `about:contact:${contact.id}`);
   }
 }
 
-// 联系方式：微信号必须公开且准确；籍贯字段已按本人要求全站移除
+// 联系方式：微信号必须公开且准确
 const wechatContact = about.contacts.find((contact) => contact.id === "contact-wechat");
 if (!wechatContact) {
   fail("missing-public-wechat-contact");
@@ -175,8 +202,47 @@ if (!wechatContact) {
 if (about.contacts.some((contact) => contact.id === "contact-hometown")) {
   fail("hometown-contact-still-present");
 }
-if (/"籍贯"|Chongqing/.test(JSON.stringify(about))) {
-  fail("native-place-still-present-in-about");
+
+/**
+ * 籍贯：本人先前要求全站移除，现已重新授权公开重庆。
+ * 授权值集中在 scripts/lib-approved-contacts.mjs 声明：
+ * 此处只放行该授权值，其它籍贯值或未授权字段仍然拦截。
+ */
+if (!isBilingual(about.nativePlace)) {
+  fail("missing-bilingual-field", "about:nativePlace");
+} else if (
+  about.nativePlace.zh !== APPROVED_NATIVE_PLACE.zh ||
+  about.nativePlace.en !== APPROVED_NATIVE_PLACE.en
+) {
+  fail("unapproved-native-place", `${about.nativePlace.zh}/${about.nativePlace.en}`);
+}
+
+// 通用研究方向：至少一项、id 合法、标签双语齐全（机器人/首页/项目页标签组的数据源）
+const RESEARCH_DIRECTION_IDS = [
+  "computer-vision",
+  "reid",
+  "vision-language",
+  "embedded-sensing",
+];
+if (!Array.isArray(about.researchDirections) || about.researchDirections.length === 0) {
+  fail("missing-about-research-directions");
+} else {
+  const seenDirectionIds = new Set();
+  for (const direction of about.researchDirections) {
+    if (!RESEARCH_DIRECTION_IDS.includes(direction.id)) {
+      fail("invalid-research-direction-id", String(direction.id));
+    }
+    if (seenDirectionIds.has(direction.id)) {
+      fail("duplicate-research-direction-id", String(direction.id));
+    }
+    seenDirectionIds.add(direction.id);
+    if (!isBilingual(direction.label)) {
+      fail("missing-bilingual-field", `about:researchDirection:${direction.id}`);
+    }
+  }
+  if (seenDirectionIds.size !== RESEARCH_DIRECTION_IDS.length) {
+    fail("incomplete-research-directions", `count=${seenDirectionIds.size}`);
+  }
 }
 
 // 实践经历：阶段 → 职务条目 → 分项工作内容 + 可选量化成果
@@ -275,13 +341,30 @@ for (const project of projects) {
   if (!Array.isArray(project.metrics) || project.metrics.length === 0) {
     fail("missing-project-metrics", project.id);
   }
+  if (!isBilingual(project.endDate)) {
+    fail("missing-bilingual-field", `project:${project.id}:endDate`);
+  }
   if (!Array.isArray(project.techTags) || project.techTags.length === 0) {
     fail("missing-project-tech-tags", project.id);
-  } else if (project.techTags.some((tag) => typeof tag !== "string" || tag.length === 0)) {
+  } else if (project.techTags.some((tag) => !isBilingual(tag))) {
+    // techTags 已改造为 BilingualText[]：中英任一为空即视为非法标签
     fail("invalid-project-tech-tag", project.id);
   }
   if (!Array.isArray(project.coreSkill) || project.coreSkill.length === 0) {
     fail("missing-project-core-skill", project.id);
+  } else if (project.coreSkill.some((entry) => !isBilingual(entry))) {
+    // coreSkill 同步双语化，防止中文技能条目泄漏到英文页面
+    fail("invalid-project-core-skill", project.id);
+  }
+  // 项目所属通用研究方向：必须是合法 id，且至少标注一个（项目页方向筛选依赖该映射）
+  if (!Array.isArray(project.researchDirections) || project.researchDirections.length === 0) {
+    fail("missing-project-research-directions", project.id);
+  } else {
+    for (const directionId of project.researchDirections) {
+      if (!RESEARCH_DIRECTION_IDS.includes(directionId)) {
+        fail("invalid-project-research-direction", `${project.id}:${directionId}`);
+      }
+    }
   }
 
   // 项目展示图片：双语图注/替代文本齐全，路径必须落在约定的项目图片目录
@@ -338,12 +421,23 @@ for (const category of skills) {
   }
 }
 
+// 荣誉：标题/颁发方双语齐全、时间非空、级别合法（荣誉页与机器人回答都按级别分组）
+const AWARD_LEVELS = ["national", "provincial", "university"];
 for (const item of [...awards, ...competitions]) {
   if (!isBilingual(item.title) || !isBilingual(item.issuer)) {
     fail("missing-bilingual-field", `honor:${item.id}`);
   }
   if (typeof item.year !== "string" || item.year.length === 0) {
     fail("missing-honor-year", item.id);
+  }
+  if (!AWARD_LEVELS.includes(item.level)) {
+    fail("invalid-honor-level", `${item.id}:${item.level}`);
+  }
+}
+// 时间格式统一为 YYYY.MM，保证列表按字典序即等于时间倒序
+for (const item of [...awards, ...competitions]) {
+  if (typeof item.year === "string" && !/^\d{4}\.\d{2}$/.test(item.year)) {
+    fail("invalid-honor-date-format", `${item.id}:${item.year}`);
   }
 }
 
@@ -353,6 +447,13 @@ for (const credential of credentials) {
   }
   if (!["certificate", "patent", "paper"].includes(credential.kind)) {
     fail("invalid-credential-kind", credential.id);
+  }
+  // 时间格式：YYYY 或 YYYY.MM（与全站经历类信息一致）
+  if (
+    credential.year !== undefined &&
+    !/^\d{4}(\.\d{2})?$/.test(credential.year)
+  ) {
+    fail("invalid-credential-year-format", `${credential.id}:${credential.year}`);
   }
 }
 
@@ -471,7 +572,8 @@ if (publicPatent) {
   }
 }
 
-if (awards.filter(isPublicVerified).length !== 4) {
+// 公开评奖条目数：海南大学 1 项 + 四川工业科技学院本科阶段 8 项（含 1 项省级优秀毕业生）
+if (awards.filter(isPublicVerified).length !== 11) {
   fail("incorrect-public-award-count");
 }
 if (competitions.filter(isPublicVerified).length !== 2) {

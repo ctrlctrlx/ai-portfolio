@@ -13,16 +13,18 @@ const strengthIcons: Record<string, React.ElementType> = {
 };
 
 /**
- * 「关于我」板块。
+ * 「关于我」板块（完整版），由 /[lang]/about 使用。
  *
- * summaryOnly=true  —— 首页预览：只渲染精简版简介 + 政治面貌，
- *                      末尾给出「查看完整介绍」入口；实践经历与三大核心优势下沉到 /[lang]/about。
- * summaryOnly=false —— 内页完整版：精简版简介 + 教育经历（可选）+ 实践经历 + 三大核心优势。
+ * 结构：个人简介（about.bioSections 三段式，开篇定位句加粗，政治面貌并入末段末尾）
+ * → 研究方向 → 教育经历（可选）→ 实践经历 → 三大核心优势。
  *
- * 籍贯字段已按本人要求全站移除，两种模式均不再展示。
+ * summaryOnly=true 为保留的精简预览模式（精简简介 + 政治面貌 + 「查看完整介绍」入口）：
+ * 首页的「个人简介」板块已按要求整体移除，因此当前无调用方使用该模式，
+ * 保留以便后续需要时在任意页面复用同一套简介文案。
  *
- * includeEducation：首页把「教育经历」提升为独立板块（需排在「荣誉与资质」之前），
- * 因此首页以 includeEducation={false} 调用，避免同一板块渲染两次。
+ * includeEducation：调用方若已单独渲染「教育经历」板块，传 false 避免重复渲染。
+ *
+ * 籍贯字段已按本人要求全站移除。
  */
 export default function About({
   locale,
@@ -35,19 +37,17 @@ export default function About({
 }) {
   if (!publicAbout || !publicIdentity) return null;
 
-  const { headline, summary, politicalStatus, strengths, practice, practiceImages } =
+  const { bioSections, summary, strengths, practice, practiceImages } =
     publicAbout;
 
   if (summaryOnly) {
     return (
       <section aria-labelledby="about-heading">
         <div className="max-w-3xl">
-          <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
-            {locale === "zh" ? "关于我" : "About Me"}
-          </p>
+          {/* 原「关于我」小标题与本节「个人简介」重复，已移除，仅保留模块标题 */}
           <h2
             id="about-heading"
-            className="mt-2 text-2xl font-bold"
+            className="text-2xl font-bold"
             style={{ color: "var(--foreground)" }}
           >
             {locale === "zh" ? "个人简介" : "Profile"}
@@ -59,18 +59,6 @@ export default function About({
           >
             {summary[locale]}
           </p>
-
-          {/* 政治面貌 */}
-          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
-            <div className="flex items-center gap-2">
-              <dt className="font-medium" style={{ color: "var(--muted)" }}>
-                {locale === "zh" ? "政治面貌" : "Political status"}：
-              </dt>
-              <dd style={{ color: "var(--foreground)" }}>
-                {politicalStatus[locale]}
-              </dd>
-            </div>
-          </dl>
 
           <Link
             href={`/${locale}/about`}
@@ -87,44 +75,43 @@ export default function About({
 
   return (
     <div className="space-y-14">
-      {/* 个人简介 */}
+      {/*
+        个人简介：about.bioSections 的三段式结构。
+        ① 开篇核心定位句整段加粗；② 研究方向与软硬协同能力，关键成果加粗；
+        ③ 行事风格与风险预判，政治面貌由本组件追加到该段末尾（字面量只存在于 about.ts）。
+      */}
       <section aria-labelledby="about-heading">
         <div className="max-w-3xl">
-          <p className="text-sm font-medium" style={{ color: "var(--accent)" }}>
-            {locale === "zh" ? "关于我" : "About Me"}
-          </p>
           <h2
             id="about-heading"
-            className="mt-2 text-2xl font-bold"
+            className="text-2xl font-bold"
             style={{ color: "var(--foreground)" }}
           >
             {locale === "zh" ? "个人简介" : "Profile"}
           </h2>
 
-          <p
-            className="mt-5 text-base font-medium leading-8"
-            style={{ color: "var(--foreground)" }}
-          >
-            {headline[locale]}
-          </p>
-          <p
-            className="mt-4 text-sm leading-7"
-            style={{ color: "var(--muted)" }}
-          >
-            {publicIdentity.bio[locale]}
-          </p>
-
-          {/* 政治面貌 + 籍贯 */}
-          <dl className="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm">
-            <div className="flex items-center gap-2">
-              <dt className="font-medium" style={{ color: "var(--muted)" }}>
-                {locale === "zh" ? "政治面貌" : "Political status"}：
-              </dt>
-              <dd style={{ color: "var(--foreground)" }}>
-                {politicalStatus[locale]}
-              </dd>
-            </div>
-          </dl>
+          <div className="mt-5 space-y-4">
+            {bioSections.map((section) => (
+              <p
+                key={section.id}
+                className="text-sm leading-7"
+                style={{ color: "var(--muted)" }}
+              >
+                {section.segments.map((segment, segmentIndex) => (
+                  <span
+                    key={`${section.id}-${segmentIndex}`}
+                    style={
+                      segment.strong
+                        ? { color: "var(--foreground)", fontWeight: 600 }
+                        : undefined
+                    }
+                  >
+                    {segment.text[locale]}
+                  </span>
+                ))}
+              </p>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -211,7 +198,7 @@ export default function About({
                       <ol className="mt-4 space-y-3">
                         {entry.bullets.map((bullet, index) => (
                           <li
-                            key={bullet.text.zh}
+                            key={bullet.text.en}
                             className="flex items-start gap-3 text-sm leading-7"
                             style={{ color: "var(--muted)" }}
                           >
@@ -258,12 +245,18 @@ export default function About({
                 {locale === "zh" ? "实践留影" : "Field Photos"}
               </h3>
               <ImageGallery
-                images={practiceImages}
+                images={practiceImages.map((image) => ({
+                  id: image.id,
+                  src: image.src,
+                  caption: image.caption[locale],
+                  alt: image.alt[locale],
+                }))}
                 locale={locale}
-                lightboxLabel={{
-                  zh: "实践经历图片预览",
-                  en: "Practical experience image preview",
-                }}
+                lightboxLabel={
+                  locale === "zh"
+                    ? "实践经历图片预览"
+                    : "Practical experience image preview"
+                }
               />
             </div>
           )}
