@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink, Github } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import ProjectDocuments from "@/src/components/ProjectDocuments";
+import ImageGallery from "@/src/components/ImageGallery";
+import RichText from "@/src/components/RichText";
 import {
   getPublicProjectBySlug,
   publicIdentity,
   publicProjects,
-  type Project,
 } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
@@ -66,53 +68,6 @@ const starFields: Array<{
   { key: "result", label: { zh: "结果", en: "Result" } },
 ];
 
-function ProjectLinks({
-  project,
-  locale,
-}: {
-  project: Project;
-  locale: Locale;
-}) {
-  if (!project.githubUrl && !(project.isInteractive && project.liveDemoUrl)) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-wrap gap-3">
-      {project.githubUrl && (
-        <a
-          href={project.githubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm hover:underline"
-          style={{ color: "var(--muted)" }}
-          aria-label={`${project.title[locale]} GitHub`}
-        >
-          <Github size={14} />
-          GitHub
-        </a>
-      )}
-      {project.isInteractive && project.liveDemoUrl && (
-        <a
-          href={project.liveDemoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm hover:underline"
-          style={{ color: "var(--accent)" }}
-          aria-label={
-            locale === "zh"
-              ? `${project.title.zh}在线演示`
-              : `${project.title.en} live demo`
-          }
-        >
-          <ExternalLink size={14} />
-          {locale === "zh" ? "在线演示" : "Live demo"}
-        </a>
-      )}
-    </div>
-  );
-}
-
 export default async function ProjectDetailPage({
   params,
 }: {
@@ -135,10 +90,11 @@ export default async function ProjectDetailPage({
         {locale === "zh" ? "返回项目列表" : "Back to projects"}
       </Link>
 
+      {/* 头部：返回入口 + 时间 + 标题（GitHub / 在线演示入口已按需求移除） */}
       <header className="space-y-4">
         <div>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {project.startDate} – {project.endDate}
+            {project.startDate} – {project.endDate[locale]}
           </p>
           <h1
             className="mt-2 text-2xl sm:text-3xl font-bold leading-tight"
@@ -147,7 +103,6 @@ export default async function ProjectDetailPage({
             {project.title[locale]}
           </h1>
         </div>
-        <ProjectLinks project={project} locale={locale} />
       </header>
 
       <section className="mt-10">
@@ -173,65 +128,113 @@ export default async function ProjectDetailPage({
               >
                 {label[locale]}
               </h3>
-              <p
+              {/* 结果段落含多段工程化叙述与 **加粗** 量化指标，统一由 RichText 渲染 */}
+              <RichText
                 className="mt-2 text-sm leading-relaxed"
                 style={{ color: "var(--foreground)" }}
-              >
-                {project[key][locale]}
-              </p>
+                text={project[key][locale]}
+              />
             </div>
           ))}
         </div>
       </section>
+
+      {/* 核心量化数据：主题色加粗高亮 */}
+      {project.metrics.length > 0 && (
+        <section className="mt-10">
+          <h2
+            className="text-lg font-semibold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "核心量化数据" : "Key Quantitative Results"}
+          </h2>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {project.metrics.map((metric) => (
+              <li
+                key={metric.en}
+                className="flex items-center gap-2.5 rounded-xl border px-4 py-3 text-sm font-semibold"
+                style={{
+                  color: "var(--accent)",
+                  background: "var(--tag-bg)",
+                  borderColor: "var(--tag-border)",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: "var(--accent)" }}
+                />
+                {metric[locale]}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* 项目展示：位于「项目描述（STAR 叙述）」与「技术标签」之间 */}
+      {project.images.length > 0 && (
+        <section className="mt-10" aria-labelledby="project-gallery-heading">
+          <h2
+            id="project-gallery-heading"
+            className="text-lg font-semibold"
+            style={{ color: "var(--foreground)" }}
+          >
+            {locale === "zh" ? "项目展示" : "Project Gallery"}
+          </h2>
+          <ImageGallery
+            images={project.images.map((image) => ({
+              id: image.id,
+              src: image.src,
+              caption: image.caption[locale],
+              alt: image.alt[locale],
+            }))}
+            locale={locale}
+            lightboxLabel={
+              locale === "zh" ? "项目展示图片预览" : "Project image preview"
+            }
+          />
+        </section>
+      )}
 
       <section className="mt-10">
         <h2
           className="text-lg font-semibold"
           style={{ color: "var(--foreground)" }}
         >
-          {locale === "zh" ? "核心技能与技术栈" : "Core skills and stack"}
+          {locale === "zh" ? "技术标签" : "Technology Tags"}
         </h2>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {project.coreSkill.map((skill) => (
-            <span
-              key={skill}
-              className="rounded-full border px-3 py-1 text-xs"
+        {/* 技术标签 = 展示用 techTags + 项目亮点，保证与卡片标签一致 */}
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {[
+            ...project.techTags.map((tag) => tag[locale]),
+            ...project.highlights.map((highlight) => highlight[locale]),
+          ].map((tag) => (
+            <li
+              key={tag}
+              className="rounded-full border px-2.5 py-1 text-xs"
               style={{
                 background: "var(--tag-bg)",
                 color: "var(--tag-text)",
                 borderColor: "var(--tag-border)",
               }}
             >
-              {skill}
-            </span>
+              {tag}
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
-      {project.interviewFocus.length > 0 && (
-        <section className="mt-10">
+      {/* 相关文档下载：位于详情页底部 */}
+      {project.documents.length > 0 && (
+        <section className="mt-10" aria-labelledby="project-documents-heading">
           <h2
+            id="project-documents-heading"
             className="text-lg font-semibold"
             style={{ color: "var(--foreground)" }}
           >
-            {locale === "zh" ? "面试重点" : "Interview focus"}
+            {locale === "zh" ? "相关文档下载" : "Related Documents"}
           </h2>
-          <ul className="mt-4 space-y-3">
-            {project.interviewFocus.map((focus) => (
-              <li
-                key={focus.zh}
-                className="flex items-start gap-3 text-sm leading-relaxed"
-                style={{ color: "var(--foreground)" }}
-              >
-                <span
-                  aria-hidden="true"
-                  className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ background: "var(--accent)" }}
-                />
-                {focus[locale]}
-              </li>
-            ))}
-          </ul>
+          <ProjectDocuments documents={project.documents} locale={locale} />
         </section>
       )}
     </article>

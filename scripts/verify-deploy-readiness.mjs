@@ -6,6 +6,15 @@ import {
 } from "node:fs";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  APPROVED_EMAIL,
+  EMAIL_APPROVED_FILES,
+  extractPdfText,
+  findEmails,
+  hasUnapprovedPhoneNumber,
+  scanPdfRawText,
+} from "./lib-approved-contacts.mjs";
+import { isDeclaredPendingAsset } from "./lib-pending-assets.mjs";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
@@ -136,17 +145,42 @@ const publicTextFiles = [
   .filter((filePath) => readableExtensions.has(extname(filePath).toLowerCase()));
 for (const filePath of publicTextFiles) {
   const content = readFileSync(filePath, "utf8");
-  if (/\b1[3-9]\d{9}\b/.test(content)) {
-    fail("public-phone-number-present", repositoryPath(filePath));
+  const relativePath = repositoryPath(filePath);
+  // 已授权公开的手机号只允许出现在身份数据层
+  if (
+    hasUnapprovedPhoneNumber(content) ||
+    (/\b1[3-9]\d{9}\b/.test(content) &&
+      relativePath !== "src/data/profile/identity.ts")
+  ) {
+    fail("public-phone-number-present", relativePath);
   }
-  const emailMatches =
-    content.match(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi) ?? [];
-  for (const email of emailMatches) {
+  for (const email of findEmails(content)) {
     if (
-      email !== "yangc202706@163.com" ||
-      repositoryPath(filePath) !== "src/data/profile/identity.ts"
+      email !== APPROVED_EMAIL ||
+      !EMAIL_APPROVED_FILES.has(relativePath)
     ) {
-      fail("unapproved-public-email-address-present", repositoryPath(filePath));
+      fail("unapproved-public-email-address-present", relativePath);
+    }
+  }
+}
+
+// 正式版简历 PDF 必须存在且文字可审计
+const resumePdfAsset = join(repositoryRoot, "public", "resume.pdf");
+if (!existsSync(resumePdfAsset)) {
+  fail("missing-public-resume-pdf");
+} else {
+  const extracted = extractPdfText(resumePdfAsset);
+  let pdfText = extracted.text;
+  if (!extracted.ok) {
+    notices.push(`resume-pdf-text-not-audited:${extracted.reason}`);
+    pdfText = scanPdfRawText(resumePdfAsset);
+  }
+  if (hasUnapprovedPhoneNumber(pdfText)) {
+    fail("public-resume-pdf-unapproved-phone-number");
+  }
+  for (const email of findEmails(pdfText)) {
+    if (email !== APPROVED_EMAIL) {
+      fail("public-resume-pdf-unapproved-email-address");
     }
   }
 }
@@ -154,6 +188,7 @@ for (const filePath of publicTextFiles) {
 const localAssetPattern =
   /["'`](\/(?!\/)[^"'`\s?#]+\.(?:gif|ico|jpe?g|pdf|png|svg|webp))(?:[?#][^"'`]*)?["'`]/gi;
 const checkedAssets = new Set();
+const pendingAssets = new Set();
 for (const filePath of publicTextFiles) {
   const content = readFileSync(filePath, "utf8");
   for (const match of content.matchAll(localAssetPattern)) {
@@ -165,10 +200,21 @@ for (const filePath of publicTextFiles) {
       join(repositoryRoot, "public", relativeAssetPath),
       join(repositoryRoot, "app", relativeAssetPath),
     ];
-    if (!candidates.some((candidate) => existsSync(candidate) && statSync(candidate).isFile())) {
-      fail("missing-static-asset", publicPath);
+    if (candidates.some((candidate) => existsSync(candidate) && statSync(candidate).isFile())) {
+      continue;
     }
+    // 已登记「待放置」的项目展示图片 / 文档：跳过并提示，不阻塞发布校验
+    if (isDeclaredPendingAsset(publicPath)) {
+      pendingAssets.add(publicPath);
+      continue;
+    }
+    fail("missing-static-asset", publicPath);
   }
+}
+if (pendingAssets.size > 0) {
+  notices.push(
+    `${pendingAssets.size} reserved project asset(s) still pending upload to public/`
+  );
 }
 
 const buildIdPath = join(repositoryRoot, ".next", "BUILD_ID");
@@ -234,17 +280,37 @@ if (
   fail("env-example-site-url-mismatch");
 }
 
+/**
+ * sitemap 契约：必须与当前真实公开路由清单一致。
+ *
+ * 当前有效公开路由：`/[lang]`、`/[lang]/about`、`/[lang]/contact`、
+ * `/[lang]/honors`、`/[lang]/projects`、`/[lang]/projects/[slug]`、`/[lang]/resume`，
+ * 以及（仅在存在已发布文章时）`/[lang]/blog` 与 `/[lang]/blog/[slug]`。
+ * `/[lang]/research` 已永久重定向到 `/[lang]/projects`，不得再出现在 sitemap 中。
+ */
 const sitemapSource = readFileSync(
   join(repositoryRoot, "app", "sitemap.ts"),
   "utf8"
 );
+const sitemapRequiredFragments = [
+  "`/${locale}`",
+  "`/${locale}/projects`",
+  "`/${locale}/about`",
+  "`/${locale}/contact`",
+  "`/${locale}/honors`",
+  "`/${locale}/resume`",
+  "publicProjects",
+  "getAllPostMetas",
+];
 if (
-  !sitemapSource.includes("publicProjects") ||
-  !sitemapSource.includes("publicResearchAreas") ||
-  !sitemapSource.includes("publicPatents") ||
-  !sitemapSource.includes('basePaths.push(`/${locale}/resume`)')
+  sitemapRequiredFragments.some(
+    (fragment) => !sitemapSource.includes(fragment)
+  )
 ) {
   fail("sitemap-public-route-contract-missing");
+}
+if (sitemapSource.includes("${locale}/research")) {
+  fail("sitemap-lists-retired-route", "/research");
 }
 
 for (const notice of notices) {

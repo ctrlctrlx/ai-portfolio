@@ -1,16 +1,26 @@
 @import "tailwindcss";
 
+/*
+ * next-themes 通过 class="dark" 切换主题（见 src/providers/ThemeProvider.tsx）。
+ * Tailwind v4 默认按 prefers-color-scheme 生成 dark: 变体，必须显式覆盖，
+ * 否则所有 dark: 工具类会跟随操作系统而不是站点主题。
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
-  --card: #f8fafc;
-  --card-border: #e2e8f0;
-  --muted: #64748b;
+  --card: #f1f5f9;
+  --card-border: #dbe3ec;
+  --muted: #5b6b7f;
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
+  /* 强调色背景上的前景色：浅色主题用白色，深色主题改用深色以保证对比度 */
+  --accent-foreground: #ffffff;
   --tag-bg: #eff6ff;
   --tag-text: #1d4ed8;
   --tag-border: #bfdbfe;
+  --code-bg: #1e293b;
 }
 
 .dark {
@@ -21,9 +31,11 @@
   --muted: #9ca3af;
   --accent: #60a5fa;
   --accent-hover: #93c5fd;
+  --accent-foreground: #0b1220;
   --tag-bg: #1e3a5f;
   --tag-text: #93c5fd;
   --tag-border: #2563eb;
+  --code-bg: #0d1526;
 }
 
 @theme inline {
@@ -56,20 +68,15 @@ html {
   overflow-x: clip;
 }
 
-/* Typewriter cursor blink */
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.typewriter-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.2em;
-  background: var(--accent);
-  margin-left: 2px;
-  vertical-align: text-bottom;
-  animation: blink 1s step-end infinite;
+/*
+ * 顶部导航为 sticky 且高 3.5rem，锚点跳转需要留出同样的偏移，
+ * 否则目标标题会被导航栏遮住（首页「关于我」、研究页 #patents-heading）。
+ */
+h1,
+h2,
+h3,
+[id] {
+  scroll-margin-top: 5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -83,12 +90,25 @@ html {
   }
 }
 
-/* KaTeX display block scrollable on mobile */
+/* 页脚访客指示灯动画（不依赖 Tailwind 的 animate-pulse） */
+@keyframes visitor-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* KaTeX 展示公式在移动端可横向滚动，避免撑破布局 */
 .katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 0.5rem;
-  touch-action: pan-x pinch-zoom;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  max-width: 100% !important;
+  touch-action: pan-x pinch-zoom !important;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 /* Prose overrides for MDX content */
@@ -107,6 +127,7 @@ html {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 3px;
+  overflow-wrap: anywhere;
 }
 
 .prose-portfolio code {
@@ -115,10 +136,11 @@ html {
   border-radius: 4px;
   padding: 0.125rem 0.375rem;
   font-size: 0.875em;
+  overflow-wrap: anywhere;
 }
 
 .prose-portfolio pre {
-  background: #1e293b;
+  background: var(--code-bg);
   border-radius: 8px;
   padding: 1rem;
   overflow-x: auto;
@@ -130,22 +152,20 @@ html {
   padding: 0;
   color: #e2e8f0;
 }
-/* MathJax 移动端防溢出与手势缩放 */
-mjx-container[display="true"] {
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  max-width: 100% !important;
-  touch-action: pan-x pinch-zoom !important;
-  padding-bottom: 10px; /* 防止滚动条遮挡公式底部 */
-  padding-top: 10px;
+
+/* GFM 表格在窄屏下横向滚动，而不是把页面撑宽 */
+.prose-portfolio table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
 }
-/* KaTeX 移动端防溢出与手势缩放 */
-.katex-display {
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  max-width: 100% !important;
-  touch-action: pan-x pinch-zoom !important;
-  padding-bottom: 10px;
+
+.prose-portfolio th,
+.prose-portfolio td {
+  border: 1px solid var(--card-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
 }
 
 .resume-heading {
@@ -181,6 +201,8 @@ mjx-container[display="true"] {
   .resume-page {
     max-width: none !important;
     padding: 0 !important;
+    background: #ffffff !important;
+    border-color: #b8b8b8 !important;
   }
 
   .resume-page *,
@@ -212,7 +234,8 @@ mjx-container[display="true"] {
   }
 
   .resume-section {
-    margin-top: 7mm !important;
+    /* 与屏幕端同步压缩约 30%，控制打印/导出 PDF 的篇幅 */
+    margin-top: 5mm !important;
   }
 
   .resume-section:first-child {

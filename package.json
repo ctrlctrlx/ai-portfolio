@@ -8,6 +8,8 @@
   },
   "scripts": {
     "dev": "next dev",
+    "generate:last-updated": "node scripts/generate-last-updated.mjs",
+    "prebuild": "npm run generate:last-updated",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

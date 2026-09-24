@@ -31,8 +31,8 @@ export default function LocalizedError({
       <button
         type="button"
         onClick={reset}
-        className="mt-8 rounded-lg px-4 py-2 text-sm font-medium text-white"
-        style={{ background: "var(--accent)" }}
+        className="mt-8 rounded-lg px-4 py-2 text-sm font-medium"
+        style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
       >
         {locale === "zh" ? "重试" : "Try again"}
       </button>

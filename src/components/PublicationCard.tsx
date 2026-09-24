@@ -1,6 +1,11 @@
 import { ExternalLink } from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
-import type { Publication, PublicationStatus } from "@/src/data/profile";
+import {
+  getPublicationAuthors,
+  publicIdentity,
+  type Publication,
+  type PublicationStatus,
+} from "@/src/data/profile";
 
 const statusLabels: Record<PublicationStatus, Record<Locale, string>> = {
   draft: { zh: "草稿", en: "Draft" },
@@ -19,6 +24,20 @@ export default function PublicationCard({
   publication: Publication;
   locale: Locale;
 }) {
+  /**
+   * 作者行文案：优先读取数据层的 author（由 identity 派生，如「第一作者：杨冲」），
+   * 未提供时回退到 authors 顺序 + identity 姓名派生，组件内不硬编码姓名。
+   */
+  const authorLine =
+    publication.author?.[locale] ??
+    getPublicationAuthors(
+      publication,
+      publicIdentity?.name[locale] ?? "",
+      locale
+    )
+      .map((author) => author.name)
+      .join(", ");
+
   return (
     <article
       className="rounded-xl border p-5"
@@ -40,40 +59,48 @@ export default function PublicationCard({
         </span>
       </div>
       <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-        {publication.authors.map((author) => author.name).join(", ")}
+        {authorLine}
       </p>
       <p className="mt-1 text-xs italic" style={{ color: "var(--muted)" }}>
-        {publication.venue[locale]} · {publication.year}
-      </p>
-      <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
-        {publication.abstract[locale]}
-      </p>
-      {(publication.doi || publication.arxivUrl) && (
-        <div className="mt-4 flex flex-wrap gap-3">
-          {publication.doi && (
+        {publication.month ? `${publication.month} · ` : ""}
+        {publication.venue[locale]}
+        {publication.authorRole ? ` · ${publication.authorRole[locale]}` : ""}
+        {/* 会议信息行末尾的 DOI 链接：仅在数据层提供 doi 时渲染 */}
+        {publication.doi && (
+          <>
+            {" · "}
             <a
               href={`https://doi.org/${publication.doi}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs hover:underline"
+              className="not-italic break-words hover:underline"
               style={{ color: "var(--accent)" }}
-              aria-label={`${publication.title[locale]} DOI`}
+              aria-label={
+                locale === "zh"
+                  ? `DOI：在发布方网站查看论文《${publication.title.zh}》（新窗口打开）`
+                  : `DOI: view the paper "${publication.title.en}" on the publisher site (opens in a new tab)`
+              }
             >
-              DOI <ExternalLink size={11} />
+              DOI: {publication.doi}
             </a>
-          )}
-          {publication.arxivUrl && (
-            <a
-              href={publication.arxivUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs hover:underline"
-              style={{ color: "var(--accent)" }}
-              aria-label={`${publication.title[locale]} arXiv`}
-            >
-              arXiv <ExternalLink size={11} />
-            </a>
-          )}
+          </>
+        )}
+      </p>
+      <p className="mt-3 text-sm leading-relaxed" style={{ color: "var(--muted)" }}>
+        {publication.abstract[locale]}
+      </p>
+      {publication.arxivUrl && (
+        <div className="mt-4 flex flex-wrap gap-3">
+          <a
+            href={publication.arxivUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs hover:underline"
+            style={{ color: "var(--accent)" }}
+            aria-label={`${publication.title[locale]} arXiv`}
+          >
+            arXiv <ExternalLink size={11} />
+          </a>
         </div>
       )}
     </article>

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MessageCircle, X, Send, Bot, ChevronDown } from "lucide-react";
-import { publicIdentity } from "@/src/data/profile";
 
 interface Message {
   role: "user" | "assistant";
@@ -18,7 +17,7 @@ const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
     { label: "核心技能", key: "skills" },
     { label: "教育经历", key: "education" },
     { label: "研究方向", key: "research" },
-    { label: "论文信息", key: "publications" },
+    { label: "荣誉资质", key: "honors" },
   ],
   en: [
     { label: "Introduction", key: "introduction" },
@@ -26,7 +25,7 @@ const QUICK_QUESTIONS: Record<Lang, { label: string; key: string }[]> = {
     { label: "Core Skills", key: "skills" },
     { label: "Education", key: "education" },
     { label: "Research Focus", key: "research" },
-    { label: "Publications", key: "publications" },
+    { label: "Honors & Awards", key: "honors" },
   ],
 };
 
@@ -51,17 +50,21 @@ const QUICK_PROMPTS: Record<string, Record<Lang, string>> = {
     zh: "你的研究方向是什么？",
     en: "What is your research focus?",
   },
-  publications: {
-    zh: "目前有哪些论文信息？",
-    en: "What publication information is currently available?",
+  // 「论文信息」快捷入口与问答规则已整体移除：该类提问改为规则未命中后走 API 兜底
+  honors: {
+    zh: "有哪些荣誉资质？",
+    en: "What honors and awards do you have?",
   },
 };
 
-const GREETING: Record<Lang, string> = {
-  zh: `你好！我是${publicIdentity?.name.zh ?? "候选人"}的求职信息助理。请问您想了解哪个项目或技能？`,
-  en: `Hi! I'm ${publicIdentity?.name.en ?? "the candidate"}'s career information assistant. What project or skill would you like to know about?`,
-};
-
+/**
+ * 开场白由服务端布局按当前 locale 组装后以纯字符串传入。
+ *
+ * 这里不再直接 import profile 数据层：ChatBox 是客户端组件，一旦在客户端
+ * 引用 "@/src/data/profile"，整个双语 profile 数据集（about / projects /
+ * publications 等全部中英文本）都会被序列化进客户端 chunk，使英文页面的
+ * 资源包里出现大量中文字符。改为只传一句已解析好的问候语。
+ */
 const BUSY_MSG: Record<Lang, string> = {
   zh: "AI 助理正在忙碌，请稍后再试，或点击下方快捷按钮获取答案。",
   en: "AI is busy right now. Please try again later or use the quick buttons below.",
@@ -72,20 +75,31 @@ const NET_ERR: Record<Lang, string> = {
   en: "Network error. Please retry or use quick buttons below.",
 };
 
-export default function ChatBox({ lang }: { lang: Lang }) {
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
+
+export default function ChatBox({
+  lang,
+  greeting,
+}: {
+  lang: Lang;
+  greeting: string;
+}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Show greeting on first open
   useEffect(() => {
     if (open && messages.length === 0) {
-      setMessages([{ role: "assistant", content: GREETING[lang] }]);
+      setMessages([{ role: "assistant", content: greeting }]);
     }
-  }, [open, lang, messages.length]);
+  }, [open, greeting, messages.length]);
 
   // Scroll to latest message
   useEffect(() => {
@@ -95,8 +109,48 @@ export default function ChatBox({ lang }: { lang: Lang }) {
   // Focus input when chat opens
   useEffect(() => {
     if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }
+  }, [open]);
+
+  // Esc 关闭 + Tab 焦点陷阱 + 关闭后焦点回到触发按钮
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        toggleRef.current?.focus();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      const focusable = Array.from(
+        panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      ).filter((element) => element.offsetParent !== null);
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !panel.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
   useEffect(() => {
@@ -149,18 +203,20 @@ export default function ChatBox({ lang }: { lang: Lang }) {
     <>
       {/* Floating toggle button */}
       <button
+        type="button"
+        ref={toggleRef}
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
-        style={{ background: "var(--accent)" }}
+        className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-xl transition-transform hover:scale-110 active:scale-95 motion-reduce:transform-none sm:bottom-6 sm:right-6"
+        style={{ background: "var(--accent)", color: "var(--accent-foreground)" }}
         aria-label={lang === "zh" ? "打开 AI 助理" : "Open AI assistant"}
         aria-expanded={open}
         aria-controls="portfolio-ai-assistant"
         title={lang === "zh" ? "AI 助理" : "AI assistant"}
       >
         {open ? (
-          <ChevronDown size={20} color="white" />
+          <ChevronDown size={20} aria-hidden="true" />
         ) : (
-          <MessageCircle size={20} color="white" />
+          <MessageCircle size={20} aria-hidden="true" />
         )}
       </button>
 
@@ -168,51 +224,61 @@ export default function ChatBox({ lang }: { lang: Lang }) {
       {open && (
         <div
           id="portfolio-ai-assistant"
+          ref={panelRef}
           role="dialog"
+          aria-modal="false"
           aria-labelledby="portfolio-ai-assistant-title"
-          className="fixed left-4 right-4 sm:left-auto sm:right-6 z-50 w-auto sm:w-96 rounded-2xl shadow-2xl border flex flex-col overflow-hidden"
+          className="fixed left-4 right-4 z-50 flex w-auto flex-col overflow-hidden rounded-2xl border shadow-2xl sm:left-auto sm:right-6 sm:w-96"
           style={{
             bottom: "5.5rem",
-            height: "min(440px, calc(100dvh - 7rem))",
-            background: "#0d1117",
-            borderColor: "#30363d",
+            // 下限 15rem 保证输入区在矮视口下仍可见可用
+            height: "max(15rem, min(28rem, calc(100dvh - 7rem)))",
+            background: "var(--card)",
+            borderColor: "var(--card-border)",
           }}
         >
           {/* Header bar */}
           <div
-            className="px-4 py-3 flex items-center justify-between border-b shrink-0"
-            style={{ borderColor: "#30363d" }}
+            className="flex shrink-0 items-center justify-between border-b px-4 py-3"
+            style={{ borderColor: "var(--card-border)" }}
           >
             <div className="flex items-center gap-2">
-              <Bot size={16} color="#60a5fa" />
+              <Bot size={16} style={{ color: "var(--accent)" }} aria-hidden="true" />
               <span
                 id="portfolio-ai-assistant-title"
-                className="text-sm font-semibold text-white"
+                className="text-sm font-semibold"
+                style={{ color: "var(--foreground)" }}
               >
                 {lang === "zh" ? "求职信息助理" : "Career Assistant"}
               </span>
               <span
-                className="text-xs px-1.5 py-0.5 rounded font-mono"
-                style={{ background: "#161b22", color: "#60a5fa" }}
+                className="rounded px-1.5 py-0.5 font-mono text-xs"
+                style={{ background: "var(--tag-bg)", color: "var(--tag-text)" }}
               >
                 Profile
               </span>
             </div>
             <button
-              onClick={() => setOpen(false)}
-              className="transition-colors hover:text-white"
-              style={{ color: "#6b7280" }}
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                toggleRef.current?.focus();
+              }}
+              className="transition-opacity hover:opacity-70"
+              style={{ color: "var(--muted)" }}
               aria-label={lang === "zh" ? "关闭 AI 助理" : "Close AI assistant"}
               title={lang === "zh" ? "关闭" : "Close"}
             >
-              <X size={15} />
+              <X size={15} aria-hidden="true" />
             </button>
           </div>
 
           {/* Message list */}
           <div
-            className="flex-1 overflow-y-auto px-3 py-3 space-y-3"
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-3"
+            role="log"
             aria-live="polite"
+            aria-label={lang === "zh" ? "对话记录" : "Conversation"}
           >
             {messages.map((msg, i) => (
               <div
@@ -220,12 +286,15 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                 className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  role="status"
-                  className="max-w-[88%] text-xs leading-relaxed px-3 py-2 rounded-2xl whitespace-pre-wrap break-words"
+                  className="max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-xs leading-relaxed"
                   style={
                     msg.role === "user"
-                      ? { background: "#1d4ed8", color: "#e0e7ff" }
-                      : { background: "#1f2937", color: "#d1d5db" }
+                      ? { background: "var(--accent)", color: "var(--accent-foreground)" }
+                      : {
+                          background: "var(--background)",
+                          color: "var(--foreground)",
+                          border: "1px solid var(--card-border)",
+                        }
                   }
                 >
                   {msg.content}
@@ -234,10 +303,14 @@ export default function ChatBox({ lang }: { lang: Lang }) {
             ))}
 
             {loading && (
-              <div className="flex justify-start">
+              <div className="flex justify-start" role="status">
                 <div
-                  className="text-xs px-3 py-2 rounded-2xl"
-                  style={{ background: "#1f2937", color: "#6b7280" }}
+                  className="rounded-2xl px-3 py-2 text-xs"
+                  style={{
+                    background: "var(--background)",
+                    color: "var(--muted)",
+                    border: "1px solid var(--card-border)",
+                  }}
                 >
                   <span className="animate-pulse">
                     {lang === "zh" ? "正在思考…" : "Thinking…"}
@@ -249,14 +322,15 @@ export default function ChatBox({ lang }: { lang: Lang }) {
           </div>
 
           {/* Quick question chips */}
-          <div className="px-3 pb-2 flex flex-wrap gap-1.5 shrink-0">
+          <div className="flex shrink-0 flex-wrap gap-1.5 px-3 pb-2">
             {QUICK_QUESTIONS[lang].map((q) => (
               <button
+                type="button"
                 key={q.key}
                 onClick={() => sendMessage(QUICK_PROMPTS[q.key][lang])}
                 disabled={loading}
-                className="text-xs px-2.5 py-1 rounded-full border transition-colors hover:border-blue-500 hover:text-blue-400 disabled:opacity-40"
-                style={{ borderColor: "#374151", color: "#9ca3af" }}
+                className="rounded-full border px-2.5 py-1 text-xs transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
+                style={{ borderColor: "var(--card-border)", color: "var(--muted)" }}
               >
                 {q.label}
               </button>
@@ -264,13 +338,13 @@ export default function ChatBox({ lang }: { lang: Lang }) {
           </div>
 
           {/* Input row */}
-          <div className="px-3 pb-3 shrink-0">
+          <div className="shrink-0 px-3 pb-3">
             <label htmlFor="portfolio-ai-question" className="sr-only">
               {lang === "zh" ? "向 AI 助理提问" : "Ask the AI assistant"}
             </label>
             <div
-              className="flex items-center gap-2 rounded-xl px-3 py-2 border"
-              style={{ background: "#161b22", borderColor: "#30363d" }}
+              className="flex items-center gap-2 rounded-xl border px-3 py-2"
+              style={{ background: "var(--background)", borderColor: "var(--card-border)" }}
             >
               <input
                 id="portfolio-ai-question"
@@ -284,22 +358,25 @@ export default function ChatBox({ lang }: { lang: Lang }) {
                   }
                 }}
                 placeholder={
-                  lang === "zh" ? "询问公开资料…" : "Ask about public profile…"
+                  lang === "zh"
+                    ? "可自由提问，或点击下方快捷问题"
+                    : "Feel free to ask, or click quick questions below"
                 }
                 disabled={loading}
                 maxLength={2000}
-                className="flex-1 bg-transparent text-xs outline-none text-gray-200 disabled:opacity-60"
-                style={{ color: "#d1d5db" }}
+                className="flex-1 bg-transparent text-xs outline-none disabled:opacity-60"
+                style={{ color: "var(--foreground)" }}
               />
               <button
+                type="button"
                 onClick={() => sendMessage(input)}
                 disabled={loading || !input.trim()}
                 className="shrink-0 transition-opacity disabled:opacity-30"
-                style={{ color: "#60a5fa" }}
+                style={{ color: "var(--accent)" }}
                 aria-label={lang === "zh" ? "发送问题" : "Send question"}
                 title={lang === "zh" ? "发送问题" : "Send question"}
               >
-                <Send size={14} />
+                <Send size={14} aria-hidden="true" />
               </button>
             </div>
           </div>
