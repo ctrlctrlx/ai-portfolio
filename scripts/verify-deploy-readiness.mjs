@@ -164,8 +164,8 @@ for (const filePath of publicTextFiles) {
   }
 }
 
-// 正式版简历 PDF 必须存在且文字可审计
-const resumePdfAsset = join(repositoryRoot, "public", "resume.pdf");
+// 正式版简历 PDF（全站唯一官方文件）必须存在且文字可审计
+const resumePdfAsset = join(repositoryRoot, "public", "杨冲个人简历.pdf");
 if (!existsSync(resumePdfAsset)) {
   fail("missing-public-resume-pdf");
 } else {
@@ -195,7 +195,17 @@ for (const filePath of publicTextFiles) {
     const publicPath = match[1];
     if (checkedAssets.has(publicPath)) continue;
     checkedAssets.add(publicPath);
-    const relativeAssetPath = publicPath.slice(1).replaceAll("/", sep);
+    /**
+     * 资源路径允许百分号编码（例如中文文件名 `/杨冲个人简历.pdf` 写成
+     * `/%E6%9D%A8...pdf`，以便英文页面 HTML 不出现中文字符），检查前先解码。
+     */
+    let decodedAssetPath = publicPath;
+    try {
+      decodedAssetPath = decodeURIComponent(publicPath);
+    } catch {
+      decodedAssetPath = publicPath;
+    }
+    const relativeAssetPath = decodedAssetPath.slice(1).replaceAll("/", sep);
     const candidates = [
       join(repositoryRoot, "public", relativeAssetPath),
       join(repositoryRoot, "app", relativeAssetPath),
@@ -204,7 +214,7 @@ for (const filePath of publicTextFiles) {
       continue;
     }
     // 已登记「待放置」的项目展示图片 / 文档：跳过并提示，不阻塞发布校验
-    if (isDeclaredPendingAsset(publicPath)) {
+    if (isDeclaredPendingAsset(decodedAssetPath)) {
       pendingAssets.add(publicPath);
       continue;
     }

@@ -109,7 +109,19 @@ for (const { filePath, content } of implementationFiles) {
     if (checkedAssets.has(publicPath)) continue;
     checkedAssets.add(publicPath);
 
-    const relativeAssetPath = publicPath.slice(1).replaceAll("/", sep);
+    /**
+     * 资源路径允许使用百分号编码（例如中文文件名 `/杨冲个人简历.pdf` 写成
+     * `/%E6%9D%A8...pdf`，以便英文页面 HTML 不出现中文字符），
+     * 因此检查文件是否存在前先解码；解码失败时退回原始路径。
+     */
+    let decodedPath = publicPath;
+    try {
+      decodedPath = decodeURIComponent(publicPath);
+    } catch {
+      decodedPath = publicPath;
+    }
+
+    const relativeAssetPath = decodedPath.slice(1).replaceAll("/", sep);
     const candidates = [
       join(repositoryRoot, "public", relativeAssetPath),
       join(repositoryRoot, "app", relativeAssetPath),
@@ -120,7 +132,7 @@ for (const { filePath, content } of implementationFiles) {
     }
 
     // 已登记「待放置」的资产：跳过存在性检查并提示，文件放入后提示自动消失
-    if (isDeclaredPendingAsset(publicPath)) {
+    if (isDeclaredPendingAsset(decodedPath)) {
       pendingAssets.add(publicPath);
       continue;
     }
@@ -161,9 +173,9 @@ if (
 /**
  * 正式版简历 PDF 必须存在，并且与公开内容遵守同一套隐私红线：
  * 只允许出现已批准的联系方式，其它手机号 / 邮箱一律拦截。
- * 中文 `resume.pdf` 与英文 `resume-en.pdf` 都要审计，避免出现未被覆盖的公开文件。
+ * 全站唯一官方简历文件是本人提供的 `杨冲个人简历.pdf`，必须纳入审计范围。
  */
-const resumePdfFiles = ["resume.pdf", "resume-en.pdf"];
+const resumePdfFiles = ["杨冲个人简历.pdf"];
 for (const resumePdfName of resumePdfFiles) {
   const resumePdfPath = join(repositoryRoot, "public", resumePdfName);
   if (!existsSync(resumePdfPath)) {
@@ -277,6 +289,6 @@ if (errors.length > 0) {
   process.exitCode = 1;
 } else {
   console.log(
-    `Public content verification passed (${implementationFiles.length} public text files, ${checkedAssets.size} local assets, resume.pdf audited).`
+    `Public content verification passed (${implementationFiles.length} public text files, ${checkedAssets.size} local assets, ${resumePdfFiles.join(" + ")} audited).`
   );
 }

@@ -45,14 +45,15 @@ export const awards: Award[] = [
     verificationStatus: "verified",
     sourceId: "profile-award-sichuan-graduate-2023",
     title: {
-      zh: "2023届四川省优秀大学毕业生",
-      en: "Sichuan Province Outstanding University Graduate (Class of 2023)",
+      zh: "四川省优秀大学毕业生",
+      en: "Sichuan Province Outstanding Graduate",
     },
     issuer: {
       zh: "四川省教育厅",
       en: "Sichuan Provincial Education Department",
     },
-    year: "2023.06",
+    /** 该荣誉为年度评选，展示层只标注年份（YYYY），与奖项名称分离 */
+    year: "2023",
     level: "provincial",
   },
   {

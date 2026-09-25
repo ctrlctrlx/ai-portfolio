@@ -28,12 +28,17 @@ import type { Locale } from "@/src/lib/i18n";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 /**
- * 首页只展示最高权重的 2 个代表项目。
+ * 首页展示 4 个代表项目（当前公开项目全集，按最新在前排列）。
  * 用显式 slug 指定，而不是对按时间排序的列表取前 N 个，
  * 避免新增/调整项目时间后首页展示的项目被静默替换。
- * 其余项目与全部指标、技术标签完整保留在 /[lang]/projects 内页。
+ * 每个项目的全部指标、技术标签与图文详情在 /[lang]/projects 与详情页展开。
  */
-const HOME_PROJECT_SLUGS = ["fish-reid-open-world", "rfid-multiview-acquisition"];
+const HOME_PROJECT_SLUGS = [
+  "personal-portfolio-website",
+  "fish-reid-open-world",
+  "rfid-multiview-acquisition",
+  "grouper-tagging-standard",
+];
 
 export async function generateMetadata({
   params,

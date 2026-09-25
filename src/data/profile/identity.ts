@@ -67,8 +67,9 @@ export const identity: ProfileIdentity = {
       label: { zh: "电话", en: "Phone" },
       /**
        * 本人已授权在求职场景主动公开手机号。
-       * 该号码字面值只允许出现在本文件与 public/resume.pdf，
-       * 白名单见 scripts/lib-approved-contacts.mjs。
+       * 该号码字面值只允许出现在本文件，以及 public/ 下本人提供的正式版简历 PDF
+       * （具体文件名登记在 scripts/lib-approved-contacts.mjs 的白名单中，
+       * 此处不写字面姓名，避免破坏「公开姓名在数据层只出现一次」的校验）。
        */
       value: "18716985140",
       icon: "Phone",

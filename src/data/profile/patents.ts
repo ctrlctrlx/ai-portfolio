@@ -11,7 +11,10 @@ export const patents: Patent[] = [
     patentNumber: "ZL 2022 2 0475134.9",
     publicationNumber: "CN 216957023 U",
     applicationDate: "2022-03-04",
-    grantDate: "2022-07-12",
+    /**
+     * 授权时间：按本人确认修正为 2022.03（展示层按 YYYY.MM 输出，日期部分仅用于排序与格式化）。
+     */
+    grantDate: "2022-03-01",
     inventorOrder: 2,
     role: {
       zh: "第二发明人",

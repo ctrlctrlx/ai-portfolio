@@ -434,9 +434,10 @@ for (const item of [...awards, ...competitions]) {
     fail("invalid-honor-level", `${item.id}:${item.level}`);
   }
 }
-// 时间格式统一为 YYYY.MM，保证列表按字典序即等于时间倒序
+// 时间格式为 YYYY.MM 或 YYYY（年度评选类荣誉只标注年份）。
+// 两种形式按字典序即等于时间倒序：YYYY 等价于该年 01 月。
 for (const item of [...awards, ...competitions]) {
-  if (typeof item.year === "string" && !/^\d{4}\.\d{2}$/.test(item.year)) {
+  if (typeof item.year === "string" && !/^\d{4}(\.\d{2})?$/.test(item.year)) {
     fail("invalid-honor-date-format", `${item.id}:${item.year}`);
   }
 }
@@ -567,11 +568,16 @@ if (publicPatent) {
   if (publicPatent.applicationDate !== "2022-03-04") {
     fail("incorrect-patent-application-date");
   }
-  if (publicPatent.grantDate !== "2022-07-12") {
+  // 授权时间按本人确认修正为 2022.03（ISO 日期中月份为 03）
+  if (publicPatent.grantDate !== "2022-03-01") {
     fail("incorrect-patent-grant-date");
   }
 }
 
+// 公开项目条目数：CV 研究 1 + 采集装置 1 + 标记标准化 1 + 本站作品集 1
+if (projects.filter(isPublicVerified).length !== 4) {
+  fail("incorrect-public-project-count");
+}
 // 公开评奖条目数：海南大学 1 项 + 四川工业科技学院本科阶段 8 项（含 1 项省级优秀毕业生）
 if (awards.filter(isPublicVerified).length !== 11) {
   fail("incorrect-public-award-count");
@@ -586,11 +592,15 @@ const expectedCredentialCount =
 if (credentials.filter(isPublicVerified).length !== expectedCredentialCount) {
   fail("incorrect-public-credential-count");
 }
-// 证书与专利分类中的专利条目必须与 patents.ts 的授权事实一致
+// 证书与专利分类中的专利条目必须与 patents.ts 的授权事实一致（年份必须一致，
+// 允许 YYYY 或 YYYY.MM 两种精度）
 const credentialPatent = credentials.find((entry) => entry.kind === "patent");
 if (!credentialPatent) {
   fail("missing-credential-patent-entry");
-} else if (publicPatent && credentialPatent.year !== publicPatent.grantDate.slice(0, 4)) {
+} else if (
+  publicPatent &&
+  credentialPatent.year.slice(0, 4) !== publicPatent.grantDate.slice(0, 4)
+) {
   fail("credential-patent-year-mismatch-patents-source");
 }
 if (publications.filter(isPublicVerified).length !== 2) {

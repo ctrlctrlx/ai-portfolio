@@ -64,12 +64,12 @@ docs/deployment-readiness.md  部署准备状态与人工验收清单
 | 路由 | 内容 | 渲染 |
 | --- | --- | --- |
 | `/` | 按 `Accept-Language` 进入 `zh` / `en` | 静态（重定向） |
-| `/[lang]` | 首页：求职定位、学历行、政治面貌、研究方向标签、代表项目 3 张卡、荣誉预览、技能栈 | SSG |
+| `/[lang]` | 首页：求职定位、学历行、政治面貌、研究方向标签、代表项目 4 张卡、荣誉预览、技能栈 | SSG |
 | `/[lang]/about` | 关于我：三段式简介、研究方向、教育经历、实践经历、三大核心优势、实践配图 | SSG |
-| `/[lang]/projects` | 项目经历：3 张项目卡（STAR + 量化指标 + 技术标签）+ 学术成果与专利 | SSG |
+| `/[lang]/projects` | 项目经历：4 张项目卡（STAR + 量化指标 + 技术标签）+ 学术成果与专利 | SSG |
 | `/[lang]/projects/[slug]` | 项目详情：STAR 四段、核心量化数据、项目图集（灯箱缩放）、技术标签、相关文档下载 | SSG |
 | `/[lang]/honors` | 荣誉与资质：国家级 / 省部级 / 校级 + 证书与专利 + 学术论文 | SSG |
-| `/[lang]/resume` | 在线公开简历（教育 / 项目 / 技能 / 荣誉 / 专利）+ A4 打印样式 + 双语 PDF 下载 | SSG |
+| `/[lang]/resume` | 在线公开简历（教育 / 项目 / 技能 / 荣誉 / 专利）+ A4 打印样式 + 正式简历 PDF 下载 | SSG |
 | `/[lang]/contact` | 联系我：公开求职邮箱、微信、电话（`tel:`） | SSG |
 | `/[lang]/blog`、`/[lang]/blog/[slug]` | 技术文章；当前无已发布文章（3 篇草稿），导航入口隐藏且不进入 sitemap | SSG |
 | `/[lang]/research` | **已永久重定向（301）到 `/[lang]/projects`**，研究内容并入项目经历页 | 重定向 |
@@ -87,7 +87,7 @@ docs/deployment-readiness.md  部署准备状态与人工验收清单
 
 | 集合 | 数量 | 说明 |
 | --- | --- | --- |
-| 项目经历 | 3 | 鱼类 ReID 研究 → RFID 多目视觉采集装置 → 东星斑标记标准化 |
+| 项目经历 | 4 | 本站作品集（最新）→ 鱼类 ReID 研究 → RFID 多目视觉采集装置 → 东星斑标记标准化 |
 | 研究方向 | 3 | 计算机视觉、个体重识别（ReID）、嵌入式智能感知 |
 | 论文 | 2 | 均为第一作者 EI 会议论文，含 DOI；会议全称待补充（占位不得改写为「已收录」） |
 | 专利 | 1 | 已授权实用新型专利，年份与授权日期一致 |
@@ -98,32 +98,17 @@ docs/deployment-readiness.md  部署准备状态与人工验收清单
 | 实践经历 | 2 个阶段 | 本科学生工作 + 硕士驻场项目 |
 | 联系方式 | 4 | 邮箱、电话、个人网站、GitHub |
 
-### 双语简历 PDF
+### 正式简历 PDF
 
-| 文件 | 语言 | 来源 | 大小 / 页数 |
+| 文件 | 语言 | 来源 | 说明 |
 | --- | --- | --- | --- |
-| `public/resume.pdf` | 中文 | `/[lang]/resume` 页面打印 | ≈ 300 KB / 3 页 A4 |
-| `public/resume-en.pdf` | 英文 | `/[lang]/resume` 页面打印 | ≈ 105 KB / 4 页 A4 |
+| `public/杨冲个人简历.pdf` | 中文（正式版） | 本人提供 | 全站唯一官方简历文件，中英文页面共用 |
 
-- 中文页的下载按钮指向 `resume.pdf`，英文页指向 `resume-en.pdf`（`ResumeDownloadButton` 按 locale 选择）。
-- 两个文件都由 `/[lang]/resume` 页面（同一份 profile 数据源）打印生成，因此与网页内容天然一致；
-  页面打印样式（`app/globals.css` 的 `@media print`）会隐藏导航、页脚与 AI 助理，并按 A4 分页。
-- 两份 PDF 的文字都会被 `verify:content` 与 `verify:resume` 提取并审计：只允许出现已批准的邮箱与手机号，
-  且必须分别包含中文名 / 英文名，避免出现空白或语言错配的文件。
-
-重新生成（需要本机安装 Chrome 或 Edge，项目不引入 PDF 依赖）：
-
-```powershell
-npm run build
-npx next start -p 3331          # 另开一个终端
-& "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
-  --no-pdf-header-footer --virtual-time-budget=10000 `
-  --print-to-pdf="$PWD\public\resume.pdf"    "http://127.0.0.1:3331/zh/resume"
-& "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
-  --no-pdf-header-footer --virtual-time-budget=10000 `
-  --print-to-pdf="$PWD\public\resume-en.pdf" "http://127.0.0.1:3331/en/resume"
-npm run verify:content && npm run verify:resume
-```
+- 中文页与英文页的下载按钮都指向同一份 `/杨冲个人简历.pdf`（`ResumeDownloadButton` 按 locale 只切换另存文件名：
+  `杨冲-个人简历.pdf` / `Yang Chong Resume.pdf`），页面内不再有浏览器打印入口，也不再自动生成 PDF。
+- 该 PDF 的文字由 `verify:content`、`verify:resume`、`verify:deploy` 提取并审计：只允许出现已批准的邮箱与手机号，
+  且必须包含候选人姓名，避免拿到空白或错误的文件。
+- 替换简历时直接覆盖 `public/杨冲个人简历.pdf`，然后重跑 `npm run verify`。
 
 ---
 

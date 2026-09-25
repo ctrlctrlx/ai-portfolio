@@ -5,8 +5,8 @@ import { existsSync, readFileSync } from "node:fs";
  * 公开联系方式白名单 —— 手机号隐私门禁的唯一放行来源。
  *
  * 背景：本人明确授权在求职作品集中公开手机号，因此以下位置允许出现该号码：
- *   1. src/data/profile/identity.ts  —— 联系方式数据层
- *   2. public/resume.pdf             —— 正式版简历文件（可公开下载）
+ *   1. src/data/profile/identity.ts        —— 联系方式数据层
+ *   2. public/杨冲个人简历.pdf              —— 本人提供的正式版简历（全站唯一官方简历文件）
  *
  * 除上述位置外，任何 app/、src/、content/、public/ 中的文本文件都不得出现手机号；
  * 新增放行位置必须同时修改本文件，并同步更新 AGENTS.md 的隐私条款说明。
@@ -30,7 +30,7 @@ export const APPROVED_NATIVE_PLACE = Object.freeze({
 /** 允许包含已批准手机号的文件（仓库相对路径，POSIX 分隔符） */
 export const PHONE_APPROVED_FILES = new Set([
   "src/data/profile/identity.ts",
-  "public/resume.pdf",
+  "public/杨冲个人简历.pdf",
 ]);
 
 /**

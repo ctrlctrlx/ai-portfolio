@@ -8,19 +8,16 @@ const typeLabels: Record<PatentType, Record<Locale, string>> = {
   },
 };
 
+/**
+ * 授权时间：与全站经历类信息统一采用 `YYYY.MM`（grantDate 为 ISO 日期，取前 7 位并替换分隔符），
+ * 避免同一份数据在专利卡片里显示成「2022年3月」、在证书列表里显示成「2022.03」。
+ */
 function formatGrantDate(grantDate: string, locale: Locale): string {
-  const formattedDate = new Intl.DateTimeFormat(
-    locale === "zh" ? "zh-CN" : "en-US",
-    {
-      year: "numeric",
-      month: "long",
-      timeZone: "UTC",
-    }
-  ).format(new Date(`${grantDate}T00:00:00Z`));
+  const formattedDate = grantDate.slice(0, 7).replace("-", ".");
 
   return locale === "zh"
     ? `授权于 ${formattedDate}`
-    : `Granted in ${formattedDate}`;
+    : `Granted ${formattedDate}`;
 }
 
 export default function PatentCard({
