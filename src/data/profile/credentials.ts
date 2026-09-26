@@ -32,6 +32,8 @@ export const credentials: Credential[] = [
       zh: "教育部教育考试院",
       en: "National Education Examinations Authority, MOE",
     },
+    /** 取证时间；与全站经历类信息一致采用 YYYY.MM */
+    year: "2022.06",
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-cet4",
@@ -47,7 +49,8 @@ export const credentials: Credential[] = [
       zh: "国家知识产权局（第二发明人）",
       en: "China National Intellectual Property Administration (Second Inventor)",
     },
-    year: "2022",
+    /** 授权时间：与 patents.ts 的 grantDate 同源，精确到月 */
+    year: "2022.03",
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-utility-model",

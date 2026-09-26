@@ -73,8 +73,9 @@ export default async function ResumePage({
         }}
       >
         {/*
-          正式版下载入口：ResumeDownloadButton 统一指向 public/resume.pdf
-          （本地上传的正式版简历），网页版仅用于在线浏览，不再提供浏览器打印入口。
+          正式版下载入口：ResumeDownloadButton 统一指向 public/杨冲个人简历.pdf
+          （本人提供的正式版简历，中英文页面共用同一份文件），
+          网页版仅用于在线浏览，不再提供浏览器打印入口。
         */}
         <div
           className="mb-6 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"

@@ -58,8 +58,8 @@ export const education: EducationEntry[] = [
     endDate: "2023.06",
     highlights: [
       {
-        zh: "2023届四川省优秀大学毕业生（2023.06）",
-        en: "Sichuan Province Outstanding University Graduate, Class of 2023 (Jun. 2023)",
+        zh: "四川省优秀大学毕业生（2023）",
+        en: "Sichuan Province Outstanding Graduate (2023)",
       },
       {
         zh: "国家奖学金（2022.12）",

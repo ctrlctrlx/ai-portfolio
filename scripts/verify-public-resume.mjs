@@ -19,7 +19,9 @@ const resumeDownloadButtonPath = join(
   "components",
   "ResumeDownloadButton.tsx"
 );
-const resumePdfPath = join(repositoryRoot, "public", "resume.pdf");
+/** 全站唯一官方简历文件：本人提供的中文正式版 PDF */
+const resumePdfFileName = "杨冲个人简历.pdf";
+const resumePdfPath = join(repositoryRoot, "public", resumePdfFileName);
 const errors = [];
 const notices = [];
 
@@ -72,11 +74,15 @@ expect(
 );
 expect(!/resumeData|publicProfile/.test(resumeSource), "resume-uses-legacy-source");
 
-// 下载入口必须指向本地正式版 PDF（中文 /resume.pdf、英文 /resume-en.pdf），
+// 下载入口必须指向本地唯一官方简历文件（href 用百分号编码，避免英文页 HTML 出现中文字符），
 // 且页面内不得再保留浏览器打印入口
+const resumePdfHref = "/%E6%9D%A8%E5%86%B2%E4%B8%AA%E4%BA%BA%E7%AE%80%E5%8E%86.pdf";
 expect(
-  downloadButtonSource.includes("/resume.pdf") &&
-    downloadButtonSource.includes("/resume-en.pdf") &&
+  decodeURIComponent(resumePdfHref) === `/${resumePdfFileName}`,
+  "resume-pdf-href-decoding-mismatch"
+);
+expect(
+  downloadButtonSource.includes(resumePdfHref) &&
     /download/.test(downloadButtonSource),
   "resume-download-button-not-pointing-to-local-pdf"
 );
@@ -93,7 +99,7 @@ expect(
   "resume-download-button-not-used-on-resume-page"
 );
 expect(
-  /resume\.pdf/.test(resumeSource),
+  resumeSource.includes(resumePdfFileName),
   "resume-page-missing-pdf-reference"
 );
 expect(!/publication/i.test(resumeSource), "resume-publication-content-present");
@@ -114,12 +120,11 @@ expect(
 
 /**
  * 正式版 PDF 的文字必须可提取，才能对下载内容做同样的隐私审计。
- * 中文 /resume.pdf 与英文 /resume-en.pdf 都必须通过同一套隐私红线，
- * 并各自包含对应语言下的候选人姓名，避免拿到空白或语言错配的文件。
+ * 唯一官方文件 `杨冲个人简历.pdf` 必须通过隐私红线，并包含候选人姓名与已授权联系方式，
+ * 避免拿到空白或错误的文件。
  */
 const resumePdfAssets = [
-  { fileName: "resume.pdf", expectedName: "杨冲" },
-  { fileName: "resume-en.pdf", expectedName: "Yang Chong" },
+  { fileName: resumePdfFileName, expectedName: "杨冲" },
 ];
 for (const asset of resumePdfAssets) {
   const pdfPath = join(repositoryRoot, "public", asset.fileName);

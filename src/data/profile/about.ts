@@ -171,7 +171,7 @@ export const about: AboutProfile = {
       id: "comprehensive-quality",
       title: { zh: "综合素质过硬", en: "Comprehensive Capability" },
       description: {
-        zh: "中共党员，本科获国家奖学金、国家励志奖学金并获评四川省优秀毕业生；担任项目负责人期间独立完成实验设计、跨学科沟通与工程规范沉淀，具备把复杂任务拆解并推进到交付的能力。",
+        zh: "中共党员，本科获国家奖学金、国家励志奖学金并获评四川省优秀大学毕业生；担任项目负责人期间独立完成实验设计、跨学科沟通与工程规范沉淀，具备把复杂任务拆解并推进到交付的能力。",
         en: "A CPC member who earned the National Scholarship, the National Encouragement Scholarship, and the Sichuan Province Outstanding Graduate award as an undergraduate. As project lead I owned experimental design, cross-disciplinary coordination, and engineering documentation — the ability to break a complex task down and drive it to delivery.",
       },
     },
