@@ -729,6 +729,17 @@ for (const [kind, id, slug] of slugEntries) {
   seenSlugs.add(slug);
 }
 
+/**
+ * 条目 id 全局唯一：id 同时是列表渲染的 React key，
+ * 重复会导致「Encountered two children with the same key」告警与卡片重复。
+ * （历史上的重复块来自分支合并时整块叠加，见本次修复记录。）
+ */
+const seenIds = new Set();
+for (const [kind, id] of slugEntries) {
+  if (seenIds.has(`${kind}:${id}`)) fail("duplicate-entry-id", `${kind}:${id}`);
+  seenIds.add(`${kind}:${id}`);
+}
+
 for (const project of projects) {
   if (project.slug !== project.id) fail("project-slug-changed-from-stable-id", project.id);
 }
