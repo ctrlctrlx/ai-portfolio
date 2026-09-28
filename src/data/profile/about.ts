@@ -37,10 +37,15 @@ export const about: AboutProfile = {
     en: "My research covers computer vision, individual re-identification (ReID), and embedded intelligent sensing. On the algorithm side I have worked on CLIP-ReID feature compression and open-set rejection; on the hardware side I led the construction of an RFID plus multi-camera synchronized acquisition device. I validate conclusions with reproducible experimental data.",
   },
   /**
-   * 「关于我」页个人简介：标签行 + 量化增强正文。
+   * 「关于我」页个人简介数据：标签行 + 量化增强正文 + 行事风格。
    *
    * 结构：① 开篇标签行（整行加粗，含学历/政治面貌/奖学金三个身份标签）
    * ② 量化正文（核心数据局部加粗）③ 行事风格。
+   *
+   * 展示约定：关于我页面只渲染 `[0]` 标签行，正文段落改由 6 个能力模块
+   * （见下方 `strengths`）承载；`[1..]` 仍保留在数据层，作为求职问答
+   * 「自我介绍」的取词来源（`career-agent.mjs` 的 buildIntroduction 与
+   * `verify:chat` 的同源断言都依赖这段正文），因此不要删除。
    *
    * 注意：政治面貌字面量按 AGENTS.md 的隐私条款只允许出现在本文件。
    */
@@ -147,32 +152,57 @@ export const about: AboutProfile = {
     },
   ],
   /**
-   * 三大核心优势属于对该条目的自我评价，不单独标注可见性，
-   * 统一继承 AboutProfile 的 public + verified 状态。
+   * 「关于我」的 6 个能力模块（自我介绍区域，3 列 2 行卡片展示）。
+   * 属于对该条目的自我评价，不单独标注可见性，统一继承 AboutProfile 的
+   * public + verified 状态；顺序即展示顺序，由 About 组件按 id 映射图标。
    */
   strengths: [
     {
-      id: "full-stack-engineering",
-      title: { zh: "全栈工程能力", en: "Full-Stack Engineering" },
+      id: "algorithm-research",
+      title: { zh: "算法研究能力", en: "Algorithm Research" },
       description: {
-        zh: "从算法建模、模型压缩到硬件搭建与边缘部署可独立打通全链路：独立完成 CLIP-ReID 投影层设计与训练，也独立完成 RFID 与三路全局快门相机的整机结构设计、防水封装与多线程同步采集程序开发。",
-        en: "Able to carry a project end to end alone — from algorithm design and model compression through hardware construction and edge deployment. I designed and trained the CLIP-ReID projection layer myself, and also built the full mechanical structure, waterproof enclosure, and multi-threaded synchronized acquisition software for an RFID plus three global-shutter camera rig.",
+        zh: "海南大学电子信息类 2027 届硕士，研究方向为计算机视觉与开放世界个体识别。以第一作者发表 EI 国际会议论文 2 篇，独立完成从算法方案设计、模型训练调优到消融验证的完整研究闭环。研究工作中提出质量感知机制与 Compact256 紧凑投影层，前者将成像质量波动转化为可学习信号，后者在特征压缩至 1/5 的同时将精度损失控制在 2% 以内——具备“发现问题、抽象为算法问题、设计方案、实验验证”的完整科研方法论。",
+        en: "M.Eng. candidate in Electronic Information at Hainan University (Class of 2027), researching computer vision and open-world individual recognition. First author of two EI international conference papers; I independently completed the full research loop from algorithm design and model training/tuning through ablation validation. My research proposed a quality-aware mechanism and the Compact256 compact projection layer — the former turns imaging-quality fluctuation into a learnable signal, the latter compresses features to 1/5 while holding accuracy loss within 2% — so I bring a complete research methodology: spot the problem, abstract it into an algorithmic problem, design a solution, validate it experimentally.",
       },
     },
     {
-      id: "rigorous-research",
-      title: { zh: "严谨科研素养", en: "Rigorous Research Practice" },
+      id: "engineering-delivery",
+      title: { zh: "工程落地能力", en: "Engineering Delivery" },
       description: {
-        zh: "习惯用可复现实验与量化指标说话：自建 92 个身份、万余张图像的东星斑数据集，dev70 测试集上已知个体错误率从 20.10% 优化至 14.65%（相对优化 27%），并如实报告部署级 FAR 6.91%，不回避开放集场景下的性能边界。",
-        en: "I let reproducible experiments and quantified metrics speak. I built a crimson snapper dataset of 92 identities and over ten thousand images, cut the known-identity error rate on the dev70 test set from 20.10% to 14.65% (a 27% relative improvement), and report the deployment-level FAR of 6.91% rather than hiding the limits of open-set performance.",
+        zh: "算法不止于论文：完成 PyTorch → ONNX 转换与边缘端部署适配，基于 FastAPI + MySQL + Nginx 搭建在线推理服务，针对现场稳定性问题设计五大运行时机制，将开放场景误报率降至 6.91%。驻场 6 个月完成系统部署与迭代，理解从“模型精度”到“系统可用”之间的工程距离。",
+        en: "Algorithms do not stop at the paper: I completed PyTorch → ONNX conversion and edge-deployment adaptation, built an online inference service on FastAPI + MySQL + Nginx, designed five runtime mechanisms for on-site stability problems, and brought the false-acceptance rate in open scenarios down to 6.91%. Six months on site delivering and iterating the system taught me the engineering distance between “model accuracy” and “system availability”.",
       },
     },
     {
-      id: "comprehensive-quality",
-      title: { zh: "综合素质过硬", en: "Comprehensive Capability" },
+      id: "edge-ai-deployment",
+      title: { zh: "边缘AI部署经验", en: "Edge AI Deployment" },
       description: {
-        zh: "中共党员，本科获国家奖学金、国家励志奖学金并获评四川省优秀大学毕业生；担任项目负责人期间独立完成实验设计、跨学科沟通与工程规范沉淀，具备把复杂任务拆解并推进到交付的能力。",
-        en: "A CPC member who earned the National Scholarship, the National Encouragement Scholarship, and the Sichuan Province Outstanding Graduate award as an undergraduate. As project lead I owned experimental design, cross-disciplinary coordination, and engineering documentation — the ability to break a complex task down and drive it to delivery.",
+        zh: "完成深度学习模型的轻量化压缩（特征压缩至 1/5、精度损失 <2%）与 ONNX 边缘推理适配，基于 Python/C 混合思路开发在线推理服务，针对现场真实约束设计五大运行时稳定性机制，系统达到工程冻结标准并在生产现场稳定运行 6 个月以上。驻场经历让我理解边缘系统的真实约束：算力、内存、带宽、散热、网络，每一个都会在实验室里看不见的地方爆发。",
+        en: "I completed lightweight compression of a deep-learning model (features compressed to 1/5 with accuracy loss <2%) and ONNX edge-inference adaptation, developed an online inference service with a Python/C mixed approach, and designed five runtime stability mechanisms for real on-site constraints; the system reached the engineering freeze standard and has run stably in production for more than six months. Working on site taught me the real constraints of edge systems — compute, memory, bandwidth, thermals and network, each of which erupts where the lab cannot see it.",
+      },
+    },
+    {
+      id: "debugging-root-cause",
+      title: { zh: "调试与问题定位", en: "Debugging & Root-Cause Analysis" },
+      description: {
+        zh: "习惯“现象复现 → 模块归因 → 最小验证 → 修复验证”的系统化调试流程：在采集终端项目中定位 USB 带宽瓶颈与多线程竞争，在识别系统现场定位轨迹断裂与帧质量问题。具备 C/C++ 与 Linux 基础，熟悉多线程编程与同步机制，能读懂硬件原理图，具备软硬件联调经验。",
+        en: "I follow a systematic debugging routine — reproduce the symptom, attribute it to a module, verify minimally, then verify the fix: I located a USB bandwidth bottleneck and multi-thread contention in the acquisition-terminal project, and tracked down track breaks and frame-quality problems on site in the recognition system. I have C/C++ and Linux fundamentals, am familiar with multi-threaded programming and synchronization, can read hardware schematics, and have hardware-software co-debugging experience.",
+      },
+    },
+    {
+      id: "learning-potential",
+      title: { zh: "学习力与潜力", en: "Learning Ability & Potential" },
+      description: {
+        zh: "研究生阶段绩点 3.6/4.0；本科获国家奖学金（全国获奖比例约 0.2‰）、省级优秀大学毕业生；获“大唐杯”全国大学生移动通信 5G 挑战赛全国三等奖。从视觉语言大模型微调到边缘部署再到全栈服务开发，持续在算法能力半径外扩展，学习迁移能力经过多方向验证。",
+        en: "GPA 3.6/4.0 in graduate school; as an undergraduate I received the National Scholarship (awarded to roughly 0.2‰ of students nationwide) and the provincial Outstanding Graduate award; and I won a national 3rd prize in the “Datang Cup” National Collegiate Mobile Communication 5G Challenge. From vision-language model fine-tuning to edge deployment and full-stack service development, I keep extending beyond my algorithm comfort zone, with learning transfer validated across multiple directions.",
+      },
+    },
+    {
+      id: "overall-capability",
+      title: { zh: "综合素质", en: "Overall Capability" },
+      description: {
+        zh: "担任社团社长与消防志愿者中心负责人，组织协调与跨部门沟通能力经过实战检验；长期撰写技术博客，技术表达清晰。认同“算法的价值在于解决真实问题”，期望在工业界将学术积累转化为产品竞争力。",
+        en: "I served as a club president and as head of a fire-safety volunteer centre, so my organizing, coordination and cross-department communication skills are battle-tested; I have long written technical blogs and express technical ideas clearly. I believe the value of an algorithm lies in solving real problems, and I want to turn academic accumulation into product competitiveness in industry.",
       },
     },
   ],

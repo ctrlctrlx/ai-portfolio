@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ScrollText } from "lucide-react";
+import { ArrowRight, CalendarDays, ExternalLink, ScrollText } from "lucide-react";
 import PatentCard from "@/src/components/PatentCard";
+import { formatYearMonth } from "@/src/lib/dateFormat";
 import type { Locale } from "@/src/lib/i18n";
 import {
   getPublicProjectBySlug,
@@ -92,7 +93,7 @@ export default function AcademicOutput({ locale }: { locale: Locale }) {
                     )}
                   </div>
 
-                  {/* 发表时间 · 会议 · 类型 */}
+                  {/* 发表时间 · DOI · 会议 · 作者：日期在前，DOI 紧随其后同一行 */}
                   <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-xs">
                     <div className="flex items-center gap-1.5">
                       <CalendarDays
@@ -103,34 +104,35 @@ export default function AcademicOutput({ locale }: { locale: Locale }) {
                       <dt className="sr-only">
                         {locale === "zh" ? "发表时间" : "Published"}
                       </dt>
-                      <dd style={{ color: "var(--muted)" }}>
-                        {publication.month ?? publication.year}
+                      <dd className="flex flex-wrap items-center gap-2" style={{ color: "var(--muted)" }}>
+                        {formatYearMonth(
+                          publication.month ?? String(publication.year),
+                          locale
+                        )}
+                        {/* DOI：紧跟日期之后，直接展示完整编号，品牌蓝 + hover 下划线，新标签页打开 */}
+                        {publication.doi && (
+                          <a
+                            href={`https://doi.org/${publication.doi}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 break-words hover:text-[var(--accent-hover)] hover:underline"
+                            style={{ color: "var(--accent)" }}
+                            aria-label={
+                              locale === "zh"
+                                ? `DOI：在发布方网站查看论文《${publication.title.zh}》（新窗口打开）`
+                                : `DOI: view the paper "${publication.title.en}" on the publisher site (opens in a new tab)`
+                            }
+                          >
+                            <ExternalLink size={11} aria-hidden="true" />
+                            {`DOI: ${publication.doi}`}
+                          </a>
+                        )}
                       </dd>
                     </div>
                     {/* 会议行：venue 数据本身已带「EI 会议 / EI Conference」前缀 */}
                     <div className="flex items-center gap-1.5">
                       <dd style={{ color: "var(--foreground)" }}>
                         {publication.venue[locale]}
-                        {/* DOI 链接：仅在数据层提供 doi 时渲染 */}
-                        {publication.doi && (
-                          <>
-                            {" · "}
-                            <a
-                              href={`https://doi.org/${publication.doi}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="break-words hover:underline"
-                              style={{ color: "var(--accent)" }}
-                              aria-label={
-                                locale === "zh"
-                                  ? `DOI：在发布方网站查看论文《${publication.title.zh}》（新窗口打开）`
-                                  : `DOI: view the paper "${publication.title.en}" on the publisher site (opens in a new tab)`
-                              }
-                            >
-                              DOI: {publication.doi}
-                            </a>
-                          </>
-                        )}
                       </dd>
                     </div>
                     {/* 作者行：author 数据本身已带「第一作者：/ First author:」前缀 */}

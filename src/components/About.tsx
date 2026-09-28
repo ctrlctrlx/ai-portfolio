@@ -1,22 +1,36 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, Briefcase, FlaskConical, Wrench } from "lucide-react";
+import {
+  ArrowRight,
+  Brain,
+  Briefcase,
+  Bug,
+  Cpu,
+  Users,
+  Wrench,
+  GraduationCap,
+} from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
+import { formatDateTokens } from "@/src/lib/dateFormat";
 import Education from "@/src/components/Education";
 import ImageGallery from "@/src/components/ImageGallery";
 import { publicAbout, publicIdentity } from "@/src/data/profile";
 
-/** 三大核心优势各自固定一个图标，按 id 映射 */
+/** 6 个能力模块各自固定一个图标，按 id 映射（复用现有图标库，不新增依赖） */
 const strengthIcons: Record<string, React.ElementType> = {
-  "full-stack-engineering": Wrench,
-  "rigorous-research": FlaskConical,
-  "comprehensive-quality": BadgeCheck,
+  "algorithm-research": Brain,
+  "engineering-delivery": Wrench,
+  "edge-ai-deployment": Cpu,
+  "debugging-root-cause": Bug,
+  "learning-potential": GraduationCap,
+  "overall-capability": Users,
 };
 
 /**
  * 「关于我」板块（完整版），由 /[lang]/about 使用。
  *
- * 结构：个人简介（about.bioSections 三段式，开篇定位句加粗，政治面貌并入末段末尾）
- * → 研究方向 → 教育经历（可选）→ 实践经历 → 三大核心优势。
+ * 结构：个人简介（bioSections[0] 身份标签行 + 6 个能力模块卡片，桌面 3 列 2 行）
+ * → 教育经历（可选）→ 实践经历。
+ * 简介正文段落（bioSections[1..]）不再在本页渲染，仅保留在数据层供求职问答使用。
  *
  * summaryOnly=true 为保留的精简预览模式（精简简介 + 政治面貌 + 「查看完整介绍」入口）：
  * 首页的「个人简介」板块已按要求整体移除，因此当前无调用方使用该模式，
@@ -39,6 +53,12 @@ export default function About({
 
   const { bioSections, summary, strengths, practice, practiceImages } =
     publicAbout;
+
+  /**
+   * 个人简介只展示 bioSections[0]（身份标签行）；
+   * 其后的正文段落保留在数据层供求职问答「自我介绍」使用，不在本页渲染。
+   */
+  const tagSection = bioSections[0];
 
   if (summaryOnly) {
     return (
@@ -65,7 +85,7 @@ export default function About({
             className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
             style={{ color: "var(--accent)" }}
           >
-            {locale === "zh" ? "查看完整个人介绍与核心优势" : "Read the full profile and core strengths"}
+            {locale === "zh" ? "查看完整个人介绍与核心能力" : "Read the full profile and core capabilities"}
             <ArrowRight size={14} aria-hidden="true" />
           </Link>
         </div>
@@ -76,9 +96,11 @@ export default function About({
   return (
     <div className="space-y-14">
       {/*
-        个人简介：about.bioSections 的三段式结构。
-        ① 开篇核心定位句整段加粗；② 研究方向与软硬协同能力，关键成果加粗；
-        ③ 行事风格与风险预判，政治面貌由本组件追加到该段末尾（字面量只存在于 about.ts）。
+        个人简介：顶部保留 bioSections[0] 的身份标签行（整行加粗），
+        正文（bioSections[1..]）不再在本页渲染，改为紧随其后的 6 个能力模块卡片，
+        避免「大段简介 + 能力卡片」两处信息重复。
+        数据层仍保留完整简介正文——它是求职问答「自我介绍」的取词来源
+        （career-agent 的 buildIntroduction 与 verify:chat 的同源断言依赖它）。
       */}
       <section aria-labelledby="about-heading">
         <div className="max-w-3xl">
@@ -90,28 +112,62 @@ export default function About({
             {locale === "zh" ? "个人简介" : "Profile"}
           </h2>
 
-          <div className="mt-5 space-y-4">
-            {bioSections.map((section) => (
-              <p
-                key={section.id}
-                className="text-sm leading-7"
-                style={{ color: "var(--muted)" }}
+          {/* 顶部身份标签行 */}
+          {tagSection && (
+            <p
+              className="mt-5 text-sm leading-7"
+              style={{ color: "var(--muted)" }}
+            >
+              {tagSection.segments.map((segment, segmentIndex) => (
+                <span
+                  key={`${tagSection.id}-${segmentIndex}`}
+                  style={
+                    segment.strong
+                      ? { color: "var(--foreground)", fontWeight: 600 }
+                      : undefined
+                  }
+                >
+                  {segment.text[locale]}
+                </span>
+              ))}
+            </p>
+          )}
+        </div>
+
+        {/* 6 个能力模块：桌面 3 列 2 行、平板 2 列 3 行、移动端单列 */}
+        <div className="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {strengths.map((strength) => {
+            const Icon = strengthIcons[strength.id] ?? Brain;
+            return (
+              <article
+                key={strength.id}
+                className="group flex flex-col rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none"
+                style={{
+                  background: "var(--card)",
+                  borderColor: "var(--card-border)",
+                }}
               >
-                {section.segments.map((segment, segmentIndex) => (
-                  <span
-                    key={`${section.id}-${segmentIndex}`}
-                    style={
-                      segment.strong
-                        ? { color: "var(--foreground)", fontWeight: 600 }
-                        : undefined
-                    }
-                  >
-                    {segment.text[locale]}
-                  </span>
-                ))}
-              </p>
-            ))}
-          </div>
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{ background: "var(--tag-bg)" }}
+                >
+                  <Icon size={18} style={{ color: "var(--accent)" }} aria-hidden="true" />
+                </div>
+                <h3
+                  className="mt-4 text-base font-semibold"
+                  style={{ color: "var(--foreground)" }}
+                >
+                  {strength.title[locale]}
+                </h3>
+                <p
+                  className="mt-3 text-sm leading-7"
+                  style={{ color: "var(--muted)" }}
+                >
+                  {strength.description[locale]}
+                </p>
+              </article>
+            );
+          })}
         </div>
       </section>
 
@@ -169,7 +225,8 @@ export default function About({
                           className="shrink-0 whitespace-nowrap text-xs"
                           style={{ color: "var(--muted)" }}
                         >
-                          {entry.period[locale]}
+                          {/* 实践经历时间：数据层为双语字符串，展示层按 locale 本地化 YYYY.MM 记号 */}
+                          {formatDateTokens(entry.period[locale], locale)}
                         </span>
                       </div>
 
@@ -263,51 +320,6 @@ export default function About({
         </section>
       )}
 
-      {/* 三大核心优势 */}
-      <section aria-labelledby="strengths-heading">
-        <h2
-          id="strengths-heading"
-          className="text-2xl font-bold"
-          style={{ color: "var(--foreground)" }}
-        >
-          {locale === "zh" ? "三大核心优势" : "Three Core Strengths"}
-        </h2>
-
-        <div className="mt-6 grid gap-5 md:grid-cols-3">
-          {strengths.map((strength) => {
-            const Icon = strengthIcons[strength.id] ?? BadgeCheck;
-            return (
-              <article
-                key={strength.id}
-                className="group flex flex-col rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg motion-reduce:transform-none motion-reduce:transition-none"
-                style={{
-                  background: "var(--card)",
-                  borderColor: "var(--card-border)",
-                }}
-              >
-                <div
-                  className="flex h-10 w-10 items-center justify-center rounded-xl"
-                  style={{ background: "var(--tag-bg)" }}
-                >
-                  <Icon size={18} style={{ color: "var(--accent)" }} aria-hidden="true" />
-                </div>
-                <h3
-                  className="mt-4 text-base font-semibold"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  {strength.title[locale]}
-                </h3>
-                <p
-                  className="mt-3 text-sm leading-7"
-                  style={{ color: "var(--muted)" }}
-                >
-                  {strength.description[locale]}
-                </p>
-              </article>
-            );
-          })}
-        </div>
-      </section>
     </div>
   );
 }

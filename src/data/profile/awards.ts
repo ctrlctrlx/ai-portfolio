@@ -38,6 +38,16 @@ export const awards: Award[] = [
     },
     year: "2026.09",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-11-hainan-u-first-scholarship.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "sichuan-outstanding-graduate-2023",
@@ -52,9 +62,19 @@ export const awards: Award[] = [
       zh: "四川省教育厅",
       en: "Sichuan Provincial Education Department",
     },
-    /** 该荣誉为年度评选，展示层只标注年份（YYYY），与奖项名称分离 */
-    year: "2023",
+    /** 获奖时间：与其它奖项统一采用 YYYY.MM（精确到月） */
+    year: "2023.06",
     level: "provincial",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-07-sichuan-outstanding-graduate-2023.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "national-scholarship-2022",
@@ -68,6 +88,16 @@ export const awards: Award[] = [
     },
     year: "2022.12",
     level: "national",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-06-national-scholarship-2022.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-outstanding-student-cadre-2022",
@@ -81,6 +111,16 @@ export const awards: Award[] = [
     },
     year: "2022.11",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-05-outstanding-cadre-2022.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-outstanding-innovation-trainee-2022",
@@ -94,6 +134,16 @@ export const awards: Award[] = [
     },
     year: "2022.07",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-08-innovation-excellent-2022.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "national-encouragement-scholarship-2021",
@@ -107,6 +157,16 @@ export const awards: Award[] = [
     },
     year: "2021.12",
     level: "national",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-04-national-endeavor-scholarship-2021.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-three-good-student-2021",
@@ -123,6 +183,16 @@ export const awards: Award[] = [
     },
     year: "2021.11",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-02-merit-student-2021.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-first-class-scholarship-2021",
@@ -139,6 +209,16 @@ export const awards: Award[] = [
     },
     year: "2021.11",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-03-first-scholarship-2021.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-may-fourth-pacesetter-2021",
@@ -152,6 +232,16 @@ export const awards: Award[] = [
     },
     year: "2021.05",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-13-youth-league-pacemaker.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-military-training-advanced-2021",
@@ -168,6 +258,16 @@ export const awards: Award[] = [
     },
     year: "2021.03",
     level: "university",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-12-military-training-excellent.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "scust-young-marxist-programme-2020",
@@ -184,5 +284,15 @@ export const awards: Award[] = [
     },
     year: "2020.12",
     level: "university",
+    attachments: [
+      {
+        name: "结业证明",
+        nameEn: "Completion Proof",
+        type: "image",
+        path: "/attachments/awards/award-01-youth-marxism-program.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
 ];

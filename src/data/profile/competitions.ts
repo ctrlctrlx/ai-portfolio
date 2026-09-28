@@ -22,6 +22,16 @@ export const competitions: Award[] = [
     },
     year: "2025.05",
     level: "provincial",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-09-datang-cup-third.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "lanqiao-13th-mcu-sichuan-3rd",
@@ -38,5 +48,15 @@ export const competitions: Award[] = [
     },
     year: "2022.05",
     level: "provincial",
+    attachments: [
+      {
+        name: "获奖证明",
+        nameEn: "Award Proof",
+        type: "image",
+        path: "/attachments/awards/award-10-lanqiao-cup-sichuan.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
 ];

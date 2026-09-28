@@ -2,19 +2,28 @@ import Link from "next/link";
 import {
   ArrowRight,
   Award as AwardIcon,
+  ExternalLink,
   FileBadge,
   GraduationCap,
   Medal,
   ScrollText,
 } from "lucide-react";
+import AttachmentList from "@/src/components/AttachmentList";
+import { formatYearMonth } from "@/src/lib/dateFormat";
 import type { Locale } from "@/src/lib/i18n";
-import type { AwardLevel, BilingualText, Credential } from "@/src/data/profile";
+import type {
+  Attachment,
+  AwardLevel,
+  BilingualText,
+  Credential,
+} from "@/src/data/profile";
 import {
   awardLevelLabels,
   awardLevelOrder,
   publicAwards,
   publicCompetitions,
   publicCredentials,
+  publicPublications,
 } from "@/src/data/profile";
 
 /** 首页预览模式下展示的条目数量 */
@@ -32,6 +41,13 @@ interface HonorsItem {
   title: string;
   issuer: string;
   year?: string;
+  /** 该条目的证明材料（奖项 / 证书 / 专利可选；论文条目按约定不带附件） */
+  attachments?: Attachment[];
+  /**
+   * 论文条目的 DOI 编号：由 publications.ts 按标题同源解析后注入
+   * （证书集合中的论文条目只作分类引用，不重复存储 DOI）。
+   */
+  doi?: string;
 }
 
 /** 把三类证据统一成同一种渲染结构，避免三段重复的 JSX */
@@ -42,6 +58,8 @@ function toItems(
     title: BilingualText;
     issuer: BilingualText;
     year?: string;
+    attachments?: Attachment[];
+    doi?: string;
   }>
 ): HonorsItem[] {
   return entries.map((entry) => ({
@@ -49,6 +67,8 @@ function toItems(
     title: entry.title[locale],
     issuer: entry.issuer[locale],
     year: entry.year,
+    attachments: entry.attachments,
+    doi: entry.doi,
   }));
 }
 
@@ -108,7 +128,16 @@ export default function Honors({
       id: "papers",
       label: { zh: "学术论文", en: "Academic Papers" },
       icon: ScrollText,
-      items: toItems(locale, paperEntries),
+      // 论文条目的 DOI 从 publications.ts 按标题同源解析（唯一事实来源仍是 publications.ts）
+      items: toItems(
+        locale,
+        paperEntries.map((entry) => ({
+          ...entry,
+          doi: publicPublications.find(
+            (publication) => publication.title.zh === entry.title.zh
+          )?.doi,
+        }))
+      ),
     },
   ].filter((category) => category.items.length > 0);
 
@@ -169,8 +198,9 @@ export default function Honors({
               </p>
               <p className="mt-1.5 text-xs" style={{ color: "var(--muted)" }}>
                 {item.issuer}
-                {item.year ? ` · ${item.year}` : ""}
+                {item.year ? ` · ${formatYearMonth(item.year, locale)}` : ""}
               </p>
+              {/* 首页预览按需求隐藏所有附件入口，保持首屏简洁 */}
             </li>
           ))}
         </ul>
@@ -253,10 +283,40 @@ export default function Honors({
                       >
                         {item.title}
                       </p>
-                      <p className="mt-0.5 text-xs" style={{ color: "var(--muted)" }}>
-                        {item.issuer}
-                        {item.year ? ` · ${item.year}` : ""}
-                      </p>
+                      {/*
+                        颁发机构行与附件文字链同行：附件在右，同级次级文字色 + hover 下划线，
+                        避免为附件单独占一行，缩短卡片纵向高度。
+                      */}
+                      <div className="mt-0.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <p className="text-xs" style={{ color: "var(--muted)" }}>
+                          {item.issuer}
+                          {item.year ? ` · ${formatYearMonth(item.year, locale)}` : ""}
+                        </p>
+                        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                          {/* 论文条目：直接展示完整 DOI 编号（与项目页学术成果同一格式） */}
+                          {item.doi && (
+                            <a
+                              href={`https://doi.org/${item.doi}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs hover:text-[var(--accent-hover)] hover:underline"
+                              style={{ color: "var(--accent)" }}
+                              aria-label={
+                                locale === "zh"
+                                  ? `DOI：在发布方网站查看论文《${item.title}》（新窗口打开）`
+                                  : `DOI: view the paper "${item.title}" on the publisher site (opens in a new tab)`
+                              }
+                            >
+                              <ExternalLink size={12} aria-hidden="true" />
+                              {`DOI: ${item.doi}`}
+                            </a>
+                          )}
+                          <AttachmentList
+                            attachments={item.attachments}
+                            locale={locale}
+                          />
+                        </span>
+                      </div>
                     </div>
                   </li>
                 ))}

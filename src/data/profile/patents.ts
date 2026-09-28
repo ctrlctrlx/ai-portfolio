@@ -28,5 +28,15 @@ export const patents: Patent[] = [
     verificationStatus: "verified",
     sourceId: "profile-patent-classroom-attendance",
     sourceNote: "Verified from user-provided patent certificate.",
+    attachments: [
+      {
+        name: "专利证书",
+        nameEn: "Patent Certificate",
+        type: "file",
+        path: "/attachments/patents/doc-01-utility-attendance-system.pdf",
+        format: "PDF 格式",
+        formatEn: "PDF Format",
+      },
+    ],
   },
 ];

@@ -11,6 +11,7 @@ import {
   publicProjects,
 } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
+import { formatDateRange } from "@/src/lib/dateFormat";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 export const dynamicParams = false;
@@ -94,7 +95,7 @@ export default async function ProjectDetailPage({
       <header className="space-y-4">
         <div>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {project.startDate} – {project.endDate[locale]}
+            {formatDateRange(project.startDate, project.endDate[locale], locale)}
           </p>
           <h1
             className="mt-2 text-2xl sm:text-3xl font-bold leading-tight"

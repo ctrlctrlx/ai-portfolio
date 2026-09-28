@@ -23,6 +23,7 @@
     "verify:all": "npm run verify:content && npm run verify:profile && npm run verify:chat && npm run verify:resume && npm run lint && npm run typecheck && npm run build && npm run verify:deploy"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "@vercel/kv": "^3.0.0",
     "gray-matter": "^4.0.3",
     "katex": "^0.16.28",

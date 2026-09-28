@@ -13,12 +13,14 @@ function skill(id: string, zh: string, en: string) {
 /**
  * 技能栈：按「编程语言 / 框架与工具 / 研究方向」三类组织。
  *
- * 条目总数为 27 条：编程语言 5 + 框架与工具 15 + 研究方向 7。
- * 本次新增 1 条「C/C++」（编程语言分组），其余条目沿用既有内容，未增删。
+ * 条目总数为 29 条：编程语言 5 + 框架与工具 17 + 研究方向 7。
+ * 框架与工具组新增两个子组：「开发工具 / 数据存储」（MySQL）与「工程开发」（Web 前端）；
+ * 其余分组与条目沿用既有内容，未增删、未改顺序。
  *
  * 组内顺序按求职场景的核心度排列（越靠前越能代表主力能力），
  * 而非按字母序：Python / C/C++ 先行，随后是数据处理与单片机、并发能力；
- * 框架组以深度学习与视觉工具打头，再是系统与部署、最后硬件与结构工具；
+ * 框架组以深度学习与视觉工具打头，再是系统与部署、硬件与结构工具，
+ * 最后是新增的开发工具 / 数据存储与工程开发；
  * 研究方向组先列网络架构，再按「个体重识别 → 开放集识别 → 特征压缩 → 图像分类」
  * 的主线任务顺序排列。
  *
@@ -99,6 +101,20 @@ export const skills: SkillCategory[] = [
           skill("office", "Office 套件", "Microsoft Office suite"),
         ],
       },
+      {
+        id: "frameworks-devtools-data",
+        label: { zh: "开发工具 / 数据存储", en: "Dev Tools / Data Storage" },
+        items: [
+          skill("mysql", "MySQL / 关系型数据库", "MySQL / Relational Database"),
+        ],
+      },
+      {
+        id: "frameworks-engineering",
+        label: { zh: "工程开发", en: "Engineering Development" },
+        items: [
+          skill("web-frontend", "Web 前端", "Web Frontend"),
+        ],
+      },
     ],
     items: [
       skill("pytorch", "PyTorch", "PyTorch"),
@@ -116,6 +132,8 @@ export const skills: SkillCategory[] = [
       skill("ip-enclosure", "工业级硬件防水封装", "Industrial-grade waterproof enclosure"),
       skill("autocad", "AutoCAD 结构设计", "AutoCAD structure design"),
       skill("office", "Office 套件", "Microsoft Office suite"),
+      skill("mysql", "MySQL / 关系型数据库", "MySQL / Relational Database"),
+      skill("web-frontend", "Web 前端", "Web Frontend"),
     ],
   },
   {

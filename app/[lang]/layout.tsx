@@ -1,6 +1,7 @@
 import { isValidLocale } from "@/src/lib/i18n";
 import type { Locale } from "@/src/lib/i18n";
 import { notFound } from "next/navigation";
+import SiteAnalytics from "@/src/components/SiteAnalytics";
 import Navbar from "@/src/components/Navbar";
 import Footer from "@/src/components/Footer";
 import ChatBox from "@/src/components/ChatBox";
@@ -78,7 +79,13 @@ export default async function LangLayout({
         hasAbout={publicAbout !== null}
         hasHonors={hasHonors}
       />
-      {/* tabIndex=-1 让锚点跳转后焦点真正落在主内容区域 */}
+      {/*
+        跳转到主内容后，焦点落在 <main id="main-content">：需要 tabIndex={-1} 让
+        非交互元素可被编程聚焦。React 的 HTMLAttributes.tabIndex 类型是 number，
+        写成字符串 "−1" 会直接类型报错；两种写法序列化到 HTML 后都是 tabindex="-1"，
+        因此这里保留数值形式，不存在服务端/客户端差异。
+        className 为纯静态字符串，不依赖 window / document 计算。
+      */}
       <main id="main-content" tabIndex={-1} className="focus:outline-none">
         {children}
       </main>
@@ -92,6 +99,18 @@ export default async function LangLayout({
         extraContacts={footerContacts}
       />
       <ChatBox lang={locale} greeting={chatGreeting} />
+      {/*
+        Vercel 原生 Analytics：位于 body 内容最底部，仅在 Vercel 部署环境下
+        向 /_vercel/insights/* 上报匿名聚合数据（PV / UV、页面排行、来源、设备、地域、性能）。
+        组件自身渲染 null、不展示任何可见元素，访客完全无感知；
+        其内部已用 <Suspense> 包裹 useSearchParams，因此在全站 SSG 下
+        既不会打断静态预渲染，也不会产生水合差异。
+
+        站长自访过滤（`?self=1` 标记 + localStorage 持久化）由 SiteAnalytics
+        在客户端组件内通过 beforeSend 回调实现：beforeSend 是函数，无法从
+        服务端组件跨 RSC 边界传递，因此统计入口统一走该客户端组件。
+      */}
+      <SiteAnalytics />
     </>
   );
 }

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import AcademicOutput from "@/src/components/AcademicOutput";
 import RichText, { firstParagraph } from "@/src/components/RichText";
+import { formatDateRange } from "@/src/lib/dateFormat";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 export function generateStaticParams() {
@@ -103,7 +104,7 @@ export default async function ProjectsPage({
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <span className="text-xs whitespace-nowrap" style={{ color: "var(--muted)" }}>
-                    {proj.startDate} – {proj.endDate[locale]}
+                    {formatDateRange(proj.startDate, proj.endDate[locale], locale)}
                   </span>
                   {/* 项目角色徽章：固定在卡片右上角 */}
                   <span

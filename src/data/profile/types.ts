@@ -13,6 +13,28 @@ export interface EvidenceStatus {
   sourceNote?: string;
 }
 
+export type AttachmentType = "image" | "file";
+
+/**
+ * 荣誉资质附件（奖项 / 证书 / 专利三类条目可选）。
+ *
+ * 数据层约定（与 `BilingualText` 的 `{ zh, en }` 结构不同，按需求以扁平双语字段表达）：
+ * - `name` / `nameEn`    附件显示名称
+ * - `type`               `image` 走灯箱预览，`file` 走原生下载
+ * - `path`               统一放在 `public/attachments/<分类>/` 下的相对路径
+ * - `format` / `formatEn` 格式说明，例如「JPG 格式」/「PDF 格式」
+ *
+ * 无附件时该字段为 `[]`，展示层不渲染任何入口。
+ */
+export interface Attachment {
+  name: string;
+  nameEn: string;
+  type: AttachmentType;
+  path: string;
+  format: string;
+  formatEn: string;
+}
+
 export type ContactKind = "email" | "phone" | "website" | "github";
 
 export interface ContactPoint extends EvidenceStatus {
@@ -101,6 +123,8 @@ export interface Patent extends EvidenceStatus {
   inventorOrder: number;
   role: BilingualText;
   stageLabel: BilingualText;
+  /** 专利证书（脱敏版）等附件；无附件时为 `[]` */
+  attachments?: Attachment[];
 }
 
 /** 项目展示图片：仅保存 public 下的相对路径与图注 */
@@ -171,6 +195,8 @@ export interface Award extends EvidenceStatus {
    */
   year: string;
   level: AwardLevel;
+  /** 获奖证明等附件；无附件时为 `[]` */
+  attachments?: Attachment[];
 }
 
 export interface ResearchArea extends EvidenceStatus {
@@ -211,6 +237,11 @@ export interface Credential extends EvidenceStatus {
   title: BilingualText;
   issuer: BilingualText;
   year?: string;
+  /**
+   * 证书 / 专利证明等附件；无附件时为 `[]`。
+   * `kind: "paper"` 的论文条目按约定不挂本地附件（保留 DOI 官方链接）。
+   */
+  attachments?: Attachment[];
 }
 
 /** 实践经历中的一条分项工作内容；metric 为可选的核心量化成果（主题色加粗展示） */
