@@ -44,6 +44,73 @@ function validateEvidence(entry, label) {
   }
 }
 
+/** 附件允许的目录与扩展名：统一放在 public/attachments/<分类>/ 下 */
+const ATTACHMENT_DIRECTORIES = new Set([
+  "/attachments/awards/",
+  "/attachments/credentials/",
+  "/attachments/patents/",
+]);
+const ATTACHMENT_IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+const ATTACHMENT_FILE_EXTENSIONS = [".pdf"];
+/** 附件文件名规范：仅允许 ASCII 字母/数字/点/下划线/连字符，禁止中文与空格 */
+const ATTACHMENT_FILENAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+
+/**
+ * 校验荣誉资质附件（奖项 / 证书 / 专利）：
+ * - 结构：必填字段齐全、type 枚举合法；
+ * - 路径：必须位于约定的三级目录、扩展名与 type 匹配、文件名仅 ASCII；
+ * - 存在性：对应 public 下的文件必须真实存在，避免上线 404。
+ */
+function validateAttachments(attachments, label) {
+  if (attachments === undefined) return;
+  if (!Array.isArray(attachments)) {
+    fail("invalid-attachments-type", label);
+    return;
+  }
+  for (const attachment of attachments) {
+    if (typeof attachment !== "object" || attachment === null) {
+      fail("invalid-attachment-entry", label);
+      continue;
+    }
+    for (const field of ["name", "nameEn", "path", "format", "formatEn"]) {
+      if (
+        typeof attachment[field] !== "string" ||
+        attachment[field].trim().length === 0
+      ) {
+        fail("missing-attachment-field", `${label}:${field}`);
+      }
+    }
+    if (!["image", "file"].includes(attachment.type)) {
+      fail("invalid-attachment-kind", `${label}:${attachment.type}`);
+      continue;
+    }
+    const path = typeof attachment.path === "string" ? attachment.path : "";
+    if (
+      ![...ATTACHMENT_DIRECTORIES].some((directory) =>
+        path.startsWith(directory)
+      )
+    ) {
+      fail("invalid-attachment-path", `${label}:${path}`);
+      continue;
+    }
+    const fileName = path.split("/").at(-1) ?? "";
+    if (!ATTACHMENT_FILENAME_PATTERN.test(fileName)) {
+      fail("invalid-attachment-filename", `${label}:${fileName}`);
+    }
+    const lowerFileName = fileName.toLowerCase();
+    const allowedExtensions =
+      attachment.type === "image"
+        ? ATTACHMENT_IMAGE_EXTENSIONS
+        : ATTACHMENT_FILE_EXTENSIONS;
+    if (!allowedExtensions.some((extension) => lowerFileName.endsWith(extension))) {
+      fail("attachment-extension-mismatch", `${label}:${fileName}`);
+    }
+    if (!existsSync(join(repositoryRoot, "public", path.slice(1)))) {
+      fail("missing-attachment-file", `${label}:${path}`);
+    }
+  }
+}
+
 async function loadProfileModule(fileName) {
   const moduleUrl = pathToFileURL(join(profileDirectory, fileName)).href;
   return import(moduleUrl);
@@ -160,7 +227,8 @@ if (!Array.isArray(about.jobTargets) || about.jobTargets.length === 0) {
     if (!isBilingual(target)) fail("missing-bilingual-field", "about:jobTarget");
   }
 }
-if (!Array.isArray(about.strengths) || about.strengths.length !== 3) {
+// 「关于我」的能力模块卡片：6 个（算法研究 / 工程落地 / 边缘AI部署 / 调试定位 / 学习力 / 综合素质）
+if (!Array.isArray(about.strengths) || about.strengths.length !== 6) {
   fail("incorrect-about-strength-count");
 } else {
   for (const strength of about.strengths) {
@@ -434,12 +502,16 @@ for (const item of [...awards, ...competitions]) {
     fail("invalid-honor-level", `${item.id}:${item.level}`);
   }
 }
-// 时间格式为 YYYY.MM 或 YYYY（年度评选类荣誉只标注年份）。
-// 两种形式按字典序即等于时间倒序：YYYY 等价于该年 01 月。
+// 荣誉时间格式统一为 YYYY.MM（与证书集合的取证时间不同：奖项一律精确到月），
+// 保证列表按字典序即等于时间倒序
 for (const item of [...awards, ...competitions]) {
-  if (typeof item.year === "string" && !/^\d{4}(\.\d{2})?$/.test(item.year)) {
+  if (typeof item.year === "string" && !/^\d{4}\.\d{2}$/.test(item.year)) {
     fail("invalid-honor-date-format", `${item.id}:${item.year}`);
   }
+}
+// 荣誉附件（竞赛条目同样使用 Award 结构，未配置时跳过校验）
+for (const item of [...awards, ...competitions]) {
+  validateAttachments(item.attachments, `honor:${item.id}`);
 }
 
 for (const credential of credentials) {
@@ -449,12 +521,25 @@ for (const credential of credentials) {
   if (!["certificate", "patent", "paper"].includes(credential.kind)) {
     fail("invalid-credential-kind", credential.id);
   }
-  // 时间格式：YYYY 或 YYYY.MM（与全站经历类信息一致）
+  // 时间格式：证书/专利允许 YYYY 或 YYYY.MM
   if (
     credential.year !== undefined &&
     !/^\d{4}(\.\d{2})?$/.test(credential.year)
   ) {
     fail("invalid-credential-year-format", `${credential.id}:${credential.year}`);
+  }
+  // 论文条目必须精确到月（YYYY.MM），避免再次出现只有年份的展示
+  if (
+    credential.kind === "paper" &&
+    (typeof credential.year !== "string" ||
+      !/^\d{4}\.\d{2}$/.test(credential.year))
+  ) {
+    fail("invalid-paper-credential-year-format", `${credential.id}:${credential.year}`);
+  }
+  validateAttachments(credential.attachments, `credential:${credential.id}`);
+  // 论文条目按约定不挂本地附件，只保留 DOI 官方链接
+  if (credential.kind === "paper" && (credential.attachments?.length ?? 0) > 0) {
+    fail("paper-credential-has-attachments", credential.id);
   }
 }
 
@@ -469,18 +554,33 @@ for (const publication of publications) {
   if (publication.publicationType !== "ei-conference") {
     fail("unexpected-publication-type", publication.id);
   }
+  /**
+   * DOI：必须存在、格式合法（`10.<注册机构>/<后缀>`），
+   * 保证展示层拼出的 `https://doi.org/<doi>` 是有效检索链接。
+   */
+  if (typeof publication.doi !== "string" || publication.doi.trim().length === 0) {
+    fail("missing-publication-doi", publication.id);
+  } else if (!/^10\.\d{4,9}\/[A-Za-z0-9._;()/:+-]+$/.test(publication.doi)) {
+    fail("invalid-publication-doi", `${publication.id}:${publication.doi}`);
+  }
   if (!isBilingual(publication.authorRole)) {
     fail("missing-publication-author-role", publication.id);
   }
   if (!isBilingual(publication.coreContribution)) {
     fail("missing-publication-core-contribution", publication.id);
   }
-  if (!Array.isArray(publication.metrics) || publication.metrics.length === 0) {
-    fail("missing-publication-metrics", publication.id);
-  } else {
-    for (const metric of publication.metrics) {
-      if (!isBilingual(metric)) {
-        fail("missing-bilingual-field", `publication:${publication.id}:metric`);
+  /**
+   * 量化指标：字段可省略或为空数组（论文版本指标可能按本人要求不下沉到站点），
+   * 但只要提供了条目，就必须是中英双语完整结构，避免出现半截指标。
+   */
+  if (publication.metrics !== undefined) {
+    if (!Array.isArray(publication.metrics)) {
+      fail("invalid-publication-metrics", publication.id);
+    } else {
+      for (const metric of publication.metrics) {
+        if (!isBilingual(metric)) {
+          fail("missing-bilingual-field", `publication:${publication.id}:metric`);
+        }
       }
     }
   }
@@ -551,6 +651,7 @@ for (const patent of patents) {
   ) {
     fail("missing-bilingual-field", `patent:${patent.id}`);
   }
+  validateAttachments(patent.attachments, `patent:${patent.id}`);
 }
 
 const publicPatents = patents.filter(isPublicVerified);

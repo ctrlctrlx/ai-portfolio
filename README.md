@@ -21,6 +21,7 @@
 | 主题 | next-themes（`class` 策略，浅色 / 深色两套 CSS 变量） | 0.4.x |
 | 图标 | lucide-react | 0.575.x |
 | 内容 | MDX（gray-matter + next-mdx-remote）、KaTeX、remark-gfm / remark-math | — |
+| 统计 | `@vercel/analytics`（Vercel 原生访问统计 + 自定义事件） | ^2.0.1 |
 | 可选服务 | Vercel KV（访客计数 + 聊天限流）、DeepSeek API（问答兜底） | — |
 | 工具 | ESLint 9（flat config）、PostCSS + `@tailwindcss/postcss` | — |
 | 运行时 | Node.js ≥ 22.15.0、npm 10.9.2 | `package.json` 的 `engines` / `packageManager` |
@@ -65,10 +66,10 @@ docs/deployment-readiness.md  部署准备状态与人工验收清单
 | --- | --- | --- |
 | `/` | 按 `Accept-Language` 进入 `zh` / `en` | 静态（重定向） |
 | `/[lang]` | 首页：求职定位、学历行、政治面貌、研究方向标签、代表项目 4 张卡、荣誉预览、技能栈 | SSG |
-| `/[lang]/about` | 关于我：三段式简介、研究方向、教育经历、实践经历、三大核心优势、实践配图 | SSG |
-| `/[lang]/projects` | 项目经历：4 张项目卡（STAR + 量化指标 + 技术标签）+ 学术成果与专利 | SSG |
+| `/[lang]/about` | 关于我：简介标签行 + 6 个能力模块卡片（3×2）+ 教育经历 + 实践经历 + 实践配图 | SSG |
+| `/[lang]/projects` | 项目经历：4 张项目卡（STAR + 量化指标 + 技术标签）+ 学术成果与专利（论文自带完整 DOI 编号） | SSG |
 | `/[lang]/projects/[slug]` | 项目详情：STAR 四段、核心量化数据、项目图集（灯箱缩放）、技术标签、相关文档下载 | SSG |
-| `/[lang]/honors` | 荣誉与资质：国家级 / 省部级 / 校级 + 证书与专利 + 学术论文 | SSG |
+| `/[lang]/honors` | 荣誉与资质：国家级 / 省部级 / 校级 + 证书与专利 + 学术论文；奖项 / 证书 / 专利支持配置证明材料附件 | SSG |
 | `/[lang]/resume` | 在线公开简历（教育 / 项目 / 技能 / 荣誉 / 专利）+ A4 打印样式 + 正式简历 PDF 下载 | SSG |
 | `/[lang]/contact` | 联系我：公开求职邮箱、微信、电话（`tel:`） | SSG |
 | `/[lang]/blog`、`/[lang]/blog/[slug]` | 技术文章；当前无已发布文章（3 篇草稿），导航入口隐藏且不进入 sitemap | SSG |
@@ -98,6 +99,41 @@ docs/deployment-readiness.md  部署准备状态与人工验收清单
 | 实践经历 | 2 个阶段 | 本科学生工作 + 硕士驻场项目 |
 | 联系方式 | 4 | 邮箱、电话、个人网站、GitHub |
 
+### 荣誉资质附件（奖项 / 证书 / 专利）
+
+三类条目都支持可选的 `attachments` 字段（数据层，初始化为 `[]`），用于挂载获奖证明、证书扫描件、专利证书等材料：
+
+```ts
+attachments?: Array<{
+  name: string;      // 中文显示名
+  nameEn: string;    // 英文显示名
+  type: "image" | "file";   // image 走灯箱预览；file 走原生下载
+  path: string;      // 统一放在 public/attachments/<分类>/ 下
+  format: string;    // 例如「JPG 格式」
+  formatEn: string;  // 例如 "JPG"
+}>
+```
+
+- 目录约定：`public/attachments/awards/`、`public/attachments/credentials/`、`public/attachments/patents/`。
+- 渲染位置（一处配置、全站同步）：荣誉资质页三类卡片（图片走全站 `ImageGallery` 灯箱、文件走原生下载按钮）、
+  首页荣誉预览（精简为「N 个证明材料」）、项目页与本页的专利卡片；条目没有附件时不渲染任何元素。
+- 命名规范（由 `verify:profile` 与 `verify:content` 校验）：文件名只允许 ASCII 字母/数字/点/下划线/连字符，
+  **禁止中文文件名与空格**；`image` 允许 `.jpg/.jpeg/.png/.webp`，`file` 允许 `.pdf`；登记的路径必须真实存在，否则校验失败。
+- ⚠️ 文件名中不要出现 `patent` / `certificate` / `证书` / `专利` 等字样：`verify:content` 会把它判定为未脱敏的原始证书素材并拦截
+  （目录名 `attachments/patents/` 本身不受影响）。请只上传已脱敏、无二维码/条形码的版本。
+- 论文（`kind: "paper"`）与教育经历按约定**不挂本地附件**：论文只保留 DOI 官方链接，教育模块无下载入口。
+
+### 时间格式约定
+
+- **数据层唯一格式**：`YYYY.MM`（或 ISO `YYYY-MM-DD`，如专利授权日），按字典序即等于时间倒序；
+  荣誉、证书、论文、教育与学生工作的日期字段都由 `verify:profile` 强制校验该格式。
+- **展示层本地化**：统一走 `src/lib/dateFormat.ts`
+  - 中文：`2025.04`
+  - 英文：`Mon. YYYY`（如 `Apr. 2025`）
+  - `formatDateRange` 用于区间（`2024.09 – 2027.06` → `Sep. 2024 – Jun. 2027`），
+    `formatDateTokens` 用于数据层以双语字符串维护的时间描述（如实践经历 `period`）。
+  新增日期展示时请复用这三个函数，不要在组件里手写 `YYYY.MM` 拼接。
+
 ### 正式简历 PDF
 
 | 文件 | 语言 | 来源 | 说明 |
@@ -112,7 +148,39 @@ docs/deployment-readiness.md  部署准备状态与人工验收清单
 
 ---
 
-## 五、本地开发与校验
+## 五、访问统计（Vercel Analytics）
+
+站点接入 Vercel 原生 Analytics（`@vercel/analytics`，统计入口为客户端组件 `src/components/SiteAnalytics.tsx`，在 `app/[lang]/layout.tsx` 底部渲染），**仅站长在后台可见，前端零展示**。
+
+- **采集内容**：页面访问量（PV）/ 独立访客（UV）、各页面访问排行、访问来源与外部引荐、设备类型、国家/地区、页面性能指标；全部为匿名聚合数据，不使用 Cookie 跟踪个人身份，符合隐私合规要求。
+- **自定义事件**：点击任意简历下载入口（首页 / 关于我 / 联系我 / 在线简历共用 `ResumeDownloadButton`）触发 `resume_download`，携带 `language`（`zh` / `en`）与 `page`（`home` / `about` / `resume` / `contact`），用于区分语言与入口的转化效果。事件通过 `track()` 入队，**非阻塞、不 `preventDefault`**，不影响下载行为与文件名规则。
+- **查看路径**：Vercel 控制台 → 选择本项目 → 顶部 **Analytics** 面板
+  - `Overview`：总访问量与趋势、Top Pages（各模块访问排行）、Top Referrers、设备/浏览器/国家分布；
+  - `Events`（自定义事件）：查看 `resume_download` 的触发次数与按 `language` / `page` 的分布；
+  - `Speed Insights`（如已启用）：真实用户的首屏性能指标。
+- **本地行为**：`/_vercel/insights/script.js` 是 Vercel 边缘提供的脚本，本地 `next start` 访问会得到 404（属预期，不影响页面）；部署到 Vercel 后自动生效，其他托管平台（自建 Node / Netlify 等）需额外配置或改用其它统计方案。
+- **性能**：组件渲染 `null`，脚本在 hydration 后才注入，静态 HTML 中不含任何统计引用（实测 0 处），因此不增加首屏 HTML 体积与请求数；包含该 SDK 的客户端 chunk 约 32 KB 原始 / 12 KB gzip（与其它客户端组件共享）。
+
+### 5.1 自访过滤使用方法（站长本人）
+
+过滤由 `src/components/SiteAnalytics.tsx` 的 `beforeSend` 回调实现：**URL 参数标记 + localStorage 持久化**，纯客户端执行，不依赖 IP、不影响任何访客。
+
+| 操作 | 效果 |
+| --- | --- |
+| 访问任意页面并在网址后加 `?self=1`，例如 `https://<你的域名>/zh?self=1` | 把当前浏览器标记为「站长设备」，**本次及之后所有访问都不计入统计**（短链同理，只要最终 URL 带该参数） |
+| 正常访问其他页面（不带参数） | 已标记的浏览器继续被过滤，无需重复加参数 |
+| 访问 `?self=0`（如 `https://<你的域名>/?self=0`） | 清除标记，该浏览器恢复正常统计 |
+| 清除浏览器的 localStorage | 等同取消标记（键名 `va_self_exclude`） |
+
+- **过滤范围**：该浏览器后续的**页面浏览（PV/UV）、简历下载 `resume_download`、以及今后新增的任何自定义事件**全部被丢弃，一次标记长期生效。
+- **多设备支持**：电脑、手机、平板各自在浏览器里访问一次 `?self=1` 即可，标记互相独立（换浏览器或清除站点数据后需重新标记）。
+- **不依赖 IP**：标记只存在浏览器本地，网络环境变化（换 Wi-Fi、切 4G/5G、公司网络等）都不会影响过滤效果。
+- **普通访客零影响**：不带参数且没有标记的访客，事件原样上报；隐私模式或禁用 localStorage 时不会报错，且带 `?self=1` 的这次访问仍会被过滤。
+- **实现位置**：`beforeSend` 是函数，无法从服务端组件跨 RSC 边界传递，因此统计入口抽为客户端组件 `SiteAnalytics`（等价于在根布局写 `<Analytics beforeSend={...} />`），SSG 与水合行为不变。
+
+---
+
+## 六、本地开发与校验
 
 ```bash
 npm ci            # 安装依赖（有 package-lock.json）
@@ -134,7 +202,7 @@ npm run dev       # 开发服务器 http://localhost:3000
 
 ---
 
-## 六、环境变量
+## 七、环境变量
 
 复制 `.env.example` 中的变量名，**不要提交任何 `.env*` 文件**（`.env.local` 仅本地使用，其存在会使 `verify:deploy` 失败，属预期设计）。
 
@@ -148,7 +216,7 @@ npm run dev       # 开发服务器 http://localhost:3000
 
 ---
 
-## 七、求职信息助理（双层架构）
+## 八、求职信息助理（双层架构）
 
 1. **规则引擎（主路径）**：`src/lib/career-agent.mjs` 从 public + verified 数据确定性作答，零成本、秒响应，
    覆盖自我介绍、教育、技能、项目、研究方向、专利、实践经历、证书、荣誉、联系方式、简历与文档等高频问题。
@@ -161,7 +229,7 @@ npm run dev       # 开发服务器 http://localhost:3000
 
 ---
 
-## 八、Profile 事实原则
+## 九、Profile 事实原则
 
 - 公开个人事实只能维护在 `src/data/profile/`；UI、metadata、简历 PDF 与助理必须使用 public + verified 过滤集合。
 - `pending`、`private`、`hidden` 不得进入公开集合。
@@ -169,7 +237,8 @@ npm run dev       # 开发服务器 http://localhost:3000
 - 当前公开论文集合为 2 篇 EI 会议论文，均为第一作者：
   - `publications.ts` 是论文事实的唯一来源；`credentials.ts` 中 `kind: "paper"` 条目仅为分类引用，由 `verify:profile` 校验标题一一对应。
   - 会议全称尚未确认，`venue` 保留【待补充会议全称】占位；在补全之前只能表述为「EI 会议论文」，不得声称 EI 已收录。
-  - 论文指标（Rank-1 94.83% / AUROC 87.75%）与项目①的部署级指标（FAR 6.91%）口径不同，两处分别如实标注，不互相覆盖。
+  - 论文的 `metrics` 字段为可选：当前两篇论文的量化指标均按本人要求未在站点展示（字段保留为空数组），
+    因此论文卡片只呈现创新点与摘要；项目①的部署级指标（FAR 6.91%）与论文口径无关，仍在项目页如实标注。
   - 本人姓名唯一来源仍是 `identity.ts`。
 - 当前公开奖励与证书：`awards.ts` 11 项荣誉、`competitions.ts` 2 项竞赛、`credentials.ts` 5 项证书与论文引用、`patents.ts` 1 项专利。
 - 技能栈 `groups` 与扁平 `items` 的 id 集合与顺序必须一致（由 `verify:profile` 校验）。
@@ -184,7 +253,7 @@ npm run dev       # 开发服务器 http://localhost:3000
 
 ---
 
-## 九、无障碍与响应式
+## 十、无障碍与响应式
 
 - 顶部提供「跳转至主内容 / Skip to main content」Skip Link，键盘首次 Tab 即可聚焦并跳过导航。
 - 图片灯箱：打开时焦点移入对话框、`Tab` / `Shift+Tab` 在灯箱内循环、`Esc` 关闭、`←`/`→` 切换图片，关闭后焦点归还触发按钮。
@@ -193,7 +262,7 @@ npm run dev       # 开发服务器 http://localhost:3000
 
 ---
 
-## 十、部署
+## 十一、部署
 
 **形态**：标准 Next.js SSR/SSG 应用，**不支持静态导出**（需要 Node 运行时承载 Route Handler 与 `proxy.ts`）。
 

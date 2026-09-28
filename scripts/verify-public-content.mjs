@@ -217,8 +217,31 @@ const publicAssetNames = walk(join(repositoryRoot, "public")).map((filePath) =>
   toRepositoryPath(filePath)
 );
 for (const assetName of publicAssetNames) {
-  if (/patent|certificate|证书|专利/i.test(assetName)) {
+  /**
+   * 敏感证书素材只按「文件名」判断，不按完整路径：
+   * 荣誉资质附件按分类存放在 `public/attachments/patents/` 这类目录中，
+   * 目录名本身包含 patents/awards 是预期的；但文件名里直接出现
+   * patent / certificate / 证书 / 专利 时，仍视为未脱敏的原始证书素材并拦截。
+   */
+  const baseName = assetName.split("/").at(-1) ?? "";
+  if (/patent|certificate|证书|专利/i.test(baseName)) {
     report(join(repositoryRoot, assetName), "sensitive-certificate-asset-present");
+  }
+}
+
+/**
+ * 荣誉资质附件命名合规扫描（public/attachments/ 下的实体文件）：
+ * 只允许 ASCII 字母/数字/点/下划线/连字符，禁止中文与空格，
+ * 与 verify:profile 中对已登记附件的命名校验保持一致。
+ * 图片类附件为二进制，不做文字校验；文件类附件同样只校验文件名。
+ */
+const ATTACHMENT_FILE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+for (const assetName of publicAssetNames) {
+  if (!assetName.startsWith("public/attachments/")) continue;
+  const baseName = assetName.split("/").at(-1) ?? "";
+  if (baseName === ".gitkeep") continue;
+  if (!ATTACHMENT_FILE_NAME_PATTERN.test(baseName)) {
+    report(join(repositoryRoot, assetName), "invalid-attachment-filename");
   }
 }
 

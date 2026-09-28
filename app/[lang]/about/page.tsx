@@ -23,8 +23,8 @@ export async function generateMetadata({
   const title = locale === "zh" ? `关于我 | ${name}` : `About | ${name}`;
   const description =
     locale === "zh"
-      ? `${name}的个人定位、研究方向、教育与实践经历、三大核心优势与政治面貌。`
-      : `${name}'s positioning, research directions, education and practical experience, core strengths, and political status.`;
+      ? `${name}的个人定位、研究方向、教育与实践经历、核心能力模块与政治面貌。`
+      : `${name}'s positioning, research directions, education and practical experience, core capability modules, and political status.`;
   const pageUrl = getAbsolutePageUrl(`/${locale}/about`);
 
   return {

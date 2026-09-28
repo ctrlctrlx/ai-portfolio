@@ -23,6 +23,16 @@ export const credentials: Credential[] = [
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-ncree-level-2",
+    attachments: [
+      {
+        name: "证书扫描件",
+        nameEn: "Certificate Scan",
+        type: "image",
+        path: "/attachments/credentials/cred-01-computer-level2-c.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "cet-4",
@@ -37,6 +47,16 @@ export const credentials: Credential[] = [
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-cet4",
+    attachments: [
+      {
+        name: "成绩证明",
+        nameEn: "Score Report",
+        type: "image",
+        path: "/attachments/credentials/cred-02-cet4-score.jpg",
+        format: "JPG 格式",
+        formatEn: "JPG Format",
+      },
+    ],
   },
   {
     id: "utility-model-attendance-system",
@@ -54,6 +74,17 @@ export const credentials: Credential[] = [
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-utility-model",
+    /** 与 patents.ts 的附件同源：保证荣誉资质页「证书与专利」卡片也能直接下载专利证书 */
+    attachments: [
+      {
+        name: "专利证书",
+        nameEn: "Patent Certificate",
+        type: "file",
+        path: "/attachments/patents/doc-01-utility-attendance-system.pdf",
+        format: "PDF 格式",
+        formatEn: "PDF Format",
+      },
+    ],
   },
   {
     id: "paper-blockchain-spectrum-sensing",
@@ -63,7 +94,8 @@ export const credentials: Credential[] = [
       en: "Blockchain-Enhanced Spectrum Sensing with PoAS and Game-Theoretic Detection",
     },
     issuer: { zh: "EI 会议 · 第一作者", en: "EI Conference · First Author" },
-    year: "2025",
+    /** 与 publications.ts 的 month 同源，统一精确到月 */
+    year: "2025.04",
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-paper-blockchain-spectrum-sensing",
@@ -76,7 +108,8 @@ export const credentials: Credential[] = [
       en: "Quality-Aware Temporal Contrastive Learning for Robust Open-Set Fish Re-Identification",
     },
     issuer: { zh: "EI 会议 · 第一作者", en: "EI Conference · First Author" },
-    year: "2026",
+    /** 与 publications.ts 的 month 同源，统一精确到月 */
+    year: "2026.05",
     visibility: "public",
     verificationStatus: "verified",
     sourceId: "profile-credential-paper-quality-aware-temporal-reid",

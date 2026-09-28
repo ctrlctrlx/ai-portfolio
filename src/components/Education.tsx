@@ -1,4 +1,5 @@
 import type { Locale } from "@/src/lib/i18n";
+import { formatDateRange } from "@/src/lib/dateFormat";
 import { publicEducation } from "@/src/data/profile";
 
 /**
@@ -33,7 +34,7 @@ export default function Education({ locale }: { locale: Locale }) {
                 {entry.institution[locale]}
               </h3>
               <span className="text-xs" style={{ color: "var(--muted)" }}>
-                {entry.startDate} – {entry.endDate}
+                {formatDateRange(entry.startDate, entry.endDate, locale)}
               </span>
             </div>
             <p className="mt-2 text-sm" style={{ color: "var(--foreground)" }}>

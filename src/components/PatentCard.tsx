@@ -1,3 +1,5 @@
+import AttachmentList from "@/src/components/AttachmentList";
+import { formatYearMonth } from "@/src/lib/dateFormat";
 import type { Locale } from "@/src/lib/i18n";
 import type { Patent, PatentType } from "@/src/data/profile";
 
@@ -9,15 +11,16 @@ const typeLabels: Record<PatentType, Record<Locale, string>> = {
 };
 
 /**
- * 授权时间：与全站经历类信息统一采用 `YYYY.MM`（grantDate 为 ISO 日期，取前 7 位并替换分隔符），
- * 避免同一份数据在专利卡片里显示成「2022年3月」、在证书列表里显示成「2022.03」。
+ * 授权时间：数据层 grantDate 为 ISO 日期，展示层统一按全站格式输出
+ * （中文 `2022.03`、英文 `Mar. 2022`），与证书与专利列表、简历页保持一致。
  */
 function formatGrantDate(grantDate: string, locale: Locale): string {
-  const formattedDate = grantDate.slice(0, 7).replace("-", ".");
+  const yearMonth = formatYearMonth(
+    grantDate.slice(0, 7).replace("-", "."),
+    locale
+  );
 
-  return locale === "zh"
-    ? `授权于 ${formattedDate}`
-    : `Granted ${formattedDate}`;
+  return locale === "zh" ? `授权于 ${yearMonth}` : `Granted ${yearMonth}`;
 }
 
 export default function PatentCard({
@@ -69,6 +72,10 @@ export default function PatentCard({
           <dd style={{ color: "var(--muted)" }}>{patent.stageLabel[locale]}</dd>
         </div>
       </dl>
+      {/* 专利证书等附件：文字链样式，与荣誉页一致，右对齐 */}
+      <div className="mt-3 flex flex-wrap justify-end gap-2">
+        <AttachmentList attachments={patent.attachments} locale={locale} />
+      </div>
     </article>
   );
 }

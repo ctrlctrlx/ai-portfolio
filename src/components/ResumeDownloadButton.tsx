@@ -1,5 +1,23 @@
+"use client";
+
 import { Download } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { track } from "@vercel/analytics";
 import type { Locale } from "@/src/lib/i18n";
+
+/**
+ * 简历下载入口所在页面：用于自定义事件 `resume_download` 的 page 参数，
+ * 区分不同入口的转化效果。全站四处入口（首页 / 关于我 / 联系我 / 在线简历）
+ * 共用本组件，页面归属由当前路径推导，调用方无需传参。
+ */
+function getDownloadPage(pathname: string): "home" | "about" | "resume" | "contact" | "other" {
+  const segment = pathname.split("/").filter(Boolean)[1];
+  if (!segment) return "home";
+  if (segment === "about" || segment === "resume" || segment === "contact") {
+    return segment;
+  }
+  return "other";
+}
 
 /**
  * 正式简历 PDF 下载入口。
@@ -10,6 +28,11 @@ import type { Locale } from "@/src/lib/i18n";
  *
  * href 使用百分号编码（等价于 `/杨冲个人简历.pdf`）：文件名保持中文原文，
  * 同时英文页面的 HTML 里不出现任何中文字符（避免英文页出现中文残留）。
+ *
+ * 统计：点击时触发 Vercel Analytics 自定义事件 `resume_download`，携带
+ * `language`（zh / en）与 `page`（home / about / resume / contact）。
+ * `track()` 只把事件推进内存队列（非阻塞、不 preventDefault），
+ * 因此不影响下载行为与文件名规则；前端也不渲染任何统计元素。
  *
  * variant="primary" 用于在线简历页顶部的醒目主按钮，默认样式用于首屏按钮区。
  */
@@ -22,6 +45,8 @@ export default function ResumeDownloadButton({
   variant?: "default" | "primary";
   label?: string;
 }) {
+  const pathname = usePathname();
+
   const text =
     label ??
     (locale === "zh" ? "下载简历 PDF" : "Download Resume PDF");
@@ -53,6 +78,10 @@ export default function ResumeDownloadButton({
       className={className}
       style={style}
       aria-label={ariaLabel}
+      onClick={() => {
+        // 自定义事件：语言 + 入口页面。异步非阻塞，不影响默认下载行为。
+        track("resume_download", { language: locale, page: getDownloadPage(pathname) });
+      }}
     >
       <Download size={15} aria-hidden="true" />
       {text}

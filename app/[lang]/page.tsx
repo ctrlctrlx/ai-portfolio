@@ -25,18 +25,19 @@ import {
   publicPublications,
 } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
+import { formatDateRange, formatYearMonth } from "@/src/lib/dateFormat";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 /**
- * 首页展示 4 个代表项目（当前公开项目全集，按最新在前排列）。
- * 用显式 slug 指定，而不是对按时间排序的列表取前 N 个，
- * 避免新增/调整项目时间后首页展示的项目被静默替换。
+ * 首页展示 4 个代表项目（当前公开项目全集）。
+ * 用显式 slug 指定，顺序与 `src/data/profile/projects.ts` 的数组顺序保持一致
+ * （数组即策展顺序：ReID 研究 → RFID 采集装置 → 本站作品集 → 标记标准化）。
  * 每个项目的全部指标、技术标签与图文详情在 /[lang]/projects 与详情页展开。
  */
 const HOME_PROJECT_SLUGS = [
-  "personal-portfolio-website",
   "fish-reid-open-world",
   "rfid-multiview-acquisition",
+  "personal-portfolio-website",
   "grouper-tagging-standard",
 ];
 
@@ -92,7 +93,7 @@ function ProjectPreviewCard({
     >
       <div className="flex items-start justify-between gap-3">
         <p className="pt-1 text-xs" style={{ color: "var(--muted)" }}>
-          {project.startDate} – {project.endDate[locale]}
+          {formatDateRange(project.startDate, project.endDate[locale], locale)}
         </p>
         {/* 项目角色徽章：固定在卡片右上角 */}
         <span
@@ -145,8 +146,8 @@ function ProjectPreviewCard({
         >
           <ScrollText size={12} aria-hidden="true" />
           {locale === "zh"
-            ? `一作 EI 会议论文 ${publication.year}`
-            : `First-author EI paper, ${publication.year}`}
+            ? `一作 EI 会议论文 ${formatYearMonth(publication.month ?? String(publication.year), locale)}`
+            : `First-author EI paper, ${formatYearMonth(publication.month ?? String(publication.year), locale)}`}
         </p>
       ))}
 
@@ -270,12 +271,16 @@ export default async function HomePage({
                     </>
                   )}
                   {" |\u00A0"}
-                  {currentEducation.startDate} – {currentEducation.endDate}
+                  {formatDateRange(
+                    currentEducation.startDate,
+                    currentEducation.endDate,
+                    locale
+                  )}
                 </span>
               </p>
             )}
 
-            {/* 政治面貌行：独立成行，位于「求职方向」上方，与学历行同级视觉权重 */}
+            {/* 政治面貌行：独立成行，位于「研究方向」上方，与学历行同级视觉权重 */}
             {publicAbout && (
               <p
                 className="mt-2 text-base font-semibold leading-7"
@@ -286,17 +291,19 @@ export default async function HomePage({
             )}
 
             {/*
-              求职方向：名称/头衔下方的次级强调文字，替代原「求职意向」标签组，
-              避免同一处出现两套不同的求职目标表述；移动端自然换行，不溢出。
-              文案直接取 about.jobTargets，保证与简历页「求职意向」全站唯一口径。
+              研究方向：名称/头衔下方的次级强调文字。
+              文案直接取 about.researchDirections（与首页标签行、关于页研究方向、
+              求职问答同源，全站唯一口径），移动端自然换行不溢出。
             */}
-            {publicAbout && publicAbout.jobTargets.length > 0 && (
+            {publicAbout && publicAbout.researchDirections.length > 0 && (
               <p
                 className="mt-4 max-w-2xl text-sm leading-7"
                 style={{ color: "var(--muted)" }}
               >
-                {locale === "zh" ? "求职方向：" : "Job Objective: "}
-                {publicAbout.jobTargets.map((target) => target[locale]).join(" / ")}
+                {locale === "zh" ? "研究方向：" : "Research Interests: "}
+                {publicAbout.researchDirections
+                  .map((direction) => direction.label[locale])
+                  .join(locale === "zh" ? "、" : ", ")}
               </p>
             )}
 
@@ -305,18 +312,8 @@ export default async function HomePage({
               <ResearchDirectionTags locale={locale} />
             </div>
 
-            {/* 一句话个人定位 */}
-            {publicAbout && (
-              <p
-                className="mt-5 max-w-2xl text-base font-medium leading-8"
-                style={{ color: "var(--foreground)" }}
-              >
-                {publicAbout.headline[locale]}
-              </p>
-            )}
-
             <div
-              className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs"
+              className="mt-5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs"
               style={{ color: "var(--muted)" }}
             >
               <MapPin size={13} aria-hidden="true" />

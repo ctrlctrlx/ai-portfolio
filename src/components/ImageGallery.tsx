@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, FileImage, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileImage, Image as ImageIcon, X } from "lucide-react";
 import type { Locale } from "@/src/lib/i18n";
 
 /** 灯箱缩放范围：1 倍（适配窗口）～ 4 倍 */
@@ -47,16 +47,26 @@ interface GalleryImage {
  * - 图片缺失时（文件尚未放入）展示占位块并标出预期路径，便于核对。
  *
  * caption 展示在图片下方，字号略小于正文；
- * lightboxLabel 用于灯箱的无障碍名称，可按场景传入。
+ * lightboxLabel 用于灯箱的无障碍名称，可按场景传入；
+ * sizes 供调用方按实际容器宽度覆盖缩略图取图尺寸（默认按整页图集的三列估算，
+ * 嵌入卡片等窄容器时应传入更贴近实际展示宽度的值，避免取到过小的图）。
  */
 export default function ImageGallery({
   images,
   locale,
   lightboxLabel,
+  sizes = "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw",
+  variant = "grid",
+  linkLabel,
 }: {
   images: GalleryImage[];
   locale: Locale;
   lightboxLabel?: string;
+  sizes?: string;
+  /** "grid" 渲染缩略图网格（默认）；"link" 只渲染行内文字链触发器 */
+  variant?: "grid" | "link";
+  /** variant="link" 时的文字链文案（按 locale 由调用方传入） */
+  linkLabel?: string;
 }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [failedSrc, setFailedSrc] = useState<Record<string, boolean>>({});
@@ -181,6 +191,30 @@ export default function ImageGallery({
 
   return (
     <>
+      {/*
+        variant="link"：不渲染缩略图网格，只渲染一个行内文字链作为灯箱触发器
+        （荣誉资质附件等需要紧凑排版的场景复用同一套灯箱与焦点逻辑）。
+      */}
+      {variant === "link" ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            triggerRef.current = event.currentTarget;
+            setActiveIndex(0);
+            setZoom(MIN_ZOOM);
+          }}
+          className="inline-flex items-center gap-1 text-xs hover:text-[var(--accent-hover)] hover:underline"
+          style={{ color: "var(--accent)" }}
+          aria-label={
+            locale === "zh"
+              ? `${linkLabel}：放大查看${images.map((image) => image.caption).join("、")}`
+              : `${linkLabel}: enlarge ${images.map((image) => image.caption).join(", ")}`
+          }
+        >
+          <ImageIcon size={12} aria-hidden="true" />
+          {linkLabel}
+        </button>
+      ) : (
       <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {images.map((image, index) => (
           <li key={image.id}>
@@ -228,7 +262,7 @@ export default function ImageGallery({
                     /* 画廊图片全部懒加载：滚动到可视区域才请求 */
                     loading="lazy"
                     /* 移动端单列、sm 两列、lg 三列，按实际展示宽度取图 */
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    sizes={sizes}
                     onError={() =>
                       setFailedSrc((previous) => ({
                         ...previous,
@@ -250,6 +284,7 @@ export default function ImageGallery({
           </li>
         ))}
       </ul>
+      )}
 
       {/* 灯箱 */}
       {activeImage && (

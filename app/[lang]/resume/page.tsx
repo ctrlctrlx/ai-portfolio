@@ -15,6 +15,7 @@ import {
   publicSkills,
 } from "@/src/data/profile";
 import type { Locale } from "@/src/lib/i18n";
+import { formatDateRange, formatYearMonth } from "@/src/lib/dateFormat";
 import { getAbsolutePageUrl } from "@/src/lib/siteUrl";
 
 export function generateStaticParams() {
@@ -115,10 +116,12 @@ export default async function ResumePage({
             <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
               {identity.tagline[locale]}
             </p>
-            {publicAbout && (
+            {publicAbout && publicAbout.researchDirections.length > 0 && (
               <p className="mt-2 text-sm" style={{ color: "var(--muted)" }}>
-                {locale === "zh" ? "求职意向：" : "Target roles: "}
-                {publicAbout.jobTargets.map((target) => target[locale]).join(" / ")}
+                {locale === "zh" ? "研究方向：" : "Research Interests: "}
+                {publicAbout.researchDirections
+                  .map((direction) => direction.label[locale])
+                  .join(locale === "zh" ? "、" : ", ")}
               </p>
             )}
           </div>
@@ -200,7 +203,7 @@ export default async function ResumePage({
                 <div className="flex flex-wrap justify-between gap-2">
                   <h3 className="font-semibold">{entry.institution[locale]}</h3>
                   <span className="text-xs" style={{ color: "var(--muted)" }}>
-                    {entry.startDate} – {entry.endDate}
+                    {formatDateRange(entry.startDate, entry.endDate, locale)}
                   </span>
                 </div>
                 <p className="mt-1 text-sm" style={{ color: "var(--muted)" }}>
@@ -244,7 +247,7 @@ export default async function ResumePage({
                     </span>
                   </h3>
                   <span className="text-xs" style={{ color: "var(--muted)" }}>
-                    {project.startDate} – {project.endDate[locale]}
+                    {formatDateRange(project.startDate, project.endDate[locale], locale)}
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6" style={{ color: "var(--muted)" }}>
@@ -299,7 +302,7 @@ export default async function ResumePage({
                   </p>
                 </div>
                 <span className="text-xs" style={{ color: "var(--muted)" }}>
-                  {award.year}
+                  {formatYearMonth(award.year, locale)}
                 </span>
               </article>
             ))}

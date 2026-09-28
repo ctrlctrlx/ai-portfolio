@@ -55,17 +55,15 @@ export const publications: Publication[] = [
     /** DOI：https://doi.org/10.1117/12.3073439 */
     doi: "10.1117/12.3073439",
     abstract: {
-      zh: "面向区块链赋能的频谱感知场景，提出 PoAS 混合共识机制与博弈论恶意节点检测方法：以权益与活跃度联合的混合共识提升链上感知数据可信度，并将恶意节点识别建模为博弈过程进行求解。检测概率由 0.5 提升至 0.9，节点收益差提升 454 单位。",
-      en: "For blockchain-enhanced spectrum sensing, this work proposes a PoAS hybrid consensus mechanism together with a game-theoretic malicious-node detection method: a hybrid consensus combining stake and activity improves the trustworthiness of on-chain sensing data, and malicious-node identification is modelled and solved as a game. Detection probability improves from 0.5 to 0.9, and the node payoff gap increases by 454 units.",
+      zh: "面向区块链赋能的频谱感知场景，提出 PoAS 混合共识机制与博弈论恶意节点检测方法：以权益与活跃度联合的混合共识提升链上感知数据可信度，并将恶意节点识别建模为博弈过程进行求解。",
+      en: "For blockchain-enhanced spectrum sensing, this work proposes a PoAS hybrid consensus mechanism together with a game-theoretic malicious-node detection method: a hybrid consensus combining stake and activity improves the trustworthiness of on-chain sensing data, and malicious-node identification is modelled and solved as a game.",
     },
     coreContribution: {
       zh: "提出 PoAS 混合共识机制与博弈论恶意节点检测方法，解决链上频谱感知数据的可信度与恶意节点识别问题。",
       en: "Proposes a PoAS hybrid consensus mechanism and a game-theoretic malicious-node detection method, addressing on-chain spectrum-sensing data trustworthiness and malicious-node identification.",
     },
-    metrics: [
-      { zh: "检测概率 0.5 → 0.9", en: "Detection probability 0.5 → 0.9" },
-      { zh: "节点收益差提升 454 单位", en: "Node payoff gap +454 units" },
-    ],
+    /** 量化指标按本人要求移除，保留其它成果描述 */
+    metrics: [],
     tags: ["Blockchain", "Spectrum Sensing", "PoAS", "Game Theory"],
     status: "published",
     sourceNote:
@@ -98,22 +96,19 @@ export const publications: Publication[] = [
     /** DOI：https://doi.org/10.1109/PRMVAI70103.2026.11605618 */
     doi: "10.1109/PRMVAI70103.2026.11605618",
     abstract: {
-      zh: "针对水下鱼类个体重识别中图像质量波动与未知个体持续出现的双重挑战，提出质量感知时序对比学习框架：将图像质量估计融入时序对比学习，在低维身份特征下同时提升闭集识别与开放集拒识性能。闭集 Rank-1 达 94.83%，开放集 AUROC 达 87.75%。",
-      en: "Addressing both fluctuating underwater image quality and the continual appearance of unknown individuals in fish re-identification, this work proposes a quality-aware temporal contrastive learning framework that folds image-quality estimation into temporal contrastive learning, improving closed-set recognition and open-set rejection simultaneously under low-dimensional identity features. Closed-set Rank-1 reaches 94.83% and open-set AUROC reaches 87.75%.",
+      zh: "针对水下鱼类个体重识别中图像质量波动与未知个体持续出现的双重挑战，提出质量感知时序对比学习框架：将图像质量估计融入时序对比学习，在低维身份特征下同时提升闭集识别与开放集拒识性能。",
+      en: "Addressing both fluctuating underwater image quality and the continual appearance of unknown individuals in fish re-identification, this work proposes a quality-aware temporal contrastive learning framework that folds image-quality estimation into temporal contrastive learning, improving closed-set recognition and open-set rejection simultaneously under low-dimensional identity features.",
     },
     coreContribution: {
       zh: "提出质量感知时序对比学习框架，实现低维度特征下的高精度个体重识别，并与「基于视觉语言先验的开放世界东星斑个体重识别研究」项目形成成果落地闭环。",
       en: "Proposes a quality-aware temporal contrastive learning framework achieving high-accuracy re-identification under low-dimensional features, closing the loop with the open-world crimson snapper individual re-identification research project.",
     },
-    metrics: [
-      { zh: "闭集 Rank-1 94.83%", en: "Closed-set Rank-1 94.83%" },
-      { zh: "开放集 AUROC 87.75%", en: "Open-set AUROC 87.75%" },
-    ],
+    /** 论文版本的量化指标按本人要求移除，保留创新点与摘要描述 */
+    metrics: [],
     tags: ["Fish Re-ID", "Temporal Contrastive Learning", "Open-Set Recognition", "Image Quality"],
     status: "published",
     relatedProjectSlugs: ["fish-reid-open-world"],
-    sourceNote:
-      "第一作者；EI 会议论文。指标为论文版本数值，与项目①的部署级评测口径不同，两者分别如实标注。",
+    sourceNote: "第一作者；EI 会议论文。",
   },
 ];
 
