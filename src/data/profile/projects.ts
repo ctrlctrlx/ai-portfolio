@@ -14,6 +14,132 @@ import {
  */
 export const projects: Project[] = [
   {
+    id: "personal-portfolio-website",
+    slug: "personal-portfolio-website",
+    visibility: "public",
+    verificationStatus: "verified",
+    sourceId: "profile-project-personal-portfolio-website",
+    title: {
+      zh: "基于 Next.js 的个人技术作品集网站",
+      en: "Personal Technical Portfolio Website Based on Next.js",
+    },
+    subtitle: {
+      zh: "独立开发的双语技术作品集：全域 SSG 静态预渲染 + Vercel 自动化部署",
+      en: "A self-built bilingual portfolio: full-site SSG static pre-rendering with automated Vercel deployment",
+    },
+    role: { zh: "独立开发者 / 全栈开发", en: "Solo Developer / Full-Stack" },
+    featured: true,
+    startDate: "2026.08",
+    endDate: { zh: "2026.09", en: "2026.09" },
+    situation: {
+      zh: "计算机视觉方向的科研项目、模型实验结果、学术论文与求职简历信息缺少统一的在线展示入口，面试官只能通过静态简历了解研究内容与工程实践。",
+      en: "Research projects, model experiment results, academic papers and resume information in computer vision lacked a single online showcase — interviewers could only learn about the research and engineering work from a static resume.",
+    },
+    task: {
+      zh: "独立开发一个基于 Next.js 的个人技术作品集网站，搭建项目图文展示模块、实现全响应式页面，并完成公网部署供面试官在线查看。",
+      en: "Independently build a Next.js-based personal technical portfolio: project display modules, fully responsive pages, and a public deployment that interviewers can browse online.",
+    },
+    action: {
+      zh: "以 Next.js + TypeScript + Tailwind CSS 实现前端与内容结构，用 Git 做版本管理并接入 Vercel 自动化部署流水线；搭建项目图文展示模块与图片灯箱画廊，通过 SSG 静态预渲染与 CDN 缓存优化首屏性能，并用 MDX 维护技术文章。",
+      en: "Built the front end and content structure with Next.js, TypeScript and Tailwind CSS; managed the source with Git and wired an automated Vercel deployment pipeline; implemented project display modules and an image lightbox gallery, optimised first-screen performance with SSG static pre-rendering and CDN caching, and maintained technical articles in MDX.",
+    },
+    result: {
+      zh: "完成网站公网部署，全域静态预渲染（SSG）并支持 CDN 缓存，首屏加载性能提升 60%+；搭建科研成果展示体系，可视化呈现鱼个体重识别项目的实验数据、流程图与核心指标；实现 GitHub + Vercel 自动化部署，代码提交后自动完成发布，上线周期缩短至 2 分钟；作为线上求职作品集替代传统静态简历。",
+      en: "Delivered the public deployment with full-site SSG static pre-rendering and CDN caching, improving first-screen loading performance by over 60%; built a research showcase that visualises experiment data, flowcharts and key metrics of the fish individual re-identification projects; implemented a GitHub + Vercel automated deployment pipeline that releases after each commit, cutting the launch cycle to 2 minutes; and now serves as the online job portfolio in place of a traditional static resume.",
+    },
+    coreSkill: [
+      { zh: "Next.js", en: "Next.js" },
+      { zh: "TypeScript", en: "TypeScript" },
+      { zh: "Tailwind CSS", en: "Tailwind CSS" },
+      { zh: "Vercel", en: "Vercel" },
+      { zh: "Git", en: "Git" },
+      { zh: "MDX", en: "MDX" },
+    ],
+    techTags: [
+      { zh: "Next.js", en: "Next.js" },
+      { zh: "TypeScript", en: "TypeScript" },
+      { zh: "Tailwind CSS", en: "Tailwind CSS" },
+      { zh: "Vercel", en: "Vercel" },
+      { zh: "Git", en: "Git" },
+      { zh: "SSG", en: "SSG" },
+      { zh: "响应式设计", en: "Responsive Design" },
+      { zh: "MDX", en: "MDX" },
+    ],
+    /**
+     * 该项目属于 Web 工程技术实践，沿用站内既有研究方向标签体系中最贴近的一项
+     * （作品集本身用于承载并展示计算机视觉方向的研究成果）。
+     */
+    researchDirections: ["computer-vision"],
+    highlights: [
+      {
+        zh: "完成网站公网部署，全域静态预渲染（SSG），支持 CDN 缓存，首屏加载性能提升 60%+",
+        en: "Completed public deployment with full-site SSG static pre-rendering and CDN caching, improving first-screen loading performance by over 60%",
+      },
+      {
+        zh: "搭建科研成果展示体系，可视化呈现鱼个体重识别项目实验数据、流程图与核心指标",
+        en: "Built a research showcase visualising experiment data, flowcharts and key metrics of the fish individual re-identification projects",
+      },
+      {
+        zh: "实现 GitHub + Vercel 自动化部署流水线，代码提交后自动完成校验与发布，上线周期缩短至 2 分钟",
+        en: "Implemented a GitHub + Vercel automated CI/CD pipeline — automatic verification and release after each commit, cutting the launch cycle to 2 minutes",
+      },
+      {
+        zh: "作为线上求职作品集，在面试中直观展示 CV 项目成果，替代传统静态简历",
+        en: "Serves as an online job portfolio that presents CV project achievements directly in interviews, replacing a traditional static resume",
+      },
+    ],
+    metrics: [
+      { zh: "首屏加载性能提升 60%+", en: "60%+ faster first-screen loading" },
+      { zh: "上线周期缩短至 2 分钟", en: "Launch cycle cut to 2 minutes" },
+      { zh: "全域静态预渲染（SSG）+ CDN 缓存", en: "Full-site SSG with CDN caching" },
+    ],
+    /**
+     * 项目展示图：首页 / 项目页 / 简历页三张实拍截图，中英文共用同一份图片资源。
+     * 首图（首页截图）同时作为列表与首页卡片的封面图。
+     */
+    images: [
+      {
+        id: "p4-ui-1-home",
+        src: "/images/projects/personal-portfolio-website/personal-portfolio-website-home.jpg",
+        caption: {
+          zh: "图1 作品集首页（首屏自我介绍与代表项目）",
+          en: "Fig.1 Portfolio home page (hero introduction and featured projects)",
+        },
+        alt: {
+          zh: "作品集网站首页截图：首屏展示姓名、求职定位、学历信息、研究方向标签与代表项目卡片",
+          en: "Screenshot of the portfolio home page: hero section with name, target roles, education, research direction tags and featured project cards",
+        },
+      },
+      {
+        id: "p4-ui-2-projects",
+        src: "/images/projects/personal-portfolio-website/personal-portfolio-website-projects.jpg",
+        caption: {
+          zh: "图2 项目经历页（STAR 叙述与核心量化数据）",
+          en: "Fig.2 Projects page (STAR narrative and key quantitative results)",
+        },
+        alt: {
+          zh: "项目经历页截图：项目卡片以 STAR 结构叙述并前置核心量化指标与技术标签",
+          en: "Screenshot of the projects page: project cards with STAR narratives, key quantitative metrics and technology tags",
+        },
+      },
+      {
+        id: "p4-ui-3-resume",
+        src: "/images/projects/personal-portfolio-website/personal-portfolio-website-resume.jpg",
+        caption: {
+          zh: "图3 在线简历页（教育 / 项目 / 技能 / 荣誉 / 专利）",
+          en: "Fig.3 Online resume page (education, projects, skills, honors, patent)",
+        },
+        alt: {
+          zh: "在线公开简历页截图：包含教育经历、项目经历、核心技能、荣誉奖项与专利板块",
+          en: "Screenshot of the online public resume page: education, projects, core skills, honors and patent sections",
+        },
+      },
+    ],
+    /** 项目本身即为本站，暂不提供对外下载文档 */
+    documents: [],
+    isInteractive: false,
+  },
+  {
     id: "fish-reid-open-world",
     slug: "fish-reid-open-world",
     visibility: "public",
